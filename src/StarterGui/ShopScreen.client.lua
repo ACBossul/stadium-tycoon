@@ -9,6 +9,7 @@ local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
 local Remotes     = ReplicatedStorage:WaitForChild("Remotes", 15)
 local PackConfig  = require(ReplicatedStorage:WaitForChild("Config"):WaitForChild("PackConfig"))
 local MonetizationConfig = require(ReplicatedStorage.Config.MonetizationConfig)
+local EventConfig = require(ReplicatedStorage:WaitForChild("Config"):WaitForChild("EventConfig"))
 
 local gui = Instance.new("ScreenGui")
 gui.Name         = "ShopScreen"
@@ -140,6 +141,133 @@ end
 for _, pack in ipairs(PackConfig.Packs) do
 	makePackCard(pack)
 end
+
+-- ─── Limited-time event packs (pinned to top, live countdown) ────────────────
+
+local activeEventCards = {}   -- { card, countdownLabel, event }
+
+local function buildEventCard(event)
+	local pack = PackConfig.ById[event.packId]
+	if not pack then return end
+
+	local card = Instance.new("Frame")
+	card.Name             = "EventCard"
+	card.Size             = UDim2.new(1, -8, 0, 122)
+	card.BackgroundColor3 = Color3.fromRGB(40, 24, 48)
+	card.BorderSizePixel  = 0
+	card.LayoutOrder      = -100      -- sort above the always-available packs
+	card.Parent           = scrollFrame
+	local cc = Instance.new("UICorner") cc.CornerRadius = UDim.new(0, 12) cc.Parent = card
+	local stroke = Instance.new("UIStroke") stroke.Color = Color3.fromRGB(255, 90, 160) stroke.Thickness = 2 stroke.Parent = card
+
+	local badge = Instance.new("TextLabel")
+	badge.Size             = UDim2.new(0, 140, 0, 22)
+	badge.Position         = UDim2.new(0, 12, 0, 8)
+	badge.BackgroundColor3 = Color3.fromRGB(255, 70, 140)
+	badge.Text             = "⏳ " .. event.badge
+	badge.TextColor3       = Color3.new(1, 1, 1)
+	badge.TextScaled       = true
+	badge.Font             = Enum.Font.GothamBlack
+	badge.Parent           = card
+	local bc = Instance.new("UICorner") bc.CornerRadius = UDim.new(0, 6) bc.Parent = badge
+
+	local nameLabel = Instance.new("TextLabel")
+	nameLabel.Size             = UDim2.new(0.6, 0, 0, 30)
+	nameLabel.Position         = UDim2.new(0, 12, 0, 34)
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Text             = event.name
+	nameLabel.TextColor3       = Color3.fromRGB(255, 235, 180)
+	nameLabel.TextScaled       = true
+	nameLabel.Font             = Enum.Font.GothamBold
+	nameLabel.TextXAlignment   = Enum.TextXAlignment.Left
+	nameLabel.Parent           = card
+
+	local desc = Instance.new("TextLabel")
+	desc.Size             = UDim2.new(0.6, 0, 0, 28)
+	desc.Position         = UDim2.new(0, 12, 0, 64)
+	desc.BackgroundTransparency = 1
+	desc.Text             = pack.description
+	desc.TextColor3       = Color3.fromRGB(200, 190, 205)
+	desc.TextScaled       = true
+	desc.Font             = Enum.Font.Gotham
+	desc.TextWrapped      = true
+	desc.TextXAlignment   = Enum.TextXAlignment.Left
+	desc.Parent           = card
+
+	local countdown = Instance.new("TextLabel")
+	countdown.Name             = "Countdown"
+	countdown.Size             = UDim2.new(0.6, 0, 0, 20)
+	countdown.Position         = UDim2.new(0, 12, 0, 94)
+	countdown.BackgroundTransparency = 1
+	countdown.Text             = "ends in …"
+	countdown.TextColor3       = Color3.fromRGB(255, 120, 160)
+	countdown.TextScaled       = true
+	countdown.Font             = Enum.Font.GothamBold
+	countdown.TextXAlignment   = Enum.TextXAlignment.Left
+	countdown.Parent           = card
+
+	local price  = (pack.costType == "gems") and ("💎" .. pack.gemCost) or ("🪙" .. pack.cost)
+	local buyBtn = Instance.new("TextButton")
+	buyBtn.Size             = UDim2.new(0, 120, 0, 58)
+	buyBtn.Position         = UDim2.new(1, -132, 0.5, -29)
+	buyBtn.BackgroundColor3 = Color3.fromRGB(230, 70, 150)
+	buyBtn.Text             = "Open\n" .. price
+	buyBtn.TextColor3       = Color3.new(1, 1, 1)
+	buyBtn.TextScaled       = true
+	buyBtn.Font             = Enum.Font.GothamBold
+	buyBtn.Parent           = card
+	local bbc = Instance.new("UICorner") bbc.CornerRadius = UDim.new(0, 10) bbc.Parent = buyBtn
+
+	local pid = pack.id
+	buyBtn.Activated:Connect(function()
+		if Remotes then Remotes:FindFirstChild("OpenPack"):FireServer(pid) end
+	end)
+
+	table.insert(activeEventCards, { card = card, countdownLabel = countdown, event = event })
+end
+
+local function refreshEvents()
+	for _, c in ipairs(scrollFrame:GetChildren()) do
+		if c:IsA("Frame") and c.Name == "EventCard" then c:Destroy() end
+	end
+	activeEventCards = {}
+	for _, ev in ipairs(EventConfig.activeEvents(os.time())) do
+		buildEventCard(ev)
+	end
+end
+
+local function fmtCountdown(sec)
+	if sec <= 0 then return "ending…" end
+	local d = math.floor(sec / 86400)
+	local h = math.floor((sec % 86400) / 3600)
+	local m = math.floor((sec % 3600) / 60)
+	if d > 0 then return string.format("ends in %dd %dh", d, h) end
+	if h > 0 then return string.format("ends in %dh %dm", h, m) end
+	return string.format("ends in %dm", math.max(m, 1))
+end
+
+refreshEvents()
+
+-- Live countdown; rebuild when the active set changes (event starts/ends).
+task.spawn(function()
+	while gui.Parent do
+		task.wait(1)
+		if not gui.Enabled then continue end
+		local now = os.time()
+		if #activeEventCards ~= #EventConfig.activeEvents(now) then
+			refreshEvents()
+		end
+		for _, entry in ipairs(activeEventCards) do
+			if entry.card.Parent then
+				entry.countdownLabel.Text = fmtCountdown(entry.event.endsAt - now)
+			end
+		end
+	end
+end)
+
+gui:GetPropertyChangedSignal("Enabled"):Connect(function()
+	if gui.Enabled then refreshEvents() end
+end)
 
 -- ─── Game Passes (one-time Robux, in the same scroll list) ───────────────────
 

@@ -8,6 +8,7 @@ local DataService   = require(ServerScriptService.DataService)
 local EconomyService = require(ServerScriptService.EconomyService)
 local CardCatalog   = require(ReplicatedStorage.Config.CardCatalog)
 local PackConfig    = require(ReplicatedStorage.Config.PackConfig)
+local EventConfig   = require(ReplicatedStorage.Config.EventConfig)
 
 local CardService = {}
 
@@ -141,6 +142,11 @@ function CardService.openPack(player, packId)
 
 	local packCfg = PackConfig.ById[packId]
 	if not packCfg then return false, "invalid_pack" end
+
+	-- Event packs are only purchasable while their window is live (server-authoritative).
+	if packCfg.eventOnly and not EventConfig.activeEventForPack(packId, os.time()) then
+		return false, "event_inactive"
+	end
 
 	-- Deduct cost first; only grant cards if payment succeeds.
 	if packCfg.costType == "coins" then

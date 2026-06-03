@@ -113,11 +113,26 @@ Fully implemented and server-authoritative:
   (`data.tradeLog`, last 25 each) with a shared trade `id`, timestamp, partner, and the
   `gave`/`got` card lists — so you can review or unwind a disputed trade from either side.
 
+## Limited-time event packs (the main revenue lever)
+`EventConfig.lua` defines time-limited pack events whose windows derive from
+`MatchdaySchedule` timestamps. The packs themselves live in `PackConfig.EventPacks`
+(marked `eventOnly = true`):
+- **Matchday Drop** (coins) — rotates through the group stage; keeps free players engaged.
+- **Knockout Drop** (gems) — knockout rounds, boosted Epic/Legendary, guaranteed Epic+.
+- **Grand Final Mega** (gems) — a **48-hour** window with massively boosted Mythic odds.
+
+Both ends are enforced: the **server** (`CardService.openPack`) rejects an `eventOnly` pack
+bought outside its live window, and the **client** Shop shows only currently-active events
+at the top with a live countdown. To add/retune an event, edit `EventConfig.Events`
+(window) and/or the matching `EventPacks` entry (odds/price). This is your highest-ROI
+monetization surface — repeatable spend + time-limited urgency.
+
 ## Adjusting matchday dates
 `MatchdaySchedule.Entries` holds Unix timestamps (UTC). Current values fire at 18:00 UTC on
-each real 2026 matchday. To shift a date, change the `timestamp`. Quick converter in any
-Luau console: `os.time({year=2026, month=6, day=11, hour=18, min=0, sec=0})` (interpreted as
-local time — compute in UTC or adjust for your offset).
+each real 2026 matchday. To shift a date, change the `timestamp` — event windows follow
+automatically (they reference these). Quick converter in any Luau console:
+`os.time({year=2026, month=6, day=11, hour=18, min=0, sec=0})` (interpreted as local time —
+compute in UTC or adjust for your offset).
 
 ## IP / legal reminder
 NO real player names, real national badge logos, FIFA marks, or official World Cup branding
