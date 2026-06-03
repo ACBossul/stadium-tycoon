@@ -37,7 +37,7 @@ local PROFILE_TEMPLATE = {
 
 	bracket = {
 		cupId               = "brainrot_cup_2026",
-		group               = "A",       -- assigned on first join
+		group               = "",        -- "" = unassigned; a letter is set on first join
 		points              = 0,
 		wins                = 0,
 		draws               = 0,

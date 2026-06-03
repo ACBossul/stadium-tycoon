@@ -180,11 +180,19 @@ function CardService.equipSquad(player, instanceIds)
 	if type(instanceIds) ~= "table" then return false, "invalid" end
 	if #instanceIds > 11 then return false, "too_many" end
 
-	-- Validate every id is owned
+	-- Validate every id is owned AND unique. Uniqueness is critical: without it
+	-- a crafted client could equip one strong card 11 times and multiply its
+	-- power (getSquadPower sums per slot), trivially dominating the bracket.
+	local seen = {}
 	for _, iid in ipairs(instanceIds) do
+		if type(iid) ~= "string" then return false, "invalid_id" end
 		if not data.cards[iid] then
 			return false, "not_owned:" .. tostring(iid)
 		end
+		if seen[iid] then
+			return false, "duplicate"
+		end
+		seen[iid] = true
 	end
 
 	data.squad = instanceIds

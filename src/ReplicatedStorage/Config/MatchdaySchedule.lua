@@ -32,6 +32,7 @@ MatchdaySchedule.WinRewards = {
 	qf    = 5000,
 	sf    = 7500,
 	final = 10000,
+	plate = 750,    -- consolation track: eliminated players keep earning
 }
 
 -- Guaranteed card rarity floor for winning at each stage
@@ -42,6 +43,7 @@ MatchdaySchedule.WinCardFloor = {
 	qf    = "Epic",
 	sf    = "Legendary",
 	final = "Mythic",
+	plate = "Rare",
 }
 
 -- The schedule. matchdayId must be unique.

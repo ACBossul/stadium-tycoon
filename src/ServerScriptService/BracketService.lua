@@ -201,7 +201,7 @@ end
 function BracketService.assignGroupIfNeeded(player)
 	local data = DataService.getData(player)
 	if not data then return end
-	if data.bracket.group ~= "A" then return end  -- already assigned to a non-default
+	if data.bracket.group ~= "" then return end  -- already assigned (any letter sticks)
 
 	local letters = {"A","B","C","D","E","F","G","H","I","J","K","L"}
 	data.bracket.group = letters[math.random(1, #letters)]

@@ -18,6 +18,7 @@ local MonetizationService = require(ServerScriptService.MonetizationService)
 local PlotService        = require(ServerScriptService.PlotService)
 local DailyRewardService = require(ServerScriptService.DailyRewardService)
 local BuildingConfig     = require(ReplicatedStorage.Config.BuildingConfig)
+local MatchdaySchedule   = require(ReplicatedStorage.Config.MatchdaySchedule)
 
 -- ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,18 @@ local function pushDailyRewardState(player)
 	local event = Remotes:FindFirstChild("DailyRewardState")
 	if event then
 		event:FireClient(player, state)
+	end
+end
+
+-- Fire a MatchdayResolved event per result (drives the result popup, confetti,
+-- and bracket-screen update on the client). Used on join (offline catch-up) and
+-- live from the income loop when a matchday ticks over while the player is online.
+local function sendMatchResults(player, results)
+	if not results or #results == 0 then return end
+	local event = Remotes:FindFirstChild("MatchdayResolved")
+	if not event then return end
+	for _, result in ipairs(results) do
+		event:FireClient(player, result)
 	end
 end
 
@@ -97,17 +110,10 @@ local function onPlayerJoin(player)
 	end
 
 	-- Show match results that resolved while offline
-	if #matchResults > 0 then
-		for _, result in ipairs(matchResults) do
-			local event = Remotes:FindFirstChild("MatchdayResolved")
-			if event then
-				event:FireClient(player, result)
-			end
-		end
-	end
+	sendMatchResults(player, matchResults)
 
 	-- Send next matchday countdown
-	local nextEntry = require(ReplicatedStorage.Config.MatchdaySchedule).getNextEntry(data.bracket.lastResolvedMatchday)
+	local nextEntry = MatchdaySchedule.getNextEntry(data.bracket.lastResolvedMatchday)
 	if nextEntry then
 		local event = Remotes:FindFirstChild("MatchdayCountdown")
 		if event then
@@ -148,8 +154,20 @@ task.spawn(function()
 		for _, player in ipairs(Players:GetPlayers()) do
 			EconomyService.tickIncome(player, now)
 
-			-- Resolve any matchdays that ticked over while player is online
-			BracketService.resolvePendingMatchdays(player)
+			-- Resolve any matchdays that ticked over while player is online,
+			-- and notify them (popup + confetti + bracket update + countdown).
+			local results = BracketService.resolvePendingMatchdays(player)
+			if #results > 0 then
+				sendMatchResults(player, results)
+				pushProfile(player)
+
+				local data = DataService.getData(player)
+				local nextEntry = data and MatchdaySchedule.getNextEntry(data.bracket.lastResolvedMatchday)
+				local cdEvent = Remotes:FindFirstChild("MatchdayCountdown")
+				if nextEntry and cdEvent then
+					cdEvent:FireClient(player, { timestamp = nextEntry.timestamp, matchdayId = nextEntry.matchdayId })
+				end
+			end
 
 			-- Periodic profile sync to client
 			local last = lastSync[player.UserId] or 0
