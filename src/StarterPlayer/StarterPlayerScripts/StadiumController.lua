@@ -21,8 +21,9 @@ local LocalPlayer = Players.LocalPlayer
 local Remotes
 
 -- Track wired buildings so we can refresh their labels on profile updates.
--- Map: buildingId -> { model, levelLabel, upgradeButton }
+-- Map: buildingId -> { model, part, levelLabel, upgradeButton, cfg, lastLevel }
 local ownedBuildings = {}
+local lastData = nil   -- most recent profile, to sync buildings wired after it arrives
 
 -- ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -91,6 +92,47 @@ local function burstSparkle(part, color)
 	Debris:AddItem(att, 1.0)
 end
 
+-- Apply a profile's state to one wired building (labels, cost, dimming, level-up fx).
+local function applyToBuilding(buildingId, entry, data)
+	local level = (data.stadium and data.stadium[buildingId]) or 0
+	local cfg   = entry.cfg
+
+	if entry.levelLabel then
+		entry.levelLabel.Text = level > 0 and ("Level " .. level) or "Locked"
+	end
+
+	if entry.upgradeButton then
+		local atMax = cfg.maxLevel > 0 and level >= cfg.maxLevel
+		if atMax then
+			entry.upgradeButton.Text = "MAX"
+			entry.upgradeButton.BackgroundColor3 = Color3.fromRGB(90, 90, 110)
+		else
+			local cost = BuildingConfig.upgradeCost(buildingId, level)
+			local verb = level <= 0 and "Build" or "Upgrade"
+			entry.upgradeButton.Text = verb .. "  🪙" .. abbreviate(cost)
+			local affordable = (data.coins or 0) >= cost
+			entry.upgradeButton.BackgroundColor3 = affordable
+				and Color3.fromRGB(50, 180, 80)
+				or  Color3.fromRGB(150, 70, 70)
+		end
+	end
+
+	-- Dim the whole building while it's unbuilt (level 0)
+	local t = level <= 0 and 0.6 or 0
+	for _, d in ipairs(entry.model:GetDescendants()) do
+		if d:IsA("BasePart") then
+			d.Transparency = t
+		end
+	end
+
+	-- Celebrate a level-up (skip the first sync, which just establishes state)
+	if entry.lastLevel ~= nil and level > entry.lastLevel then
+		floatText(entry.part, "⬆ Level " .. level, Color3.fromRGB(120, 230, 140))
+		burstSparkle(entry.part, Color3.fromRGB(120, 230, 140))
+	end
+	entry.lastLevel = level
+end
+
 -- ─── Wiring a single building ────────────────────────────────────────────────
 
 local function wireBuilding(model)
@@ -138,6 +180,12 @@ local function wireBuilding(model)
 		cfg           = cfg,
 		lastLevel     = nil,
 	}
+
+	-- If profile data already arrived, sync this building immediately so it
+	-- doesn't sit on the default "Locked" until the next periodic update.
+	if lastData then
+		applyToBuilding(buildingId, ownedBuildings[buildingId], lastData)
+	end
 end
 
 local function wireAll()
@@ -152,48 +200,10 @@ end
 -- ─── Profile-driven label refresh ───────────────────────────────────────────
 
 function StadiumController.onProfileUpdated(data)
-	local stadium = data and data.stadium
-	if not stadium then return end
-
+	if not data or not data.stadium then return end
+	lastData = data
 	for buildingId, entry in pairs(ownedBuildings) do
-		local level = stadium[buildingId] or 0
-		local cfg   = entry.cfg
-
-		if entry.levelLabel then
-			entry.levelLabel.Text = level > 0 and ("Level " .. level) or "Locked"
-		end
-
-		if entry.upgradeButton then
-			local atMax = cfg.maxLevel > 0 and level >= cfg.maxLevel
-			if atMax then
-				entry.upgradeButton.Text = "MAX"
-				entry.upgradeButton.BackgroundColor3 = Color3.fromRGB(90, 90, 110)
-			else
-				local cost = BuildingConfig.upgradeCost(buildingId, level)
-				local verb = level <= 0 and "Build" or "Upgrade"
-				entry.upgradeButton.Text = verb .. "  🪙" .. abbreviate(cost)
-				-- Affordability tint
-				local affordable = (data.coins or 0) >= cost
-				entry.upgradeButton.BackgroundColor3 = affordable
-					and Color3.fromRGB(50, 180, 80)
-					or  Color3.fromRGB(150, 70, 70)
-			end
-		end
-
-		-- Dim the whole building while it's unbuilt (level 0)
-		local t = level <= 0 and 0.6 or 0
-		for _, d in ipairs(entry.model:GetDescendants()) do
-			if d:IsA("BasePart") then
-				d.Transparency = t
-			end
-		end
-
-		-- Celebrate a level-up (skip the first sync, which just establishes state)
-		if entry.lastLevel ~= nil and level > entry.lastLevel then
-			floatText(entry.part, "⬆ Level " .. level, Color3.fromRGB(120, 230, 140))
-			burstSparkle(entry.part, Color3.fromRGB(120, 230, 140))
-		end
-		entry.lastLevel = level
+		applyToBuilding(buildingId, entry, data)
 	end
 end
 
