@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
 local CardCatalog = require(ReplicatedStorage:WaitForChild("Config"):WaitForChild("CardCatalog"))
+local CardVisuals = require(ReplicatedStorage:WaitForChild("CardVisuals"))
 local Remotes     = ReplicatedStorage:WaitForChild("Remotes", 15)
 
 local gui = Instance.new("ScreenGui")
@@ -141,24 +142,8 @@ local function buildCardTile(cardDef, instanceData)
 	local artCorner = Instance.new("UICorner") artCorner.CornerRadius = UDim.new(0,6) artCorner.Parent = art
 
 	if not hasArt then
-		-- Procedural "art": a rarity gradient with the card's emoji face.
-		local glow = RARITY_COLORS[cardDef.rarity] or Color3.new(1,1,1)
-		local grad = Instance.new("UIGradient")
-		grad.Color = ColorSequence.new(
-			glow:Lerp(Color3.new(0,0,0), 0.15),
-			glow:Lerp(Color3.new(0,0,0), 0.70)
-		)
-		grad.Rotation = 45
-		grad.Parent = art
-
-		local face = Instance.new("TextLabel")
-		face.Size = UDim2.new(1,0,1,0)
-		face.BackgroundTransparency = 1
-		face.Text = cardDef.emoji or (cardDef.name or "?"):sub(1,1)
-		face.TextScaled = true
-		face.TextColor3 = Color3.new(1,1,1)
-		face.Font = Enum.Font.GothamBlack
-		face.Parent = art
+		-- Shared procedural face (static glint — keep it cheap across many tiles).
+		CardVisuals.buildFace(art, cardDef)
 	end
 
 	local nameLabel = Instance.new("TextLabel")

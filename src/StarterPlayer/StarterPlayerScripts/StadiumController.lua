@@ -125,10 +125,12 @@ function StadiumController.onProfileUpdated(data)
 			end
 		end
 
-		-- Dim un-built buildings
-		local primaryPart = entry.model.PrimaryPart or entry.model:FindFirstChildWhichIsA("BasePart")
-		if primaryPart then
-			primaryPart.Transparency = level <= 0 and 0.5 or 0
+		-- Dim the whole building while it's unbuilt (level 0)
+		local t = level <= 0 and 0.6 or 0
+		for _, d in ipairs(entry.model:GetDescendants()) do
+			if d:IsA("BasePart") then
+				d.Transparency = t
+			end
 		end
 	end
 end

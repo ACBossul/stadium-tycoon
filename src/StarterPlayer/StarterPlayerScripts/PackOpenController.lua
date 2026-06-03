@@ -6,6 +6,9 @@ local Players       = game:GetService("Players")
 local TweenService  = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local CardVisuals = require(ReplicatedStorage:WaitForChild("CardVisuals"))
+local ConfettiVFX = require(script.Parent:WaitForChild("ConfettiVFX"))
+
 local PackOpenController = {}
 
 local LocalPlayer = Players.LocalPlayer
@@ -33,7 +36,7 @@ local RARITY_GLOW = {
 
 local function buildCardFrame(cardResult)
 	local cardDef = CardCatalog.ById[cardResult.cardId]
-	local rarity  = cardResult.rarity
+	local rarity  = (cardDef and cardDef.rarity) or cardResult.rarity or "Common"
 
 	local outer = Instance.new("Frame")
 	outer.Size = UDim2.new(0, 120, 0, 180)
@@ -52,13 +55,12 @@ local function buildCardFrame(cardResult)
 
 	-- Card art. When art is still the "rbxassetid://0" placeholder, show a
 	-- rarity-tinted block with the card's initial so it reads as intentional.
-	local artId = (cardDef and cardDef.art) or "rbxassetid://0"
+	local artId  = (cardDef and cardDef.art) or "rbxassetid://0"
 	local hasArt = artId ~= "rbxassetid://0" and artId ~= "" and artId ~= nil
 
 	local art = Instance.new("ImageLabel")
 	art.Size               = UDim2.new(1, -8, 0.55, 0)
 	art.Position           = UDim2.new(0, 4, 0, 4)
-	art.BackgroundColor3   = (RARITY_GLOW[rarity] or RARITY_GLOW.Common):Lerp(Color3.new(0,0,0), 0.55)
 	art.BackgroundTransparency = hasArt and 1 or 0
 	art.Image              = hasArt and artId or ""
 	art.ScaleType          = Enum.ScaleType.Fit
@@ -68,24 +70,10 @@ local function buildCardFrame(cardResult)
 	artCorner.Parent = art
 
 	if not hasArt then
-		-- Procedural "art": a rarity gradient with the card's emoji face.
-		local glow = RARITY_GLOW[rarity] or RARITY_GLOW.Common
-		local grad = Instance.new("UIGradient")
-		grad.Color = ColorSequence.new(
-			glow:Lerp(Color3.new(0,0,0), 0.15),
-			glow:Lerp(Color3.new(0,0,0), 0.70)
-		)
-		grad.Rotation = 45
-		grad.Parent = art
-
-		local face = Instance.new("TextLabel")
-		face.Size = UDim2.new(1, 0, 1, 0)
-		face.BackgroundTransparency = 1
-		face.Text = (cardDef and cardDef.emoji) or ((cardDef and cardDef.name or "?"):sub(1, 1))
-		face.TextScaled = true
-		face.TextColor3 = Color3.new(1, 1, 1)
-		face.Font = Enum.Font.GothamBlack
-		face.Parent = art
+		-- Shared procedural face: rarity gradient + emoji + sheen.
+		-- Animate the sheen for the exciting rarities only.
+		local animate = (rarity == "Epic" or rarity == "Legendary" or rarity == "Mythic")
+		CardVisuals.buildFace(art, cardDef, { animate = animate })
 	end
 
 	-- Rarity badge
@@ -175,8 +163,9 @@ function PackOpenController.playReveal(cards)
 	-- Reveal cards one at a time
 	task.spawn(function()
 		for i, cardResult in ipairs(cards) do
-			local rarity = cardResult.rarity
-			local frame  = buildCardFrame(cardResult)
+			local cardDef = CardCatalog.ById[cardResult.cardId]
+			local rarity  = (cardDef and cardDef.rarity) or cardResult.rarity or "Common"
+			local frame   = buildCardFrame(cardResult)
 
 			-- Start off-screen below, transparent
 			frame.Position         = UDim2.new((i-1) * (1/#cards), 0, 1.2, 0)
@@ -201,6 +190,15 @@ function PackOpenController.playReveal(cards)
 				Position = UDim2.new((i-1) * (1/#cards), 4, 0.1, 0),
 				BackgroundTransparency = 0,
 			}):Play()
+
+			-- Celebrate the big pulls
+			if rarity == "Mythic" or rarity == "Legendary" then
+				ConfettiVFX.burst({
+					count  = (rarity == "Mythic") and 75 or 45,
+					origin = Vector2.new(0.5, 0.3),
+					spread = (rarity == "Mythic") and 0.8 or 0.6,
+				})
+			end
 
 			task.wait(REVEAL_PAUSE[rarity] or 0.4)
 		end

@@ -74,6 +74,23 @@ These two are the only things tied to your Roblox account and can't be pre-fille
 Everything else — ProfileService, the stadium plot, and the fixture timestamps (computed for
 18:00 UTC on each 2026 matchday) — is already wired.
 
+## Visuals (all procedural — zero uploads)
+The game ships with a styled look built entirely from code + built-in engine features, so it
+reads as designed without any art assets:
+- **Cards** — `ReplicatedStorage/CardVisuals.lua` draws each card face: a two-tone rarity
+  gradient, the card's emoji, a glint/animated sheen (Epic+), and a glowing rarity border.
+  Shared by the pack reveal, collection book, and trade chips.
+- **Stadium** — `PlotService` builds multi-part structures: tiered stands in parody team
+  colors, roofed concession/merch booths, a **Neon** big-screen and **Neon** floodlights that
+  glow under Bloom.
+- **Atmosphere** — `ServerScriptService/Ambience.server.lua` sets lighting + a built-in sky,
+  `Atmosphere`, `Bloom`, `ColorCorrection`, and `SunRays` (replicated to all clients).
+- **Juice** — `StarterPlayerScripts/ConfettiVFX.lua` fires a confetti burst on Legendary/Mythic
+  pulls and match wins.
+
+To upgrade to real art later, just set a card's `art` to an uploaded decal ID (it overrides the
+emoji automatically) and/or swap `BUILDING_PIECES` parts for `MeshPart`s — no other changes.
+
 ## Balance tuning
 All numbers are in `Config/` ModuleScripts. The main knobs:
 - `BuildingConfig.Buildings[].baseRate` — income per second per building

@@ -5,6 +5,8 @@
 local Players           = game:GetService("Players")
 local TweenService      = game:GetService("TweenService")
 
+local ConfettiVFX = require(script.Parent:WaitForChild("ConfettiVFX"))
+
 local UIController = {}
 
 local LocalPlayer = Players.LocalPlayer
@@ -120,6 +122,10 @@ function UIController.showMatchResult(result)
 		result.coinReward or 0
 	)
 	UIController.showToast(text, outcomeColor[result.outcome] or "white")
+
+	if result.outcome == "win" then
+		ConfettiVFX.burst({ count = 55, origin = Vector2.new(0.5, 0.25), spread = 0.85 })
+	end
 end
 
 -- ─── Trade UI ─────────────────────────────────────────────────────────────────

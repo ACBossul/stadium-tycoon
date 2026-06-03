@@ -21,14 +21,54 @@ local PLOT_SPACING   = 200    -- studs between plot origins along X
 local PLOT_SIZE      = Vector3.new(120, 1, 120)
 local BUILDING_GAP   = 18     -- studs between buildings along Z
 
--- Visual definition per building id: size + color (purely cosmetic placeholders)
-local BUILDING_VISUALS = {
-	stands      = { size = Vector3.new(30, 12, 14), color = Color3.fromRGB(120,120,130) },
-	concessions = { size = Vector3.new(10, 8,  10), color = Color3.fromRGB(230,140, 40) },
-	merch       = { size = Vector3.new(12, 9,  10), color = Color3.fromRGB( 60,120,220) },
-	parking     = { size = Vector3.new(26, 1,  20), color = Color3.fromRGB( 70, 70, 75) },
-	bigscreen   = { size = Vector3.new(20, 16,  3), color = Color3.fromRGB( 20, 20, 25) },
-	floodlights = { size = Vector3.new( 3, 24,  3), color = Color3.fromRGB(235,220,120) },
+-- Parody team palette (NO real club/national colors).
+local TEAM_GREEN = Color3.fromRGB( 45, 165,  85)
+local TEAM_GOLD  = Color3.fromRGB(245, 210,  60)
+local CONCRETE   = Color3.fromRGB(120, 124, 134)
+local METAL_DARK = Color3.fromRGB( 45,  48,  58)
+local M = Enum.Material
+
+-- Each building is composed of several anchored parts. Piece #1 is the
+-- interactive base (carries the ClickDetector + info billboard + collision).
+-- `offset` = part-center position relative to the building's ground point.
+local BUILDING_PIECES = {
+	stands = {
+		{ size = Vector3.new(32, 11, 12),  offset = Vector3.new(0,  5.5, -1.0), color = CONCRETE,   material = M.Concrete },
+		{ size = Vector3.new(32, 1.6, 3),  offset = Vector3.new(0,  7.2,  2.0), color = TEAM_GREEN, material = M.SmoothPlastic },
+		{ size = Vector3.new(32, 1.6, 3),  offset = Vector3.new(0,  9.2,  3.6), color = TEAM_GOLD,  material = M.SmoothPlastic },
+		{ size = Vector3.new(32, 1.6, 3),  offset = Vector3.new(0, 11.2,  5.2), color = TEAM_GREEN, material = M.SmoothPlastic },
+	},
+	concessions = {
+		{ size = Vector3.new(11, 7, 9),      offset = Vector3.new(0, 3.5, 0),   color = Color3.fromRGB(230,150,60),  material = M.SmoothPlastic },
+		{ size = Vector3.new(12.5, 1.4, 10.5),offset = Vector3.new(0, 7.4, 0),  color = Color3.fromRGB(200,70,70),   material = M.SmoothPlastic },
+		{ size = Vector3.new(7, 2.2, 0.6),   offset = Vector3.new(0, 4.6, 4.7), color = Color3.fromRGB(250,245,235), material = M.SmoothPlastic },
+	},
+	merch = {
+		{ size = Vector3.new(12, 8, 9),       offset = Vector3.new(0, 4, 0),    color = Color3.fromRGB(60,120,220), material = M.SmoothPlastic },
+		{ size = Vector3.new(13.5, 1.4, 10.5),offset = Vector3.new(0, 8.4, 0),  color = Color3.fromRGB(35,80,170),  material = M.SmoothPlastic },
+		{ size = Vector3.new(7, 2.2, 0.6),    offset = Vector3.new(0, 5.6, 4.7),color = TEAM_GOLD,                  material = M.SmoothPlastic },
+	},
+	parking = {
+		{ size = Vector3.new(26, 0.6, 20), offset = Vector3.new(0,  0.3, 0), color = Color3.fromRGB(60,62,68),    material = M.Concrete },
+		{ size = Vector3.new(0.4, 0.66, 16),offset = Vector3.new(-6, 0.34,0),color = Color3.fromRGB(235,235,235), material = M.SmoothPlastic },
+		{ size = Vector3.new(0.4, 0.66, 16),offset = Vector3.new(0,  0.34,0),color = Color3.fromRGB(235,235,235), material = M.SmoothPlastic },
+		{ size = Vector3.new(0.4, 0.66, 16),offset = Vector3.new(6,  0.34,0),color = Color3.fromRGB(235,235,235), material = M.SmoothPlastic },
+	},
+	bigscreen = {
+		{ size = Vector3.new(22, 16, 2),   offset = Vector3.new(0, 9, 0),     color = METAL_DARK,                  material = M.Metal },
+		{ size = Vector3.new(19, 13, 0.6), offset = Vector3.new(0, 9, 1.0),   color = Color3.fromRGB(120,210,255), material = M.Neon },
+		{ size = Vector3.new(1.4, 9, 1.4), offset = Vector3.new(-8, 4.5,-0.6),color = METAL_DARK,                  material = M.Metal },
+		{ size = Vector3.new(1.4, 9, 1.4), offset = Vector3.new(8,  4.5,-0.6),color = METAL_DARK,                  material = M.Metal },
+	},
+	floodlights = {
+		{ size = Vector3.new(1.4, 22, 1.4),offset = Vector3.new(0, 11, 0),    color = Color3.fromRGB(90,95,105),   material = M.Metal },
+		{ size = Vector3.new(6, 1.6, 3),   offset = Vector3.new(0, 21.6, 0),  color = METAL_DARK,                  material = M.Metal },
+		{ size = Vector3.new(5, 1.2, 2.4), offset = Vector3.new(0, 22.4, 0.3),color = Color3.fromRGB(255,250,210), material = M.Neon },
+	},
+}
+
+local DEFAULT_PIECES = {
+	{ size = Vector3.new(10,10,10), offset = Vector3.new(0,5,0), color = Color3.fromRGB(150,150,150), material = M.SmoothPlastic },
 }
 
 -- Folder that holds all live plots
@@ -118,23 +158,27 @@ local function buildBillboard(buildingCfg)
 end
 
 local function buildBuildingModel(buildingCfg, position, player)
-	local visual = BUILDING_VISUALS[buildingCfg.id]
-		or { size = Vector3.new(10, 10, 10), color = Color3.fromRGB(150,150,150) }
+	local pieces = BUILDING_PIECES[buildingCfg.id] or DEFAULT_PIECES
 
 	local model = Instance.new("Model")
 	model.Name = buildingCfg.id
 
-	local part = Instance.new("Part")
-	part.Name         = "Base"
-	part.Size         = visual.size
-	part.Position     = position + Vector3.new(0, visual.size.Y / 2, 0)
-	part.Anchored     = true
-	part.Color        = visual.color
-	part.Material     = Enum.Material.SmoothPlastic
-	part.TopSurface   = Enum.SurfaceType.Smooth
-	part.BottomSurface = Enum.SurfaceType.Smooth
-	part.Parent       = model
-	model.PrimaryPart = part
+	local primary
+	for i, p in ipairs(pieces) do
+		local part = Instance.new("Part")
+		part.Name          = (i == 1) and "Base" or ("Piece" .. i)
+		part.Size          = p.size
+		part.Position      = position + p.offset
+		part.Anchored      = true
+		part.CanCollide    = (i == 1)       -- only the base blocks the player
+		part.Color         = p.color
+		part.Material       = p.material or Enum.Material.SmoothPlastic
+		part.TopSurface    = Enum.SurfaceType.Smooth
+		part.BottomSurface = Enum.SurfaceType.Smooth
+		part.Parent        = model
+		if i == 1 then primary = part end
+	end
+	model.PrimaryPart = primary
 
 	local idValue = Instance.new("StringValue")
 	idValue.Name   = "BuildingId"
@@ -149,9 +193,9 @@ local function buildBuildingModel(buildingCfg, position, player)
 	-- ClickDetector for active-collect buildings (client decides whether to use it)
 	local detector = Instance.new("ClickDetector")
 	detector.MaxActivationDistance = 32
-	detector.Parent = part
+	detector.Parent = primary
 
-	buildBillboard(buildingCfg).Parent = part
+	buildBillboard(buildingCfg).Parent = primary
 
 	CollectionService:AddTag(model, "StadiumBuilding")
 
