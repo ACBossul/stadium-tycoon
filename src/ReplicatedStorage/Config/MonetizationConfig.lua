@@ -55,6 +55,12 @@ MonetizationConfig.DevProducts = {
 		productId   = 100000004,  -- REPLACE
 		packId      = "premium",
 	},
+	{
+		id               = "battlepass_premium",
+		name             = "Premium Pass (this season)",
+		productId        = 100000005,  -- REPLACE
+		battlePassPremium = true,      -- unlocks the premium track for the current season
+	},
 }
 
 -- Lookup by productId (for ProcessReceipt)

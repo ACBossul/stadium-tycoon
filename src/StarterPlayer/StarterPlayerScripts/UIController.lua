@@ -150,7 +150,7 @@ end
 local SCREEN_NAMES = {
 	"ShopScreen", "PackOpenScreen",
 	"CollectionScreen", "SquadBuilderScreen", "BracketScreen",
-	"TradeScreen", "DailyRewardScreen",
+	"TradeScreen", "DailyRewardScreen", "BattlePassScreen",
 }
 
 function UIController.showScreen(name)
@@ -190,6 +190,7 @@ function UIController.init(clientState)
 		wireButton("SquadBtn",      "SquadBuilderScreen")
 		wireButton("BracketBtn",    "BracketScreen")
 		wireButton("TradeBtn",      "TradeScreen")
+		wireButton("PassBtn",       "BattlePassScreen")
 		wireButton("StadiumBtn",    "StadiumView")
 	end)
 end

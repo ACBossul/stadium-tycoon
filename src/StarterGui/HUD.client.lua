@@ -98,6 +98,7 @@ local NAV_BUTTONS = {
 	{ name="SquadBtn",      icon="⚽",  label="Squad"      },
 	{ name="BracketBtn",    icon="🏆",  label="Cup"        },
 	{ name="TradeBtn",      icon="🔄",  label="Trade"      },
+	{ name="PassBtn",       icon="🎖",  label="Pass"       },
 }
 
 for _, btnDef in ipairs(NAV_BUTTONS) do

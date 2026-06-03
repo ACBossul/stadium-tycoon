@@ -69,6 +69,15 @@ local PROFILE_TEMPLATE = {
 	lastDailyClaim = 0,   -- Unix timestamp of last claim
 	dailyStreak    = 0,   -- consecutive-day streak count
 
+	-- Seasonal battle pass progress (reset when the season id changes)
+	battlePass = {
+		seasonId       = "",     -- "" = uninitialised; set to current season on join
+		xp             = 0,
+		premium        = false,  -- premium track unlocked this season
+		claimedFree    = {},     -- [tostring(tier)] = true
+		claimedPremium = {},     -- [tostring(tier)] = true
+	},
+
 	-- ProcessReceipt idempotency log: [tostring(PurchaseId)] = true
 	purchaseHistory = {},
 

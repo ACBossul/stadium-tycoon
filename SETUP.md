@@ -127,6 +127,21 @@ at the top with a live countdown. To add/retune an event, edit `EventConfig.Even
 (window) and/or the matching `EventPacks` entry (odds/price). This is your highest-ROI
 monetization surface — repeatable spend + time-limited urgency.
 
+## Battle Pass (seasonal — recurring revenue)
+A free + premium reward track over 30 tiers (`BattlePassConfig.lua`). Players earn XP from
+core actions (opening packs, winning/drawing matches, daily claims, upgrades), unlock tiers,
+and claim rewards. The **premium track** is unlocked with Robux (dev product
+`battlepass_premium`). Progress lives in `data.battlePass` and the UI reads it from the normal
+profile sync; claims/grants are server-authoritative (`BattlePassService`).
+
+**Recurring model:** Roblox owns all billing — you can't run your own auto-charge. Recurring
+revenue comes from **rotating seasons**: bump `BattlePassConfig.CurrentSeason.id` (every
+player's XP/claims auto-reset on next join) and set a new `endsAt`, and players re-buy the
+premium track each season. If you want *true* auto-renew, that's Roblox's native
+**Subscriptions** feature — it needs your verified-creator setup on the dashboard, and you'd
+swap the premium dev-product purchase for a `UserSubscriptionStatus` check. The seasonal model
+works today with zero extra setup.
+
 ## Adjusting matchday dates
 `MatchdaySchedule.Entries` holds Unix timestamps (UTC). Current values fire at 18:00 UTC on
 each real 2026 matchday. To shift a date, change the `timestamp` — event windows follow

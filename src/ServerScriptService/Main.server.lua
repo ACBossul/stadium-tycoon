@@ -17,8 +17,10 @@ local TradeService       = require(ServerScriptService.TradeService)
 local MonetizationService = require(ServerScriptService.MonetizationService)
 local PlotService        = require(ServerScriptService.PlotService)
 local DailyRewardService = require(ServerScriptService.DailyRewardService)
+local BattlePassService  = require(ServerScriptService.BattlePassService)
 local BuildingConfig     = require(ReplicatedStorage.Config.BuildingConfig)
 local MatchdaySchedule   = require(ReplicatedStorage.Config.MatchdaySchedule)
+local BattlePassConfig   = require(ReplicatedStorage.Config.BattlePassConfig)
 
 -- ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -59,6 +61,18 @@ local function sendMatchResults(player, results)
 	end
 end
 
+-- Award battle-pass XP for a batch of match results (wins/draws).
+local function awardMatchXp(player, results)
+	if not results then return end
+	for _, result in ipairs(results) do
+		if result.outcome == "win" then
+			BattlePassService.addXp(player, BattlePassConfig.XpAwards.matchWin)
+		elseif result.outcome == "draw" then
+			BattlePassService.addXp(player, BattlePassConfig.XpAwards.matchDraw)
+		end
+	end
+end
+
 -- ─── Player lifecycle ────────────────────────────────────────────────────────
 
 local function onPlayerJoin(player)
@@ -82,6 +96,9 @@ local function onPlayerJoin(player)
 
 	-- Assign group if first join
 	BracketService.assignGroupIfNeeded(player)
+
+	-- Reset battle-pass progress if the season rolled over while they were away
+	BattlePassService.onPlayerJoin(player)
 
 	-- Build the player's stadium plot (runtime-generated, tagged buildings)
 	PlotService.buildPlot(player)
@@ -109,8 +126,9 @@ local function onPlayerJoin(player)
 		end
 	end
 
-	-- Show match results that resolved while offline
+	-- Show match results that resolved while offline (+ battle-pass XP)
 	sendMatchResults(player, matchResults)
+	awardMatchXp(player, matchResults)
 
 	-- Send next matchday countdown
 	local nextEntry = MatchdaySchedule.getNextEntry(data.bracket.lastResolvedMatchday)
@@ -159,6 +177,7 @@ task.spawn(function()
 			local results = BracketService.resolvePendingMatchdays(player)
 			if #results > 0 then
 				sendMatchResults(player, results)
+				awardMatchXp(player, results)
 				pushProfile(player)
 
 				local data = DataService.getData(player)
@@ -186,6 +205,7 @@ Remotes.UpgradeBuilding.OnServerEvent:Connect(function(player, buildingId)
 	if type(buildingId) ~= "string" then return end
 	local ok, err = EconomyService.upgradeBuilding(player, buildingId)
 	if ok then
+		BattlePassService.addXp(player, BattlePassConfig.XpAwards.upgrade)
 		pushProfile(player)
 		local cfg = BuildingConfig.ById[buildingId]
 		notify(player, "Upgraded " .. (cfg and cfg.name or buildingId) .. "!", "green")
@@ -209,6 +229,7 @@ Remotes.OpenPack.OnServerEvent:Connect(function(player, packId)
 	if type(packId) ~= "string" then return end
 	local ok, result = CardService.openPack(player, packId)
 	if ok then
+		BattlePassService.addXp(player, BattlePassConfig.XpAwards.packOpen)
 		pushProfile(player)
 		-- Send cards to client for pack opening animation
 		local event = Remotes:FindFirstChild("PackOpenResult")
@@ -267,6 +288,7 @@ end)
 Remotes.ClaimDailyReward.OnServerEvent:Connect(function(player)
 	local ok, reward = DailyRewardService.claim(player)
 	if ok then
+		BattlePassService.addXp(player, BattlePassConfig.XpAwards.dailyClaim)
 		pushProfile(player)
 		pushDailyRewardState(player)
 		local parts = { "Day " .. reward.streak .. " reward: +" .. reward.coins .. " Coins" }
@@ -274,6 +296,19 @@ Remotes.ClaimDailyReward.OnServerEvent:Connect(function(player)
 		notify(player, table.concat(parts, ", ") .. "!", "gold")
 	else
 		notify(player, "Daily reward not ready yet.", "red")
+	end
+end)
+
+-- Battle pass: claim a tier reward
+Remotes.ClaimBattlePassTier.OnServerEvent:Connect(function(player, payload)
+	if type(payload) ~= "table" then return end
+	local track = (payload.track == "premium") and "premium" or "free"
+	local ok, err = BattlePassService.claimTier(player, payload.tier, track)
+	if ok then
+		pushProfile(player)
+		notify(player, "Battle Pass reward claimed!", "gold")
+	else
+		notify(player, "Cannot claim: " .. tostring(err), "red")
 	end
 end)
 

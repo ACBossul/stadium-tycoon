@@ -10,6 +10,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local DataService        = require(ServerScriptService.DataService)
 local EconomyService     = require(ServerScriptService.EconomyService)
 local CardService        = require(ServerScriptService.CardService)
+local BattlePassService  = require(ServerScriptService.BattlePassService)
 local MonetizationConfig = require(ReplicatedStorage.Config.MonetizationConfig)
 
 local MonetizationService = {}
@@ -122,6 +123,10 @@ MarketplaceService.ProcessReceipt = function(receiptInfo)
 				event:FireClient(player, { cards = cards })
 			end
 		end
+	end
+
+	if productDef.battlePassPremium then
+		BattlePassService.grantPremium(player)
 	end
 
 	markProcessed(data, receiptId)

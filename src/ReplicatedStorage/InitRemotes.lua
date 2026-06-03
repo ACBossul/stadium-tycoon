@@ -48,6 +48,9 @@ makeEvent("TradeComplete")          -- server → client: notify both that trade
 makeEvent("ClaimDailyReward")       -- client → server: claim today's reward
 makeEvent("DailyRewardState")       -- server → client: {claimable, streak, nextReward, ...}
 
+-- Battle pass
+makeEvent("ClaimBattlePassTier")    -- client → server: { tier = N, track = "free"|"premium" }
+
 -- Notifications / UI
 makeEvent("ShowNotification")       -- server → client: toast popup
 makeEvent("ShowOfflineEarnings")    -- server → client: welcome-back popup on join
