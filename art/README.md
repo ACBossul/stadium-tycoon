@@ -4,11 +4,14 @@ Everything here is the **art handoff**: assets I can prepare without your accoun
 prompts for the art only you (or an AI tool / artist) can generate. The wiring back into the
 game is on me — you just upload and send asset IDs.
 
-## 1. Card art — `CARD_PROMPTS.md`
-30 ready-to-paste AI prompts (one per card), parody-safe and IP-compliant, with a shared style
-preamble for a consistent set. **Workflow:** generate → upload each as a Decal in Studio →
-send me `cardId → assetId`. I set each card's `art` in `CardCatalog.lua` (it auto-overrides the
-emoji placeholder).
+## 1. Card art — prompts
+- **`CARD_PROMPTS_READY.md`** ← use this. 30 fully self-contained, copy-paste prompts tuned for
+  **Bing Image Creator / DALL·E-3** (paste one block, generate, done).
+- `CARD_PROMPTS.md` — the structured reference version (style preamble + per-card line + rarity
+  flair guide), handy if you switch tools or want to tweak the style globally.
+
+**Workflow:** generate → upload each as a Decal in Studio → send me `cardId → assetId`. I set
+each card's `art` in `CardCatalog.lua` (it auto-overrides the emoji placeholder).
 
 ## 2. Surface textures — `textures/*.png` (already generated)
 Real, tileable 512×512 PNGs produced procedurally (no artist needed):
