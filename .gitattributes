@@ -1,0 +1,6 @@
+# Normalize line endings: keep everything LF in the repo regardless of OS.
+* text=auto eol=lf
+
+*.lua  text eol=lf
+*.md   text eol=lf
+*.json text eol=lf

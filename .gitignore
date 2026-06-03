@@ -1,0 +1,22 @@
+# Roblox / Rojo build artifacts
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+*.rbxl.lock
+*.rbxlx.lock
+sourcemap.json
+
+# Luau CLI tools (downloaded locally for syntax-checking; not part of the game)
+luau.exe
+luau-analyze.exe
+luau-compile.exe
+luau-ast.exe
+*.zip
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
