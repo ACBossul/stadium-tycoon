@@ -19,7 +19,7 @@ local PlotService = {}
 
 local PLOT_SPACING   = 200    -- studs between plot origins along X
 local PLOT_SIZE      = Vector3.new(120, 1, 120)
-local BUILDING_GAP   = 18     -- studs between buildings along Z
+local BUILDING_GAP   = 16     -- studs between buildings along Z
 
 -- Parody team palette (NO real club/national colors).
 local TEAM_GREEN = Color3.fromRGB( 45, 165,  85)
@@ -56,9 +56,9 @@ local BUILDING_PIECES = {
 	},
 	bigscreen = {
 		{ size = Vector3.new(22, 16, 2),   offset = Vector3.new(0, 9, 0),     color = METAL_DARK,                  material = M.Metal },
-		{ size = Vector3.new(19, 13, 0.6), offset = Vector3.new(0, 9, 1.0),   color = Color3.fromRGB(120,210,255), material = M.Neon },
-		{ size = Vector3.new(1.4, 9, 1.4), offset = Vector3.new(-8, 4.5,-0.6),color = METAL_DARK,                  material = M.Metal },
-		{ size = Vector3.new(1.4, 9, 1.4), offset = Vector3.new(8,  4.5,-0.6),color = METAL_DARK,                  material = M.Metal },
+		{ size = Vector3.new(19, 13, 0.6), offset = Vector3.new(0, 9, -1.05), color = Color3.fromRGB(120,210,255), material = M.Neon },
+		{ size = Vector3.new(1.4, 9, 1.4), offset = Vector3.new(-8, 4.5, 0.7),color = METAL_DARK,                  material = M.Metal },
+		{ size = Vector3.new(1.4, 9, 1.4), offset = Vector3.new(8,  4.5, 0.7),color = METAL_DARK,                  material = M.Metal },
 	},
 	floodlights = {
 		{ size = Vector3.new(1.4, 22, 1.4),offset = Vector3.new(0, 11, 0),    color = Color3.fromRGB(90,95,105),   material = M.Metal },
@@ -157,6 +157,109 @@ local function buildBillboard(buildingCfg)
 	return billboard
 end
 
+-- ─── Signage ─────────────────────────────────────────────────────────────────
+
+-- A lit storefront banner on a part's front (-Z) face.
+local function addBoothSign(part, text, color)
+	local sg = Instance.new("SurfaceGui")
+	sg.Name          = "Sign"
+	sg.Face          = Enum.NormalId.Front     -- -Z, toward the concourse
+	sg.SizingMode    = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	sg.PixelsPerStud = 50
+	sg.LightInfluence = 0                       -- full-bright so it "lights up"
+	sg.Parent        = part
+
+	local board = Instance.new("Frame")
+	board.Size = UDim2.new(1, 0, 0.34, 0)
+	board.Position = UDim2.new(0, 0, 0.06, 0)
+	board.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+	board.BackgroundTransparency = 0.12
+	board.BorderSizePixel = 0
+	board.Parent = sg
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = color
+	stroke.Thickness = 3
+	stroke.Parent = board
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, -8, 1, -6)
+	label.Position = UDim2.new(0, 4, 0, 3)
+	label.BackgroundTransparency = 1
+	label.Text = text
+	label.TextColor3 = color
+	label.TextScaled = true
+	label.Font = Enum.Font.GothamBlack
+	label.Parent = board
+end
+
+-- A glowing live scoreboard on the big-screen's Neon face (parody teams only).
+local function addScoreboard(part)
+	local sg = Instance.new("SurfaceGui")
+	sg.Name          = "Scoreboard"
+	sg.Face          = Enum.NormalId.Front
+	sg.SizingMode    = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	sg.PixelsPerStud = 40
+	sg.LightInfluence = 0
+	sg.Parent        = part
+
+	local bg = Instance.new("Frame")
+	bg.Size = UDim2.new(1, 0, 1, 0)
+	bg.BackgroundColor3 = Color3.fromRGB(6, 10, 18)
+	bg.BorderSizePixel = 0
+	bg.Parent = sg
+
+	local title = Instance.new("TextLabel")
+	title.Size = UDim2.new(1, 0, 0.24, 0)
+	title.BackgroundTransparency = 1
+	title.Text = "⚽ THE BRAINROT CUP"
+	title.TextColor3 = Color3.fromRGB(255, 210, 70)
+	title.TextScaled = true
+	title.Font = Enum.Font.GothamBlack
+	title.Parent = bg
+
+	local row = Instance.new("Frame")
+	row.Size = UDim2.new(1, 0, 0.5, 0)
+	row.Position = UDim2.new(0, 0, 0.26, 0)
+	row.BackgroundTransparency = 1
+	row.Parent = bg
+
+	local function teamChip(xScale, code, col)
+		local chip = Instance.new("TextLabel")
+		chip.Size = UDim2.new(0.3, 0, 0.7, 0)
+		chip.Position = UDim2.new(xScale, 0, 0.15, 0)
+		chip.BackgroundColor3 = col
+		chip.Text = code
+		chip.TextColor3 = Color3.new(1, 1, 1)
+		chip.TextScaled = true
+		chip.Font = Enum.Font.GothamBlack
+		chip.Parent = row
+		local c = Instance.new("UICorner") c.CornerRadius = UDim.new(0, 8) c.Parent = chip
+		local s = Instance.new("UIStroke") s.Color = Color3.new(0, 0, 0) s.Thickness = 2 s.Parent = chip
+	end
+	teamChip(0.04, "GRN", Color3.fromRGB(45, 165, 85))
+	teamChip(0.66, "AZL", Color3.fromRGB(60, 120, 220))
+
+	local score = Instance.new("TextLabel")
+	score.Size = UDim2.new(0.32, 0, 1, 0)
+	score.Position = UDim2.new(0.34, 0, 0, 0)
+	score.BackgroundTransparency = 1
+	score.Text = "2 - 1"
+	score.TextColor3 = Color3.new(1, 1, 1)
+	score.TextScaled = true
+	score.Font = Enum.Font.GothamBlack
+	score.Parent = row
+
+	local live = Instance.new("TextLabel")
+	live.Size = UDim2.new(1, 0, 0.2, 0)
+	live.Position = UDim2.new(0, 0, 0.78, 0)
+	live.BackgroundTransparency = 1
+	live.Text = "🔴 LIVE"
+	live.TextColor3 = Color3.fromRGB(255, 80, 80)
+	live.TextScaled = true
+	live.Font = Enum.Font.GothamBold
+	live.Parent = bg
+end
+
 local function buildBuildingModel(buildingCfg, position, player)
 	local pieces = BUILDING_PIECES[buildingCfg.id] or DEFAULT_PIECES
 
@@ -164,6 +267,7 @@ local function buildBuildingModel(buildingCfg, position, player)
 	model.Name = buildingCfg.id
 
 	local primary
+	local partsByIndex = {}
 	for i, p in ipairs(pieces) do
 		local part = Instance.new("Part")
 		part.Name          = (i == 1) and "Base" or ("Piece" .. i)
@@ -176,6 +280,7 @@ local function buildBuildingModel(buildingCfg, position, player)
 		part.TopSurface    = Enum.SurfaceType.Smooth
 		part.BottomSurface = Enum.SurfaceType.Smooth
 		part.Parent        = model
+		partsByIndex[i] = part
 		if i == 1 then primary = part end
 	end
 	model.PrimaryPart = primary
@@ -196,6 +301,15 @@ local function buildBuildingModel(buildingCfg, position, player)
 	detector.Parent = primary
 
 	buildBillboard(buildingCfg).Parent = primary
+
+	-- Flavor signage
+	if buildingCfg.id == "concessions" then
+		addBoothSign(primary, "🍔 SNACKS", Color3.fromRGB(255, 175, 60))
+	elseif buildingCfg.id == "merch" then
+		addBoothSign(primary, "👕 MERCH", Color3.fromRGB(95, 160, 255))
+	elseif buildingCfg.id == "bigscreen" then
+		addScoreboard(partsByIndex[2] or primary)   -- the Neon screen face
+	end
 
 	CollectionService:AddTag(model, "StadiumBuilding")
 
@@ -244,8 +358,10 @@ function PlotService.buildPlot(player)
 	spawnPad.Enabled     = false      -- not a global spawn; teleport handled manually
 	spawnPad.Parent      = plot
 
-	-- Lay out buildings in a row along Z, starting near the back
-	local startZ = origin.Z - (#BuildingConfig.Buildings * BUILDING_GAP) / 2
+	-- Lay out buildings in a row along Z. Shift the row north (+Z) of the spawn
+	-- pad so players never spawn inside the first building (the stands).
+	local n = #BuildingConfig.Buildings
+	local startZ = origin.Z - ((n - 1) * BUILDING_GAP) / 2 + 8
 	for i, buildingCfg in ipairs(BuildingConfig.Buildings) do
 		local pos = Vector3.new(
 			origin.X,
