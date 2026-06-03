@@ -10,6 +10,8 @@
 local Players           = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
+local TweenService      = game:GetService("TweenService")
+local Debris            = game:GetService("Debris")
 
 local BuildingConfig = require(ReplicatedStorage.Config.BuildingConfig)
 
@@ -39,6 +41,54 @@ local function abbreviate(n)
 	if n >= 1e6 then return string.format("%.1fM", n / 1e6) end
 	if n >= 1e3 then return string.format("%.1fK", n / 1e3) end
 	return tostring(n)
+end
+
+-- ─── Procedural feedback (no assets) ─────────────────────────────────────────
+
+-- A floating label that rises off a part and fades out.
+local function floatText(part, text, color)
+	if not part then return end
+	local bb = Instance.new("BillboardGui")
+	bb.Size        = UDim2.new(0, 170, 0, 42)
+	bb.StudsOffset = Vector3.new(0, part.Size.Y / 2 + 3, 0)
+	bb.AlwaysOnTop = true
+	bb.MaxDistance = 90
+	bb.Adornee     = part
+	bb.Parent      = part
+
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.new(1, 0, 1, 0)
+	lbl.BackgroundTransparency = 1
+	lbl.Text = text
+	lbl.TextColor3 = color or Color3.fromRGB(255, 220, 60)
+	lbl.TextScaled = true
+	lbl.Font = Enum.Font.GothamBlack
+	lbl.TextStrokeTransparency = 0.3
+	lbl.Parent = bb
+
+	local ti = TweenInfo.new(1.0, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	TweenService:Create(bb, ti, { StudsOffset = bb.StudsOffset + Vector3.new(0, 4, 0) }):Play()
+	TweenService:Create(lbl, ti, { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+	Debris:AddItem(bb, 1.15)
+end
+
+-- A one-shot sparkle burst (best-effort: built-in particle texture).
+local function burstSparkle(part, color)
+	if not part then return end
+	local att = Instance.new("Attachment")
+	att.Parent = part
+	local pe = Instance.new("ParticleEmitter")
+	pe.Texture       = "rbxasset://textures/particles/sparkles_main.dds"
+	pe.Color         = ColorSequence.new(color or Color3.fromRGB(255, 220, 60))
+	pe.Lifetime      = NumberRange.new(0.4, 0.7)
+	pe.Speed         = NumberRange.new(6, 11)
+	pe.SpreadAngle   = Vector2.new(180, 180)
+	pe.Rotation      = NumberRange.new(0, 360)
+	pe.Size          = NumberSequence.new(1.1)
+	pe.Rate          = 0
+	pe.Parent        = att
+	pe:Emit(16)
+	Debris:AddItem(att, 1.0)
 end
 
 -- ─── Wiring a single building ────────────────────────────────────────────────
@@ -73,15 +123,20 @@ local function wireBuilding(model)
 			detector.MouseClick:Connect(function(clickingPlayer)
 				if clickingPlayer ~= LocalPlayer then return end
 				Remotes:FindFirstChild("CollectBuilding"):FireServer(buildingId)
+				-- Optimistic juice (the exact amount comes via the toast).
+				floatText(part, "+ 🪙", Color3.fromRGB(255, 220, 60))
+				burstSparkle(part, Color3.fromRGB(255, 220, 60))
 			end)
 		end
 	end
 
 	ownedBuildings[buildingId] = {
 		model         = model,
+		part          = part,
 		levelLabel    = levelLabel,
 		upgradeButton = upgradeButton,
 		cfg           = cfg,
+		lastLevel     = nil,
 	}
 end
 
@@ -132,6 +187,13 @@ function StadiumController.onProfileUpdated(data)
 				d.Transparency = t
 			end
 		end
+
+		-- Celebrate a level-up (skip the first sync, which just establishes state)
+		if entry.lastLevel ~= nil and level > entry.lastLevel then
+			floatText(entry.part, "⬆ Level " .. level, Color3.fromRGB(120, 230, 140))
+			burstSparkle(entry.part, Color3.fromRGB(120, 230, 140))
+		end
+		entry.lastLevel = level
 	end
 end
 

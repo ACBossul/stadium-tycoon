@@ -260,6 +260,22 @@ local function addScoreboard(part)
 	live.Parent = bg
 end
 
+-- A gentle ambient sparkle on Neon surfaces (best-effort built-in texture).
+local function addGlow(part, color)
+	local att = Instance.new("Attachment")
+	att.Parent = part
+	local pe = Instance.new("ParticleEmitter")
+	pe.Texture      = "rbxasset://textures/particles/sparkles_main.dds"
+	pe.Color        = ColorSequence.new(color)
+	pe.Lifetime     = NumberRange.new(0.8, 1.5)
+	pe.Rate         = 5
+	pe.Speed        = NumberRange.new(1, 2)
+	pe.SpreadAngle  = Vector2.new(45, 45)
+	pe.Size         = NumberSequence.new(0.7)
+	pe.Transparency = NumberSequence.new(0.35)
+	pe.Parent       = att
+end
+
 local function buildBuildingModel(buildingCfg, position, player)
 	local pieces = BUILDING_PIECES[buildingCfg.id] or DEFAULT_PIECES
 
@@ -281,6 +297,9 @@ local function buildBuildingModel(buildingCfg, position, player)
 		part.BottomSurface = Enum.SurfaceType.Smooth
 		part.Parent        = model
 		partsByIndex[i] = part
+		if p.material == Enum.Material.Neon then
+			addGlow(part, p.color)
+		end
 		if i == 1 then primary = part end
 	end
 	model.PrimaryPart = primary
