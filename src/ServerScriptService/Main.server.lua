@@ -91,6 +91,13 @@ local function onPlayerJoin(player)
 		return
 	end
 
+	-- Studio-only test funds so you can exercise upgrades and watch the stadium
+	-- build up. RunService:IsStudio() is false on real servers, so this never
+	-- affects live players.
+	if game:GetService("RunService"):IsStudio() then
+		data.coins = math.max(data.coins or 0, 1000000)
+	end
+
 	-- Sync game pass ownership into profile cache
 	MonetizationService.syncGamePasses(player)
 

@@ -4,8 +4,10 @@
 
 local Players           = game:GetService("Players")
 local TweenService      = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local ConfettiVFX = require(script.Parent:WaitForChild("ConfettiVFX"))
+local ConfettiVFX  = require(script.Parent:WaitForChild("ConfettiVFX"))
+local BuildingConfig = require(ReplicatedStorage:WaitForChild("Config"):WaitForChild("BuildingConfig"))
 
 local UIController = {}
 
@@ -99,6 +101,14 @@ function UIController.onProfileUpdated(data)
 	local gemsLabel = main:FindFirstChild("GemsLabel", true)
 	if gemsLabel then
 		gemsLabel.Text = "💎 " .. tostring(data.gems or 0)
+	end
+
+	-- Live idle-income readout (was never updated before, so it sat at 0).
+	local incomeLabel = hud:FindFirstChild("IncomeLabel", true)
+	if incomeLabel and data.stadium then
+		local rate = BuildingConfig.totalPassiveRate(data.stadium)
+		if data.passes and data.passes.double_coins then rate = rate * 2 end
+		incomeLabel.Text = "Income: " .. math.floor(rate) .. "/sec"
 	end
 end
 

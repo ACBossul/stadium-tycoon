@@ -342,24 +342,60 @@ end
 -- clears its old rows first, so it doubles as the "regrow on upgrade" path.
 -- (baseX, baseZ) is the stands' world position; rows sit on its y=3 foundation.
 local function buildStandTiers(model, baseX, baseZ, level)
+	-- Clear previously-built dynamic stand parts (re-runnable for live regrow).
 	for _, c in ipairs(model:GetChildren()) do
-		if c.Name == "TierRow" then c:Destroy() end
+		if c.Name == "StandPart" then c:Destroy() end
 	end
-	local rows = math.clamp(level, 1, 8)   -- grows from 1 row up to a full bank
+
+	local rows     = math.clamp(level, 1, 8)   -- seating rows grow with level
+	local stepUp   = 2
+	local stepBack = 2.6
+	local frontZ   = baseZ - 6                  -- front row (nearest the pitch)
+	local backZ    = frontZ + (rows - 1) * stepBack
+	local topY     = 3 + rows * stepUp          -- height of the top of the seating
+	local W        = 38                          -- stand width
+	local midZ     = (frontZ + backZ) / 2
+	local depth    = (backZ - frontZ) + 6
+
+	local function part(sx, sy, sz, x, y, z, color, mat, collide)
+		local p = Instance.new("Part")
+		p.Name         = "StandPart"
+		p.Anchored     = true
+		p.CanCollide   = collide ~= false
+		p.Size         = Vector3.new(sx, sy, sz)
+		p.Position     = Vector3.new(x, y, z)
+		p.Color        = color
+		p.Material      = mat or Enum.Material.SmoothPlastic
+		p.TopSurface   = Enum.SurfaceType.Smooth
+		p.BottomSurface = Enum.SurfaceType.Smooth
+		p.Parent       = model
+		return p
+	end
+
+	local CONCRETE_C = Color3.fromRGB(82, 86, 100)
+	local ROOF_C     = Color3.fromRGB(44, 48, 58)
+
+	-- Raked seating rows (textured with the uploaded seats decal).
 	for i = 1, rows do
-		local row = Instance.new("Part")
-		row.Name         = "TierRow"
-		row.Anchored     = true
-		row.CanCollide   = true
-		row.Size         = Vector3.new(36, 2, 3.4)
-		row.Position     = Vector3.new(baseX, 3 + (i - 0.5) * 2, baseZ - 6 + (i - 1) * 2.4)
-		row.Color        = (i % 2 == 0) and Color3.fromRGB(245, 205, 55) or Color3.fromRGB(48, 170, 90)
-		row.Material     = Enum.Material.SmoothPlastic
-		row.TopSurface   = Enum.SurfaceType.Smooth
-		row.BottomSurface = Enum.SurfaceType.Smooth
-		row.Parent       = model
-		applyTexture(row, TEXTURES.seats, 5, { Enum.NormalId.Top, Enum.NormalId.Front })
+		local r = part(W - 2, 2, 3.4, baseX, 3 + (i - 0.5) * stepUp, frontZ + (i - 1) * stepBack,
+			(i % 2 == 0) and Color3.fromRGB(245, 205, 55) or Color3.fromRGB(48, 170, 90),
+			Enum.Material.SmoothPlastic, true)
+		applyTexture(r, TEXTURES.seats, 5, { Enum.NormalId.Top, Enum.NormalId.Front })
 	end
+
+	-- Solid back wall behind the top row.
+	local back = part(W, topY + 2, 2, baseX, (topY + 2) / 2, backZ + 2, CONCRETE_C, Enum.Material.Concrete, true)
+	applyTexture(back, TEXTURES.brick, 10, ALL_SIDES)
+
+	-- Two side walls enclosing the bank.
+	part(2, topY + 2, depth, baseX - W / 2, (topY + 2) / 2, midZ, CONCRETE_C, Enum.Material.Concrete, true)
+	part(2, topY + 2, depth, baseX + W / 2, (topY + 2) / 2, midZ, CONCRETE_C, Enum.Material.Concrete, true)
+
+	-- Roof cantilevering forward over the seating (the iconic stand canopy).
+	part(W + 2, 1, depth + 6, baseX, topY + 3, midZ - 2, ROOF_C, Enum.Material.Metal, false)
+	-- Two front roof-support pillars.
+	part(1.5, topY + 3, 1.5, baseX - W / 2 + 3, (topY + 3) / 2, frontZ - 2, CONCRETE_C, Enum.Material.Metal, false)
+	part(1.5, topY + 3, 1.5, baseX + W / 2 - 3, (topY + 3) / 2, frontZ - 2, CONCRETE_C, Enum.Material.Metal, false)
 end
 
 local function buildBuildingModel(buildingCfg, position, player, level)
