@@ -22,6 +22,27 @@ local ARENA_R    = 40
 local hubFolder
 local hubSpawnCFrame
 
+-- Uploaded surface textures (same decals the plots use).
+local TEXTURES = {
+	grass   = "rbxassetid://70872978008715",
+	brick   = "rbxassetid://100402802088606",
+	metal   = "rbxassetid://110788642331092",
+	asphalt = "rbxassetid://129383393602486",
+}
+local ALL_SIDES = { Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left, Enum.NormalId.Right }
+
+local function applyTexture(part, textureId, studs, faces)
+	if not part or not textureId then return end
+	for _, face in ipairs(faces) do
+		local t = Instance.new("Texture")
+		t.Texture       = textureId
+		t.Face          = face
+		t.StudsPerTileU = studs
+		t.StudsPerTileV = studs
+		t.Parent        = part
+	end
+end
+
 -- ─── helpers ──────────────────────────────────────────────────────────────────
 
 local function notify(player, msg, color)
@@ -82,6 +103,7 @@ end
 local function buildTower(x, z, w, h, d, color, name, signColor)
 	local tower = block(hubFolder, Vector3.new(w, h, d),
 		HUB_ORIGIN + Vector3.new(x, h / 2, z), color, Enum.Material.SmoothPlastic, true)
+	applyTexture(tower, TEXTURES.metal, 14, ALL_SIDES)
 	neonSign(tower, name, signColor, Enum.NormalId.Front)
 	neonSign(tower, name, signColor, Enum.NormalId.Back)
 	-- a few lit "windows"
@@ -201,14 +223,16 @@ local function build()
 	-- Big shared ground linking the plot row (z≈0) to the city (z≈-700): no more
 	-- floating islands, and you can walk/drive across it. Sits just below the plot
 	-- pads (top y = -0.2) so the pads still read as the play surface.
-	block(hubFolder, Vector3.new(2600, 4, 1100), Vector3.new(1000, -2.2, -380),
+	local ground = block(hubFolder, Vector3.new(2600, 4, 1100), Vector3.new(1000, -2.2, -380),
 		Color3.fromRGB(74, 110, 74), Enum.Material.Grass, true)
+	applyTexture(ground, TEXTURES.grass, 48, { Enum.NormalId.Top })
 
 	-- Roads: an east-west boulevard along the plot row's south side + a main street
 	-- running down to the city, so every plot can drive to the centre.
 	local function road(cx, cz, sx, sz)
-		block(hubFolder, Vector3.new(sx, 0.3, sz), Vector3.new(cx, 0.05, cz),
+		local r = block(hubFolder, Vector3.new(sx, 0.3, sz), Vector3.new(cx, 0.05, cz),
 			Color3.fromRGB(48, 50, 58), Enum.Material.Asphalt, false)
+		applyTexture(r, TEXTURES.asphalt, 18, { Enum.NormalId.Top })
 	end
 	road(960, -110, 2500, 46)        -- boulevard
 	road(0,  -335, 46, 460)          -- main street to the city
@@ -229,6 +253,17 @@ local function build()
 		block(hubFolder, Vector3.new(2, 0.5, 2),
 			HUB_ORIGIN + Vector3.new(math.cos(a) * ARENA_R, 0.3, math.sin(a) * ARENA_R),
 			Color3.fromRGB(255, 210, 70), Enum.Material.Neon, false)
+	end
+
+	-- Pedestrian bollards just outside the ring: a player squeezes between them, but
+	-- a (wider) kart can't pass or hop them — so arena coins are grabbed ON FOOT,
+	-- not in a quick drive-through.
+	local bollardN, bollardR = 44, ARENA_R + 4
+	for i = 0, bollardN - 1 do
+		local a = (i / bollardN) * math.pi * 2
+		block(hubFolder, Vector3.new(1.6, 5, 1.6),
+			HUB_ORIGIN + Vector3.new(math.cos(a) * bollardR, 2.5, math.sin(a) * bollardR),
+			Color3.fromRGB(58, 62, 74), Enum.Material.Metal, true)
 	end
 
 	local edge = PLAZA / 2 - 14   -- 126
@@ -374,7 +409,7 @@ local function spawnCoinOrb()
 	lbl.Font = Enum.Font.GothamBold
 	lbl.Parent = bb
 
-	local reward  = math.random(500, 2500)
+	local reward  = math.random(300, 1200)
 	local claimed = false
 	orb.Touched:Connect(function(hit)
 		if claimed then return end
@@ -387,17 +422,17 @@ local function spawnCoinOrb()
 		orb:Destroy()
 	end)
 
-	task.delay(22, function()
+	task.delay(16, function()
 		if orb and orb.Parent then orb:Destroy() end
 	end)
 end
 
 local function eventLoop()
 	while true do
-		task.wait(7)
+		task.wait(9)
 		if #Players:GetPlayers() == 0 then continue end
-		if countOrbs() < 14 then
-			for _ = 1, math.random(2, 4) do
+		if countOrbs() < 8 then
+			for _ = 1, math.random(1, 3) do
 				spawnCoinOrb()
 			end
 		end

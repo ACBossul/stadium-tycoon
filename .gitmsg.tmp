@@ -1,13 +1,11 @@
-Redesign city layout around the road: open north gate, no building in the path
+Arena = on-foot challenge (kart-blocking bollards), tune coins, add textures
 
-The road enters from the north, but the entrance/kiosks/spawn were at the south
-with a tower at north-centre — so a building sat dead in the road. Reoriented the
-whole city toward the road:
-- North edge is now an OPEN gate (two pillars + sign arch) the main street runs
-  straight through. Ohio Plaza moved to the south backdrop.
-- Skyline frames only the E/W/S edges.
-- Kiosks line the entrance avenue just inside the gate; arena in the centre with
-  its title pillar at the far (south) end.
-- Spawn + travel-home pads sit just inside the gate, facing into the arena.
+- Bollard ring just outside the arena: a player squeezes between the posts but a
+  (wider) kart can't pass or hop them, so arena coins must be grabbed ON FOOT —
+  no more drive-through grabbing.
+- Coins tuned down so it's a real challenge, not free money: value 300–1200 (was
+  500–2500), 1–3 at a time every 9s (was 2–4 every 7s), expire in 16s (was 22s).
+- Textures: metal panelling on the city towers, grass on the world ground, asphalt
+  on the roads.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
