@@ -1,8 +1,10 @@
-Add stadium upper tier: stairs → viewing deck → Trophy Room + VIP Lounge
+Arena King-of-the-Hill task + spaced-out plots
 
-Each plot now has a second level on the east side: an auto-climbable staircase up
-to a viewing deck with gold railings. On the deck: an enclosed Trophy Room (three
-podiums with golden cups + a sign) and an open VIP Lounge (plush neon floor, sign,
-benches). Tagged "UpperTier".
+- HubService: a "👑 King of the Hill" capture pad at the arena centre — stand on it
+  (on foot) to earn a steady 70 coins/sec. Adds an active reason to hold the middle
+  alongside the coin orbs.
+- Spaced-out world: plots now sit 60 studs apart (drivable lanes between them)
+  instead of edge-to-edge, and the shared ground + boulevard were widened to span
+  the more spread-out plot row.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

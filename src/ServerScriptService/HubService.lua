@@ -21,6 +21,7 @@ local ARENA_R    = 40
 
 local hubFolder
 local hubSpawnCFrame
+local kothPad
 
 -- Uploaded surface textures (same decals the plots use).
 local TEXTURES = {
@@ -268,7 +269,7 @@ local function build()
 	-- Big shared ground linking the plot row (z≈0) to the city (z≈-700): no more
 	-- floating islands, and you can walk/drive across it. Sits just below the plot
 	-- pads (top y = -0.2) so the pads still read as the play surface.
-	local ground = block(hubFolder, Vector3.new(2600, 4, 1100), Vector3.new(1000, -2.2, -380),
+	local ground = block(hubFolder, Vector3.new(2700, 4, 1100), Vector3.new(1050, -2.2, -380),
 		Color3.fromRGB(74, 110, 74), Enum.Material.Grass, true)
 	applyTexture(ground, TEXTURES.grass, 48, { Enum.NormalId.Top })
 
@@ -279,7 +280,7 @@ local function build()
 			Color3.fromRGB(48, 50, 58), Enum.Material.Asphalt, false)
 		applyTexture(r, TEXTURES.asphalt, 18, { Enum.NormalId.Top })
 	end
-	road(960, -110, 2500, 46)        -- boulevard
+	road(1050, -110, 2700, 46)       -- boulevard (spans the spread-out plot row)
 	road(0,  -335, 46, 460)          -- main street to the city
 	for z = -130, -540, -26 do       -- dashed centre line
 		block(hubFolder, Vector3.new(2, 0.34, 10), Vector3.new(0, 0.08, z),
@@ -310,6 +311,26 @@ local function build()
 			HUB_ORIGIN + Vector3.new(math.cos(a) * bollardR, 2.5, math.sin(a) * bollardR),
 			Color3.fromRGB(58, 62, 74), Enum.Material.Metal, true)
 	end
+
+	-- King-of-the-Hill capture pad at the arena centre: stand on it to earn coins.
+	kothPad = block(hubFolder, Vector3.new(11, 1, 11), HUB_ORIGIN + Vector3.new(0, 0.6, 0),
+		Color3.fromRGB(255, 120, 200), Enum.Material.Neon, true)
+	kothPad.Name = "KothPad"
+	local kbb = Instance.new("BillboardGui")
+	kbb.Size = UDim2.new(0, 200, 0, 50)
+	kbb.StudsOffset = Vector3.new(0, 5, 0)
+	kbb.AlwaysOnTop = true
+	kbb.MaxDistance = 120
+	kbb.Adornee = kothPad
+	kbb.Parent = kothPad
+	local kl1 = Instance.new("TextLabel")
+	kl1.Size = UDim2.new(1, 0, 0.6, 0); kl1.BackgroundTransparency = 1
+	kl1.Text = "👑 KING OF THE HILL"; kl1.TextColor3 = Color3.fromRGB(255, 170, 220)
+	kl1.TextScaled = true; kl1.Font = Enum.Font.GothamBlack; kl1.TextStrokeTransparency = 0.4; kl1.Parent = kbb
+	local kl2 = Instance.new("TextLabel")
+	kl2.Size = UDim2.new(1, 0, 0.4, 0); kl2.Position = UDim2.new(0, 0, 0.6, 0); kl2.BackgroundTransparency = 1
+	kl2.Text = "stand to earn"; kl2.TextColor3 = Color3.fromRGB(220, 220, 235)
+	kl2.TextScaled = true; kl2.Font = Enum.Font.Gotham; kl2.Parent = kbb
 
 	local edge = PLAZA / 2 - 14   -- 126
 
@@ -484,6 +505,26 @@ local function eventLoop()
 	end
 end
 
+-- King-of-the-Hill: anyone standing on the centre pad earns a trickle of coins.
+local function kothLoop()
+	while true do
+		task.wait(1)
+		if not kothPad then continue end
+		local c = kothPad.Position
+		for _, player in ipairs(Players:GetPlayers()) do
+			local char = player.Character
+			local hrp  = char and char:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				local dx, dz = hrp.Position.X - c.X, hrp.Position.Z - c.Z
+				if (dx * dx + dz * dz) <= 49 and math.abs(hrp.Position.Y - c.Y) < 8 then
+					EconomyService.addCoins(player, 70)
+					pushProfile(player)
+				end
+			end
+		end
+	end
+end
+
 -- ─── init ──────────────────────────────────────────────────────────────────────
 
 function HubService.init()
@@ -496,6 +537,7 @@ function HubService.init()
 	CollectionService:GetInstanceAddedSignal("ToStadiumPad"):Connect(function(pad) task.spawn(wireStadiumPad, pad) end)
 
 	task.spawn(eventLoop)
+	task.spawn(kothLoop)
 end
 
 return HubService

@@ -21,7 +21,7 @@ local PlotService = {}
 -- ─── Plot layout constants ───────────────────────────────────────────────────
 
 local PLOT_SIZE      = Vector3.new(180, 1, 180)
-local PLOT_SPACING   = PLOT_SIZE.X    -- pads tile edge-to-edge into one connected ground
+local PLOT_SPACING   = PLOT_SIZE.X + 60   -- 60-stud drivable lane between neighbouring plots
 
 -- Hand-placed building spots (offset from plot origin, on the ground plane). The
 -- central pitch occupies x[-40,40] z[-48,48]; buildings live in the margins around
