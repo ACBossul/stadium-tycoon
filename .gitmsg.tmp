@@ -1,17 +1,8 @@
-Audit: fix remaining script/ScreenGui name-collision lookups
+CS:GO-style pack opening: decelerating roll reel that lands on your card
 
-Full codebase pass for the same class of bug as the HUD (LocalScript name ==
-ScreenGui name, so FindFirstChild can return the script):
-
-- BracketController: was resolving the BracketScreen by name and could grab the
-  script — cup countdown/result updates silently no-op'd. Now resolves the real
-  ScreenGui.
-- UIController.getGui: same; now prefers a real ScreenGui match (makes its
-  redundant HUD/nav/screen logic correct as a backup to the self-contained HUD).
-
-Verified clean (no bugs): CardService (rarity/guarantee/squad-dupe security),
-MonetizationService (idempotent ProcessReceipt), TradeService (atomic, re-validated
-swap), Collection/Squad/Bracket/Shop screens (self-contained, close buttons,
-self-subscribe), and MatchdaySchedule timestamps (2026 dates correct).
+Replaces the instant reveal with a horizontal reel of card tiles that scrolls fast
+and eases to a stop (Quint-out, ~4.6s) under a center ticker, landing on the
+rarest card in the pull (with slight jitter so it isn't always dead-centre). After
+it lands, the full pull fans out below, with confetti for Legendary/Mythic.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
