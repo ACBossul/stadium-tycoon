@@ -271,6 +271,25 @@ end
 function StadiumController.init(clientState)
 	Remotes = clientState.remotes
 	wireAll()
+	-- Safety net independent of profile pushes: keep retrying any unwired building
+	-- for the first ~30s so a replication race can never leave one permanently dead.
+	task.spawn(function()
+		for _ = 1, 30 do
+			task.wait(1)
+			for _, model in ipairs(CollectionService:GetTagged("StadiumBuilding")) do
+				if not processed[model] and not wiringNow[model] then
+					task.spawn(wireBuilding, model)
+				end
+			end
+		end
+	end)
+end
+
+-- Diagnostic: how many of our buildings are currently wired.
+function StadiumController.wiredCount()
+	local n = 0
+	for _ in pairs(ownedBuildings) do n += 1 end
+	return n
 end
 
 return StadiumController

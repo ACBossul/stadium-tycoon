@@ -7,6 +7,7 @@
 -- print progress so the Output window shows exactly how far boot got.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CollectionService = game:GetService("CollectionService")
 
 print("[StadiumTycoon] Client booting…")
 
@@ -31,8 +32,8 @@ _dbgGui.IgnoreGuiInset = true
 _dbgGui.DisplayOrder = 999
 _dbgGui.Parent = PlayerGui
 local _dbg = Instance.new("TextLabel")
-_dbg.Size = UDim2.new(0, 360, 0, 58)
-_dbg.Position = UDim2.new(1, -372, 0, 86)
+_dbg.Size = UDim2.new(0, 410, 0, 104)
+_dbg.Position = UDim2.new(1, -422, 0, 86)
 _dbg.BackgroundColor3 = Color3.new(0, 0, 0)
 _dbg.BackgroundTransparency = 0.35
 _dbg.TextColor3 = Color3.fromRGB(0, 255, 120)
@@ -43,11 +44,7 @@ _dbg.TextYAlignment = Enum.TextYAlignment.Top
 _dbg.Text = "DEBUG: waiting for data…"
 _dbg.Parent = _dbgGui
 local _lastMsg = "(none)"
-local function _dbgRefresh(p)
-	_dbg.Text = string.format("coins=%s  gems=%s\nstands=%s\nlast: %s",
-		tostring(p and p.coins), tostring(p and p.gems),
-		tostring(p and p.stadium and p.stadium.stands), _lastMsg)
-end
+local _dbgRefresh = function() end   -- real version assigned once controllers load
 
 -- ─── Isolated require / init ───────────────────────────────────────────────────
 
@@ -87,6 +84,27 @@ safeInit(BracketController,  "BracketController")
 safeInit(KartController,     "KartController")
 safeInit(HubController,      "HubController")
 
+-- Full diagnostic now that controllers are in scope: which loaded (+/-) and how
+-- many buildings StadiumController has actually wired vs how many are tagged.
+_dbgRefresh = function(p)
+	local flags = string.format("S%s U%s P%s B%s K%s H%s",
+		StadiumController and "+" or "-", UIController and "+" or "-",
+		PackOpenController and "+" or "-", BracketController and "+" or "-",
+		KartController and "+" or "-", HubController and "+" or "-")
+	local wired  = (StadiumController and StadiumController.wiredCount and StadiumController.wiredCount()) or "?"
+	local tagged = #CollectionService:GetTagged("StadiumBuilding")
+	_dbg.Text = string.format("coins=%s gems=%s stands=%s\nctrls %s\nstadium wired=%s/%s\nlast: %s",
+		tostring(p and p.coins), tostring(p and p.gems),
+		tostring(p and p.stadium and p.stadium.stands),
+		flags, tostring(wired), tostring(tagged), _lastMsg)
+end
+task.spawn(function()
+	while _dbg and _dbg.Parent do
+		task.wait(1)
+		_dbgRefresh(ClientState.profile)
+	end
+end)
+
 print("[StadiumTycoon] Client controllers initialised.")
 
 -- ─── Server → client events (each guarded) ─────────────────────────────────────
@@ -107,10 +125,11 @@ end
 
 onEvent("ProfileUpdated", function(profileData)
 	ClientState.profile = profileData
-	_dbgRefresh(profileData)
 	-- Isolate each controller so one failing can't block the other.
 	pcall(function() if UIController then UIController.onProfileUpdated(profileData) end end)
-	pcall(function() if StadiumController then StadiumController.onProfileUpdated(profileData) end end)
+	local ok, err = pcall(function() if StadiumController then StadiumController.onProfileUpdated(profileData) end end)
+	if not ok then _lastMsg = "SC.onProfile ERR: " .. tostring(err) end
+	_dbgRefresh(profileData)
 end)
 
 onEvent("ShowNotification", function(payload)

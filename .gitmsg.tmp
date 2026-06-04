@@ -1,12 +1,18 @@
-City travel = VIP click (no accidental teleports); Studio VIP; debug readout
+Building-wiring safety-net + ground-truth debug; VIP via purchase (no auto-grant)
 
-- The "Go to City" pad teleported on TOUCH, so walking near the plot entrance
-  yanked you to the city repeatedly — making the plot feel unusable (likely behind
-  the "upgrade/purchase stopped working" report). It's now a CLICK, and the instant
-  teleport is VIP-gated (non-VIP told to walk/drive). "Back to Stadium" pads are
-  clicks too. No more accidental teleports.
-- Studio now grants VIP (alongside test coins) so VIP-gated features are testable.
-- Re-added a small top-right debug readout (coins/gems/stands + last server msg) to
-  pin down the purchase/upgrade report on the plot. Will remove once confirmed.
+Chasing the recurring "buildings show no price / can't upgrade" regression:
+
+- StadiumController: added a standalone retry loop (1s x30) that re-attempts wiring
+  any unwired building independent of profile pushes, so a replication race can't
+  leave one permanently dead. Exposes wiredCount() for diagnostics.
+- ClientMain debug overlay now shows GROUND TRUTH: which controllers loaded
+  (S/U/P/B/K/H +/-), stadium wired=N/tagged=M, and captures StadiumController
+  onProfileUpdated errors into the readout.
+
+VIP (as requested — buy it yourself, no auto-grant):
+- Removed the Studio auto-VIP grant.
+- MonetizationService: PromptGamePassPurchaseFinished now grants a pass the instant
+  its purchase completes (Studio test purchases included) + pushes profile, so
+  buying VIP works live without rejoining.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

@@ -135,4 +135,26 @@ MarketplaceService.ProcessReceipt = function(receiptInfo)
 	return Enum.ProductPurchaseDecision.PurchaseGranted
 end
 
+-- ─── Game pass purchase completion ───────────────────────────────────────────
+-- Grant a game pass the moment its purchase completes, so buyers (incl. VIP) get
+-- it live without rejoining. Studio test purchases fire this too.
+MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, gamePassId, wasPurchased)
+	if not wasPurchased then return end
+	local gp = MonetizationConfig.GamePassById[gamePassId]
+	if not gp then return end
+	local data = DataService.getData(player)
+	if not data then return end
+	data.passes = data.passes or {}
+	data.passes[gp.id] = true
+
+	-- VIP grants its first daily gems immediately on purchase.
+	if gp.id == "vip" then
+		MonetizationService.grantDailyVipGems(player)
+	end
+
+	local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+	local ev = remotes and remotes:FindFirstChild("ProfileUpdated")
+	if ev then ev:FireClient(player, data) end
+end)
+
 return MonetizationService
