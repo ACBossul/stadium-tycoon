@@ -7,6 +7,7 @@
 --   * a BillboardGui "InfoBillboard" with NameLabel, LevelLabel, UpgradeButton
 -- The client (StadiumController) wires the buttons/click detectors for the owner.
 
+local Players           = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
 local Workspace         = game:GetService("Workspace")
@@ -88,6 +89,21 @@ if not plotsFolder then
 	plotsFolder = Instance.new("Folder")
 	plotsFolder.Name = "Plots"
 	plotsFolder.Parent = Workspace
+end
+
+-- ONE big shared ground for every base (instead of separate floating plots).
+-- Top sits at y = 0; bases are placed along +X on it.
+local arena = Workspace:FindFirstChild("Arena")
+if not arena then
+	arena = Instance.new("Part")
+	arena.Name        = "Arena"
+	arena.Anchored    = true
+	arena.Size        = Vector3.new(3200, 4, 320)
+	arena.Position    = Vector3.new(1400, -2, 0)   -- covers ~16 bases along +X
+	arena.Color       = Color3.fromRGB(40, 90, 50)
+	arena.Material    = Enum.Material.Grass
+	arena.TopSurface  = Enum.SurfaceType.Smooth
+	arena.Parent      = Workspace
 end
 
 -- ─── Plot index allocation ───────────────────────────────────────────────────
@@ -362,7 +378,7 @@ end
 -- Perimeter wall (with a south entrance gap) + two goal frames, for "place" feel.
 local function buildSurrounds(plot, origin)
 	local half = PLOT_SIZE.X / 2
-	local wallH, wallT = 5, 2
+	local wallH, wallT = 8, 2          -- tall enough that you can't jump over it
 	local wallColor = Color3.fromRGB(70, 74, 86)
 
 	local function wall(cx, cz, sx, sz)
@@ -404,6 +420,83 @@ local function buildSurrounds(plot, origin)
 	goal(-44)
 end
 
+-- A force-field gate across the entrance + an owner-only toggle button.
+-- Closed: touching it insta-kills NON-owners (the owner passes freely).
+-- Open:   anyone may walk in. Owner clicks the button to open/close.
+local function buildDoor(plot, origin, player)
+	local entranceCF = origin + Vector3.new(0, 4, -PLOT_SIZE.Z / 2)
+
+	local door = Instance.new("Part")
+	door.Name       = "BaseDoor"
+	door.Anchored   = true
+	door.CanCollide  = false               -- kill-curtain, not a physical block
+	door.Size       = Vector3.new(24, 8, 1)  -- full wall height so it can't be jumped
+	door.Position   = entranceCF
+	door.Material   = Enum.Material.ForceField
+	door.Parent     = plot
+	door:SetAttribute("Closed", true)
+
+	local function paintDoor()
+		local closed = door:GetAttribute("Closed")
+		door.Color        = closed and Color3.fromRGB(220, 60, 60) or Color3.fromRGB(70, 210, 110)
+		door.Transparency = closed and 0.25 or 0.7
+	end
+	paintDoor()
+
+	-- Insta-kill intruders crossing a closed door.
+	door.Touched:Connect(function(hit)
+		if not door:GetAttribute("Closed") then return end
+		local character = hit and hit.Parent
+		local hum = character and character:FindFirstChildOfClass("Humanoid")
+		if not hum or hum.Health <= 0 then return end
+		local toucher = Players:GetPlayerFromCharacter(character)
+		if not toucher or toucher == player then return end   -- owner is immune
+		hum.Health = 0
+	end)
+
+	-- Owner-only toggle button just inside the entrance.
+	local button = Instance.new("Part")
+	button.Name      = "DoorButton"
+	button.Anchored  = true
+	button.Size      = Vector3.new(4, 2, 4)
+	button.Position  = origin + Vector3.new(11, 1, -PLOT_SIZE.Z / 2 + 9)
+	button.Material  = Enum.Material.Neon
+	button.Parent    = plot
+
+	local cd = Instance.new("ClickDetector")
+	cd.MaxActivationDistance = 20
+	cd.Parent = button
+
+	local bb = Instance.new("BillboardGui")
+	bb.Size = UDim2.new(0, 150, 0, 32)
+	bb.StudsOffset = Vector3.new(0, 2.2, 0)
+	bb.AlwaysOnTop = true
+	bb.MaxDistance = 60
+	bb.Adornee = button
+	bb.Parent = button
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.new(1, 0, 1, 0)
+	lbl.BackgroundTransparency = 1
+	lbl.TextScaled = true
+	lbl.Font = Enum.Font.GothamBold
+	lbl.TextColor3 = Color3.new(1, 1, 1)
+	lbl.Parent = bb
+
+	local function paintButton()
+		local closed = door:GetAttribute("Closed")
+		button.Color = closed and Color3.fromRGB(220, 60, 60) or Color3.fromRGB(70, 210, 110)
+		lbl.Text     = closed and "🚪 Door: CLOSED" or "🚪 Door: OPEN"
+	end
+	paintButton()
+
+	cd.MouseClick:Connect(function(clicker)
+		if clicker ~= player then return end   -- only the base owner controls the gate
+		door:SetAttribute("Closed", not door:GetAttribute("Closed"))
+		paintDoor()
+		paintButton()
+	end)
+end
+
 -- ─── Plot builder ────────────────────────────────────────────────────────────
 
 function PlotService.buildPlot(player)
@@ -418,17 +511,7 @@ function PlotService.buildPlot(player)
 	local plot = Instance.new("Model")
 	plot.Name = "Plot_" .. player.UserId
 
-	-- Base ground
-	local base = Instance.new("Part")
-	base.Name        = "Ground"
-	base.Size        = PLOT_SIZE
-	base.Position    = origin
-	base.Anchored    = true
-	base.Color       = Color3.fromRGB(40, 90, 50)
-	base.Material    = Enum.Material.Grass
-	base.TopSurface  = Enum.SurfaceType.Smooth
-	base.Parent      = plot
-	plot.PrimaryPart = base
+	-- (No per-plot ground — every base sits on the one shared "Arena" ground.)
 
 	-- Owner reference + spawn point
 	local ownerValue = Instance.new("ObjectValue")
@@ -447,20 +530,22 @@ function PlotService.buildPlot(player)
 	spawnPad.Material    = Enum.Material.Concrete
 	spawnPad.TopSurface  = Enum.SurfaceType.Smooth
 	spawnPad.Parent      = plot
+	plot.PrimaryPart     = spawnPad
 
 	-- Stored facing +Z so the player looks into their stadium on (re)spawn.
 	playerSpawnCFrame[player.UserId] =
 		CFrame.lookAt(spawnPos + Vector3.new(0, 3, 0), spawnPos + Vector3.new(0, 3, 10))
 
-	-- Perimeter wall + goals
+	-- Perimeter wall + goals + the defensible entrance gate
 	buildSurrounds(plot, origin)
+	buildDoor(plot, origin, player)
 
 	-- Place each building at its hand-picked spot (spacious, framing the plaza).
 	for _, buildingCfg in ipairs(BuildingConfig.Buildings) do
 		local spot = BUILDING_LAYOUT[buildingCfg.id] or { x = 0, z = 0 }
 		local pos = Vector3.new(
 			origin.X + spot.x,
-			origin.Y + PLOT_SIZE.Y / 2,
+			origin.Y,                 -- shared arena top is y = 0
 			origin.Z + spot.z
 		)
 		buildBuildingModel(buildingCfg, pos, player).Parent = plot
