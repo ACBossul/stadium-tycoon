@@ -1,0 +1,11 @@
+Expand card roster + rebirth-exclusive reward cards
+
+- CardCatalog: ~26 new parody-star cards (transformative pun names only, no real
+  players) across all rarities/positions ? roughly doubles the collection.
+- 5 rebirth-EXCLUSIVE Mythic cards (The Prestige, Golden Reaper, The Ascended One,
+  Phoenix Reborn, Infinity Striker) that never drop from packs.
+- CardService: packs/match rewards skip rebirthOnly cards; added grantSpecificCard.
+- RebirthService: each rebirth now grants a specific exclusive card (cycles through
+  the set) and names it in the toast.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

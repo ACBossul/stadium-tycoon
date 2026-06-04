@@ -79,6 +79,45 @@ CardCatalog.Cards = {
 	{ id = "the_finisher",      name = "The Finisher 9000",      rarity = "Legendary", position = "FWD", emoji = "🎯", art = "rbxassetid://0" },
 	{ id = "sneaky_ferret",     name = "Sneaky Ferret",          rarity = "Common",    position = "FWD", emoji = "🐀", art = "rbxassetid://0" },
 	{ id = "sus_striker",       name = "Sus Striker",            rarity = "Rare",      position = "FWD", emoji = "🕵️", art = "rbxassetid://0" },
+
+	-- ── More parody stars (transformative pun names only — no real players) ──
+	-- GKs
+	{ id = "allison_wonderland",name = "Allison Wonderland",     rarity = "Epic",      position = "GK",  emoji = "🐰", art = "rbxassetid://0" },
+	{ id = "ter_stagnant",      name = "Ter Stagnant",           rarity = "Rare",      position = "GK",  emoji = "🧤", art = "rbxassetid://0" },
+	{ id = "gigi_donnarumble",  name = "Gigi Donna-Rumble",      rarity = "Epic",      position = "GK",  emoji = "🥊", art = "rbxassetid://0" },
+	{ id = "butter_fingers_ed", name = "Butter Fingers Ed",      rarity = "Common",    position = "GK",  emoji = "🧈", art = "rbxassetid://0" },
+	-- DEFs
+	{ id = "big_virg",          name = "Big Virg",               rarity = "Legendary", position = "DEF", emoji = "🗿", art = "rbxassetid://0" },
+	{ id = "sergio_bricks",     name = "Sergio Bricks",          rarity = "Epic",      position = "DEF", emoji = "🟥", art = "rbxassetid://0" },
+	{ id = "hakimi_mini",       name = "Hakimi Mini",            rarity = "Rare",      position = "DEF", emoji = "🏍️", art = "rbxassetid://0" },
+	{ id = "cancel_o",          name = "Cancel-O",               rarity = "Rare",      position = "DEF", emoji = "❌", art = "rbxassetid://0" },
+	{ id = "marqui_nilla",      name = "Marqui-Nilla",           rarity = "Epic",      position = "DEF", emoji = "🍦", art = "rbxassetid://0" },
+	{ id = "couch_potato_def",  name = "Couch Potato (DEF)",     rarity = "Common",    position = "DEF", emoji = "🥔", art = "rbxassetid://0" },
+	-- MIDs
+	{ id = "de_bruyne_out",     name = "De Bruyne-Out",          rarity = "Legendary", position = "MID", emoji = "🅱️", art = "rbxassetid://0" },
+	{ id = "pedri_oops",        name = "Pedri-Oops",             rarity = "Rare",      position = "MID", emoji = "🎮", art = "rbxassetid://0" },
+	{ id = "gavi_goo",          name = "Gavi-Goo",               rarity = "Rare",      position = "MID", emoji = "🍬", art = "rbxassetid://0" },
+	{ id = "modritch",          name = "Modritch",               rarity = "Epic",      position = "MID", emoji = "⏳", art = "rbxassetid://0" },
+	{ id = "jude_bellingjam",   name = "Jude Belling-Jam",       rarity = "Legendary", position = "MID", emoji = "🍓", art = "rbxassetid://0" },
+	{ id = "phil_fodenfresh",   name = "Phil Foden-Fresh",       rarity = "Epic",      position = "MID", emoji = "🧒", art = "rbxassetid://0" },
+	{ id = "jack_greaselish",   name = "Jack Grease-Lish",       rarity = "Rare",      position = "MID", emoji = "💇", art = "rbxassetid://0" },
+	{ id = "lag_switch_luka",   name = "Lag-Switch Luka",        rarity = "Common",    position = "MID", emoji = "📡", art = "rbxassetid://0" },
+	-- FWDs
+	{ id = "ney_mahh",          name = "Ney-Mahh Jr.",           rarity = "Mythic",    position = "FWD", emoji = "🤹", art = "rbxassetid://0" },
+	{ id = "halaland",          name = "Hala-Land",              rarity = "Legendary", position = "FWD", emoji = "🤖", art = "rbxassetid://0" },
+	{ id = "lewandontski",      name = "Lewandontski",           rarity = "Epic",      position = "FWD", emoji = "🎯", art = "rbxassetid://0" },
+	{ id = "viniright_jr",      name = "Viniright Jr.",          rarity = "Epic",      position = "FWD", emoji = "✨", art = "rbxassetid://0" },
+	{ id = "mo_salami",         name = "Mo Salah-mi",            rarity = "Rare",      position = "FWD", emoji = "🥪", art = "rbxassetid://0" },
+	{ id = "harry_cane",        name = "Harry Cane",             rarity = "Rare",      position = "FWD", emoji = "🍬", art = "rbxassetid://0" },
+	{ id = "marcus_flashford",  name = "Marcus Flashford",       rarity = "Rare",      position = "FWD", emoji = "⚡", art = "rbxassetid://0" },
+	{ id = "benchwarmer_bob",   name = "Benchwarmer Bob",        rarity = "Common",    position = "FWD", emoji = "🪑", art = "rbxassetid://0" },
+
+	-- ── Rebirth-exclusive cards (never drop in packs — only from rebirthing) ──
+	{ id = "rb_the_prestige",   name = "The Prestige",           rarity = "Mythic",    position = "MID", emoji = "🌟", art = "rbxassetid://0", rebirthOnly = true },
+	{ id = "rb_golden_reaper",  name = "Golden Reaper",          rarity = "Mythic",    position = "FWD", emoji = "💀", art = "rbxassetid://0", rebirthOnly = true },
+	{ id = "rb_ascended_one",   name = "The Ascended One",       rarity = "Mythic",    position = "GK",  emoji = "🔆", art = "rbxassetid://0", rebirthOnly = true },
+	{ id = "rb_phoenix",        name = "Phoenix Reborn",         rarity = "Mythic",    position = "DEF", emoji = "🔥", art = "rbxassetid://0", rebirthOnly = true },
+	{ id = "rb_infinity",       name = "Infinity Striker",       rarity = "Mythic",    position = "FWD", emoji = "♾️", art = "rbxassetid://0", rebirthOnly = true },
 }
 
 -- Build a lookup table by id for O(1) access

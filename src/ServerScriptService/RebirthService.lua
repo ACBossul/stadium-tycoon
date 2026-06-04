@@ -10,8 +10,12 @@ local DataService    = require(ServerScriptService.DataService)
 local CardService    = require(ServerScriptService.CardService)
 local PlotService    = require(ServerScriptService.PlotService)
 local BuildingConfig = require(ReplicatedStorage.Config.BuildingConfig)
+local CardCatalog    = require(ReplicatedStorage.Config.CardCatalog)
 
 local RebirthService = {}
+
+-- Exclusive cards granted per rebirth (cycles if you rebirth more than this many times).
+local REBIRTH_CARDS = { "rb_the_prestige", "rb_golden_reaper", "rb_ascended_one", "rb_phoenix", "rb_infinity" }
 
 local function notify(player, msg, color)
 	local remotes = ReplicatedStorage:FindFirstChild("Remotes")
@@ -60,8 +64,10 @@ function RebirthService.doRebirth(player)
 	end
 	data.rebirths = (data.rebirths or 0) + 1
 
-	-- Exclusive reward: a guaranteed Mythic card.
-	CardService.grantRewardCard(player, "Mythic")
+	-- Exclusive reward: a rebirth-only Mythic card (cycles through the set).
+	local cardId   = REBIRTH_CARDS[((data.rebirths - 1) % #REBIRTH_CARDS) + 1]
+	CardService.grantSpecificCard(player, cardId)
+	local cardName = (CardCatalog.ById[cardId] and CardCatalog.ById[cardId].name) or "a Mythic card"
 
 	-- Reset the physical stadium to its new (low) levels.
 	for _, b in ipairs(BuildingConfig.Buildings) do
@@ -69,8 +75,8 @@ function RebirthService.doRebirth(player)
 	end
 
 	pushProfile(player)
-	notify(player, "🔁 REBIRTH " .. data.rebirths .. "! Permanent +" .. (data.rebirths * 50)
-		.. "% income + a Mythic card!", "gold")
+	notify(player, "🔁 REBIRTH " .. data.rebirths .. "!  +" .. (data.rebirths * 50)
+		.. "% income forever + exclusive card: " .. cardName .. "!", "gold")
 	return true
 end
 

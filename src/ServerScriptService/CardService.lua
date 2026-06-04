@@ -54,13 +54,16 @@ end
 local function pickCardOfRarity(rarity)
 	local pool = {}
 	for _, card in ipairs(CardCatalog.Cards) do
-		if card.rarity == rarity then
+		-- rebirthOnly cards never drop from packs/match rewards.
+		if card.rarity == rarity and not card.rebirthOnly then
 			table.insert(pool, card)
 		end
 	end
 	if #pool == 0 then
-		-- Fallback: pick any card (shouldn't happen with complete catalog)
-		pool = CardCatalog.Cards
+		-- Fallback: any non-exclusive card (shouldn't happen with complete catalog)
+		for _, card in ipairs(CardCatalog.Cards) do
+			if not card.rebirthOnly then table.insert(pool, card) end
+		end
 	end
 	return pool[math.random(1, #pool)]
 end
@@ -174,6 +177,18 @@ function CardService.grantRewardCard(player, rarityFloor)
 
 	data.cards[id] = { cardId = cardDef.id, power = power }
 	return { instanceId = id, cardId = cardDef.id, power = power, rarity = rarity }
+end
+
+-- Grant a SPECIFIC card by id (used for rebirth-exclusive rewards).
+function CardService.grantSpecificCard(player, cardId)
+	local data = DataService.getData(player)
+	if not data then return nil end
+	local def = CardCatalog.ById[cardId]
+	if not def then return nil end
+	local power = rollPower(def.rarity)
+	local id    = newInstanceId()
+	data.cards[id] = { cardId = cardId, power = power }
+	return { instanceId = id, cardId = cardId, power = power, rarity = def.rarity }
 end
 
 -- ─── Squad management ─────────────────────────────────────────────────────
