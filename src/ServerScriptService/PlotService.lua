@@ -18,19 +18,19 @@ local PlotService = {}
 
 -- ─── Plot layout constants ───────────────────────────────────────────────────
 
-local PLOT_SPACING   = 185    -- studs between plot origins (close enough to see neighbours)
 local PLOT_SIZE      = Vector3.new(150, 1, 150)
+local PLOT_SPACING   = PLOT_SIZE.X    -- pads tile edge-to-edge into one connected ground
 
--- Hand-placed building spots (offset from plot origin, on the ground plane). Gives
--- the grounds room to breathe: an entrance plaza at the south (-Z), buildings framing
--- it, a floodlight tower at the back corner. Every building faces -Z (the entrance).
+-- Hand-placed building spots (offset from plot origin, on the ground plane). The
+-- central pitch occupies x[-40,40] z[-48,48]; buildings live in the margins around
+-- it so nothing sits ON the field. Entrance/spawn is south (-Z); all face -Z.
 local BUILDING_LAYOUT = {
-	stands      = { x = -30, z =  50 },
-	bigscreen   = { x =  34, z =  52 },
-	floodlights = { x =  64, z =  60 },
-	concessions = { x = -52, z =  -6 },
-	merch       = { x = -52, z =  24 },
-	parking     = { x =  46, z = -28 },
+	stands      = { x = -22, z =  60 },   -- north stand, behind the goal
+	bigscreen   = { x =  40, z =  60 },   -- north-east, beside the stand
+	floodlights = { x = -62, z =  62 },   -- north-west corner tower
+	concessions = { x = -58, z =  12 },   -- west margin
+	merch       = { x = -58, z = -20 },   -- west margin
+	parking     = { x =  56, z = -56 },   -- south-east corner, clear of the pitch
 }
 
 -- Parody team palette (NO real club/national colors).
@@ -91,20 +91,9 @@ if not plotsFolder then
 	plotsFolder.Parent = Workspace
 end
 
--- ONE big shared ground for every base (instead of separate floating plots).
--- Top sits at y = 0; bases are placed along +X on it.
-local arena = Workspace:FindFirstChild("Arena")
-if not arena then
-	arena = Instance.new("Part")
-	arena.Name        = "Arena"
-	arena.Anchored    = true
-	arena.Size        = Vector3.new(3200, 4, 320)
-	arena.Position    = Vector3.new(1400, -2, 0)   -- covers ~16 bases along +X
-	arena.Color       = Color3.fromRGB(40, 90, 50)
-	arena.Material    = Enum.Material.Grass
-	arena.TopSurface  = Enum.SurfaceType.Smooth
-	arena.Parent      = Workspace
-end
+-- Each base brings its own solid, collidable ground pad (built in buildPlot).
+-- Pads are placed edge-to-edge in a row, so together they read as one connected
+-- ground — but every base always has guaranteed solid footing under it.
 
 -- ─── Plot index allocation ───────────────────────────────────────────────────
 
@@ -416,7 +405,7 @@ local function buildSurrounds(plot, origin)
 		bar( 7, 4, 1, 8, 1)    -- right post
 		bar( 0, 8, 15, 1, 1)   -- crossbar
 	end
-	goal(38)
+	goal(44)
 	goal(-44)
 end
 
@@ -550,7 +539,20 @@ function PlotService.buildPlot(player)
 	local plot = Instance.new("Model")
 	plot.Name = "Plot_" .. player.UserId
 
-	-- (No per-plot ground — every base sits on the one shared "Arena" ground.)
+	-- Solid, collidable ground pad — the single guaranteed walking surface for the
+	-- whole base. Top sits exactly at y = 0; everything else is placed on top of it.
+	local pad = Instance.new("Part")
+	pad.Name         = "Ground"
+	pad.Anchored     = true
+	pad.CanCollide   = true
+	pad.Size         = Vector3.new(PLOT_SIZE.X, 4, PLOT_SIZE.Z)
+	pad.Position     = origin + Vector3.new(0, -2, 0)   -- top at y = 0
+	pad.Color        = Color3.fromRGB(70, 112, 72)
+	pad.Material     = Enum.Material.Grass
+	pad.TopSurface   = Enum.SurfaceType.Smooth
+	pad.BottomSurface = Enum.SurfaceType.Smooth
+	pad.Parent       = plot
+	plot.PrimaryPart = pad
 
 	-- Owner reference + spawn point
 	local ownerValue = Instance.new("ObjectValue")
@@ -569,7 +571,25 @@ function PlotService.buildPlot(player)
 	spawnPad.Material    = Enum.Material.Concrete
 	spawnPad.TopSurface  = Enum.SurfaceType.Smooth
 	spawnPad.Parent      = plot
-	plot.PrimaryPart     = spawnPad
+
+	-- Floating base-name sign (visible over the walls, identifies whose base it is).
+	local nameSign = Instance.new("BillboardGui")
+	nameSign.Name        = "BaseName"
+	nameSign.Size        = UDim2.new(0, 280, 0, 54)
+	nameSign.StudsOffset = Vector3.new(0, 26, 0)
+	nameSign.AlwaysOnTop = true
+	nameSign.MaxDistance = 400
+	nameSign.Adornee     = spawnPad
+	nameSign.Parent      = spawnPad
+	local nameLbl = Instance.new("TextLabel")
+	nameLbl.Size = UDim2.new(1, 0, 1, 0)
+	nameLbl.BackgroundTransparency = 1
+	nameLbl.Text = player.DisplayName .. "'s Stadium"
+	nameLbl.TextColor3 = Color3.fromRGB(255, 235, 150)
+	nameLbl.TextScaled = true
+	nameLbl.Font = Enum.Font.GothamBlack
+	nameLbl.TextStrokeTransparency = 0.4
+	nameLbl.Parent = nameSign
 
 	-- Stored facing +Z so the player looks into their stadium on (re)spawn.
 	playerSpawnCFrame[player.UserId] =
@@ -585,7 +605,7 @@ function PlotService.buildPlot(player)
 		local spot = BUILDING_LAYOUT[buildingCfg.id] or { x = 0, z = 0 }
 		local pos = Vector3.new(
 			origin.X + spot.x,
-			origin.Y,                 -- shared arena top is y = 0
+			origin.Y,                 -- ground pad top is y = 0
 			origin.Z + spot.z
 		)
 		buildBuildingModel(buildingCfg, pos, player).Parent = plot
