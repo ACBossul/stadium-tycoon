@@ -100,20 +100,65 @@ local function neonSign(part, text, color, face)
 end
 
 -- A decorative city tower (parody brand) lining the plaza edges.
-local function buildTower(x, z, w, h, d, color, name, signColor)
-	local tower = block(hubFolder, Vector3.new(w, h, d),
-		HUB_ORIGIN + Vector3.new(x, h / 2, z), color, Enum.Material.SmoothPlastic, true)
-	applyTexture(tower, TEXTURES.metal, 14, ALL_SIDES)
-	neonSign(tower, name, signColor, Enum.NormalId.Front)
-	neonSign(tower, name, signColor, Enum.NormalId.Back)
-	-- a few lit "windows"
-	for _ = 1, 6 do
-		local wy = math.random(6, math.max(7, h - 6))
-		block(hubFolder, Vector3.new(w * 0.7, 2, 0.4),
-			HUB_ORIGIN + Vector3.new(x, wy, z - d / 2 - 0.1),
-			Color3.fromRGB(120, 200, 255), Enum.Material.Neon, false)
+-- A grid of lit/dark window cells across one face (gives the glass-tower look).
+local function addWindows(part, face, litColor)
+	local sg = Instance.new("SurfaceGui")
+	sg.Face          = face
+	sg.SizingMode    = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	sg.PixelsPerStud = 10
+	sg.LightInfluence = 0
+	sg.Parent        = part
+	local pad = Instance.new("UIPadding")
+	pad.PaddingTop = UDim.new(0.05, 0); pad.PaddingBottom = UDim.new(0.12, 0)
+	pad.PaddingLeft = UDim.new(0.08, 0); pad.PaddingRight = UDim.new(0.08, 0)
+	pad.Parent = sg
+	local grid = Instance.new("UIGridLayout")
+	grid.CellSize    = UDim2.new(0.17, 0, 0.07, 0)
+	grid.CellPadding = UDim2.new(0.06, 0, 0.035, 0)
+	grid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	grid.Parent = sg
+	for _ = 1, 24 do
+		local cell = Instance.new("Frame")
+		cell.BackgroundColor3 = (math.random() < 0.5) and litColor or Color3.fromRGB(22, 26, 38)
+		cell.BorderSizePixel = 0
+		cell.Parent = sg
 	end
-	return tower
+end
+
+-- A proper skyscraper: stepped setbacks, lit windows, a rooftop mast + beacon, and
+-- a small street-level marquee (instead of a flat box with a giant name on it).
+local function buildTower(x, z, w, h, d, color, name, accent)
+	local function tier(tw, th, td, cy)
+		local p = block(hubFolder, Vector3.new(tw, th, td), HUB_ORIGIN + Vector3.new(x, cy, z),
+			color, Enum.Material.SmoothPlastic, true)
+		applyTexture(p, TEXTURES.metal, 16, ALL_SIDES)
+		return p
+	end
+	local h1, h2, h3 = h * 0.56, h * 0.30, h * 0.14
+	local base = tier(w, h1, d, h1 / 2)
+	tier(w * 0.78, h2, d * 0.78, h1 + h2 / 2)
+	tier(w * 0.56, h3, d * 0.56, h1 + h2 + h3 / 2)
+
+	addWindows(base, Enum.NormalId.Front, accent)
+	addWindows(base, Enum.NormalId.Back,  accent)
+
+	-- Rooftop mast + neon beacon.
+	block(hubFolder, Vector3.new(0.7, h * 0.16, 0.7), HUB_ORIGIN + Vector3.new(x, h + h * 0.07, z),
+		Color3.fromRGB(40, 44, 56), Enum.Material.Metal, false)
+	block(hubFolder, Vector3.new(1.6, 1.6, 1.6), HUB_ORIGIN + Vector3.new(x, h + h * 0.16, z),
+		accent, Enum.Material.Neon, false)
+
+	-- Small street-level marquee.
+	local marquee = block(hubFolder, Vector3.new(w * 0.66, 3.4, 0.5),
+		HUB_ORIGIN + Vector3.new(x, 6.5, z - d / 2 - 0.35), Color3.fromRGB(12, 14, 22), Enum.Material.SmoothPlastic, false)
+	local msg = Instance.new("SurfaceGui")
+	msg.Face = Enum.NormalId.Front; msg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	msg.PixelsPerStud = 28; msg.LightInfluence = 0; msg.Parent = marquee
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.new(1, 0, 1, 0); lbl.BackgroundTransparency = 1
+	lbl.Text = name; lbl.TextColor3 = accent; lbl.TextScaled = true; lbl.Font = Enum.Font.GothamBold
+	lbl.Parent = msg
+	return base
 end
 
 -- A neon lamppost.
