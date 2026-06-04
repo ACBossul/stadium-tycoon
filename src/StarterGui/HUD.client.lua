@@ -12,8 +12,17 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
 
--- StarterGui re-runs this LocalScript on every respawn; don't stack duplicate HUDs.
-if PlayerGui:FindFirstChild("HUD") then return end
+-- This LocalScript is ITSELF named "HUD" (rojo names the instance after the file),
+-- so a plain FindFirstChild("HUD") matches the SCRIPT and bailed before building
+-- anything — that's why the HUD never appeared. Guard only against a real HUD
+-- ScreenGui (so respawns still don't stack duplicates).
+local function hudScreenExists()
+	for _, c in ipairs(PlayerGui:GetChildren()) do
+		if c:IsA("ScreenGui") and c.Name == "HUD" then return true end
+	end
+	return false
+end
+if hudScreenExists() then return end
 
 local gui = Instance.new("ScreenGui")
 gui.Name           = "HUD"
@@ -125,9 +134,19 @@ local BTN_TO_PANEL = {
 	StadiumBtn    = false,  -- close all
 }
 
+-- Each panel's LocalScript shares its name with the ScreenGui it creates, so match
+-- the ScreenGui specifically — a plain FindFirstChild can return the script instead,
+-- which is why opening menus did nothing.
+local function findScreenGui(name)
+	for _, c in ipairs(PlayerGui:GetChildren()) do
+		if c:IsA("ScreenGui") and c.Name == name then return c end
+	end
+	return nil
+end
+
 local function showPanel(target)
 	for _, name in ipairs(PANELS) do
-		local s = PlayerGui:FindFirstChild(name)
+		local s = findScreenGui(name)
 		if s then s.Enabled = (name == target) end
 	end
 end
