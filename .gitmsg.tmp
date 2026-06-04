@@ -1,14 +1,13 @@
-Fix kart driving (Owner.Value race), VIP kart redesign, connected ground + roads
+Redesign city layout around the road: open north gate, no building in the path
 
-- KartController: driving silently failed because it checked the kart's Owner.Value
-  the instant you sat, before the reference replicated (same race that hit the
-  buildings). Now it detects the kart seat by attribute and WAITS for Owner.Value to
-  resolve before starting the drive loop. KartService defers SetNetworkOwner until
-  the unanchor commits, so ownership handoff is reliable.
-- VIP kart: added a rear wing, neon underglow, sleek neon nose tip, and side skirts
-  so the premium kart actually looks premium (not just a recolor).
-- HubService: a big shared ground now links the plot row to the city (no more
-  floating islands) with an east-west boulevard + a main street down to the centre,
-  so you can drive from any plot to Brainrot City.
+The road enters from the north, but the entrance/kiosks/spawn were at the south
+with a tower at north-centre — so a building sat dead in the road. Reoriented the
+whole city toward the road:
+- North edge is now an OPEN gate (two pillars + sign arch) the main street runs
+  straight through. Ohio Plaza moved to the south backdrop.
+- Skyline frames only the E/W/S edges.
+- Kiosks line the entrance avenue just inside the gate; arena in the centre with
+  its title pillar at the far (south) end.
+- Spawn + travel-home pads sit just inside the gate, facing into the arena.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

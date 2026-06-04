@@ -231,54 +231,63 @@ local function build()
 			Color3.fromRGB(255, 210, 70), Enum.Material.Neon, false)
 	end
 
-	-- Arena title sign on a central pillar
-	local pillar = block(hubFolder, Vector3.new(6, 22, 6), HUB_ORIGIN + Vector3.new(0, 11, 38),
+	local edge = PLAZA / 2 - 14   -- 126
+
+	-- The NORTH edge faces the road, so it's kept OPEN. The skyline frames the
+	-- EAST, WEST and SOUTH edges only (no tower blocking the entrance).
+	-- West row
+	buildTower(-edge,  edge - 34, 30, 70, 26, Color3.fromRGB(54,58,80), "BRAINROT TOWER", Color3.fromRGB(255,90,90))
+	buildTower(-edge,  10,        26, 48, 30, Color3.fromRGB(64,54,48), "RIZZ MALL",      Color3.fromRGB(255,180,70))
+	buildTower(-edge, -edge + 30, 28, 60, 26, Color3.fromRGB(58,52,64), "MEME MOBILE",    Color3.fromRGB(255,130,200))
+	-- East row
+	buildTower( edge,  edge - 34, 30, 80, 26, Color3.fromRGB(48,60,64), "SUS BANK HQ",    Color3.fromRGB(120,230,140))
+	buildTower( edge,  10,        26, 58, 30, Color3.fromRGB(50,50,66), "GOBLINPAY",      Color3.fromRGB(180,130,255))
+	buildTower( edge, -edge + 30, 28, 50, 26, Color3.fromRGB(52,58,64), "NEON COLA",      Color3.fromRGB(120,255,200))
+	-- South backdrop (Ohio Plaza moved here, out of the road's path)
+	buildTower(-46, -edge, 26, 46, 24, Color3.fromRGB(60,56,50), "THE GOBLET", Color3.fromRGB(255,215,90))
+	buildTower(  0, -edge, 32, 66, 26, Color3.fromRGB(60,52,70), "OHIO PLAZA", Color3.fromRGB(120,220,255))
+	buildTower( 46, -edge, 26, 56, 24, Color3.fromRGB(54,50,64), "RIZZ FUEL",  Color3.fromRGB(255,150,90))
+
+	-- North entrance gate: two pillars with a sign arch, OPEN in the middle so the
+	-- main street runs straight through.
+	block(hubFolder, Vector3.new(6, 20, 6), HUB_ORIGIN + Vector3.new(-26, 10, edge), Color3.fromRGB(40,44,56), Enum.Material.Metal, true)
+	block(hubFolder, Vector3.new(6, 20, 6), HUB_ORIGIN + Vector3.new( 26, 10, edge), Color3.fromRGB(40,44,56), Enum.Material.Metal, true)
+	local arch = block(hubFolder, Vector3.new(58, 5, 6), HUB_ORIGIN + Vector3.new(0, 20, edge), Color3.fromRGB(36,40,52), Enum.Material.Metal, true)
+	neonSign(arch, "🏙 BRAINROT CITY", Color3.fromRGB(255,200,90), Enum.NormalId.Front)
+
+	-- Arena title pillar at the SOUTH end (facing the entrance), out of the way.
+	local pillar = block(hubFolder, Vector3.new(6, 22, 6), HUB_ORIGIN + Vector3.new(0, 11, -54),
 		Color3.fromRGB(30, 32, 44), Enum.Material.Metal, true)
-	neonSign(pillar, "⚡ BRAINROT ARENA", Color3.fromRGB(255, 210, 70), Enum.NormalId.Back)
+	neonSign(pillar, "⚡ BRAINROT ARENA", Color3.fromRGB(255, 210, 70), Enum.NormalId.Front)
 
-	-- City skyline around the edges (parody brands only)
-	local edge = PLAZA / 2 - 14
-	buildTower(-edge,  edge, 30, 70, 26, Color3.fromRGB(54, 58, 80),  "BRAINROT TOWER", Color3.fromRGB(255, 90, 90))
-	buildTower(  0,    edge, 34, 54, 26, Color3.fromRGB(60, 52, 70),  "OHIO PLAZA",     Color3.fromRGB(120, 220, 255))
-	buildTower( edge,  edge, 30, 80, 26, Color3.fromRGB(48, 60, 64),  "SUS BANK HQ",    Color3.fromRGB(120, 230, 140))
-	buildTower(-edge,  0,    26, 46, 30, Color3.fromRGB(64, 54, 48),  "RIZZ MALL",      Color3.fromRGB(255, 180, 70))
-	buildTower( edge,  0,    26, 60, 30, Color3.fromRGB(50, 50, 66),  "GOBLINPAY",      Color3.fromRGB(180, 130, 255))
+	-- Kiosks line the entrance avenue (just inside the gate), facing inward.
+	buildKiosk(-42, edge - 36, Color3.fromRGB(40,90,160), "💎 GEM SHOP", Color3.fromRGB(120,200,255), "ShopScreen")
+	buildKiosk( 42, edge - 36, Color3.fromRGB(150,70,70), "📦 PACKS",    Color3.fromRGB(255,150,80),  "ShopScreen")
+	buildKiosk(-42, edge - 72, Color3.fromRGB(60,120,90), "🔄 TRADE",    Color3.fromRGB(120,230,160), "TradeScreen")
+	buildKartGarage(42, edge - 72)
 
-	-- Kiosks (reuse existing screens) + garage, along the south side near spawn
-	buildKiosk(-44, -edge + 18, Color3.fromRGB(40, 90, 160), "💎 GEM SHOP", Color3.fromRGB(120, 200, 255), "ShopScreen")
-	buildKiosk(-14, -edge + 18, Color3.fromRGB(150, 70, 70), "📦 PACKS",    Color3.fromRGB(255, 150, 80),  "ShopScreen")
-	buildKiosk( 16, -edge + 18, Color3.fromRGB(60, 120, 90), "🔄 TRADE",    Color3.fromRGB(120, 230, 160), "TradeScreen")
-	buildKartGarage(48, -edge + 18)
+	-- Travel-home pads just inside the gate.
+	buildStadiumPad(-22, edge - 14)
+	buildStadiumPad( 22, edge - 14)
 
-	-- Travel-home pads flanking the spawn
-	buildStadiumPad(-20, -edge + 4)
-	buildStadiumPad( 20, -edge + 4)
-
-	-- Extra skyline on the side/front edges so the plaza feels enclosed by a city.
-	buildTower(-edge, -42,      24, 40, 24, Color3.fromRGB(58, 52, 64), "MEME MOBILE", Color3.fromRGB(255, 130, 200))
-	buildTower( edge, -42,      24, 50, 24, Color3.fromRGB(52, 58, 64), "NEON COLA",   Color3.fromRGB(120, 255, 200))
-	buildTower(-edge,  edge-60, 22, 36, 22, Color3.fromRGB(60, 56, 50), "THE GOBLET",  Color3.fromRGB(255, 215, 90))
-	buildTower( edge,  edge-60, 22, 44, 22, Color3.fromRGB(54, 50, 64), "RIZZ FUEL",   Color3.fromRGB(255, 150, 90))
-
-	-- Neon lampposts around the plaza perimeter.
-	local lampInset = PLAZA / 2 - 8
+	-- Neon lampposts down the avenue + corners (none at the north-centre gate).
 	for _, lp in ipairs({
-		{ -lampInset, -lampInset }, { 0, -lampInset }, { lampInset, -lampInset },
-		{ -lampInset, 0 }, { lampInset, 0 },
-		{ -lampInset, lampInset }, { 0, lampInset }, { lampInset, lampInset },
+		{ -52, edge - 20 }, { 52, edge - 20 },
+		{ -edge + 6, 0 }, { edge - 6, 0 },
+		{ -52, -edge + 16 }, { 52, -edge + 16 },
 	}) do
 		buildLamppost(lp[1], lp[2])
 	end
 
-	-- A lit path from the spawn up to the arena.
-	for z = -edge + 14, -12, 14 do
-		block(hubFolder, Vector3.new(11, 0.3, 8), HUB_ORIGIN + Vector3.new(0, 0.25, z),
+	-- A lit path from the gate down to the arena centre.
+	for z = edge - 18, 18, -16 do
+		block(hubFolder, Vector3.new(12, 0.3, 9), HUB_ORIGIN + Vector3.new(0, 0.25, z),
 			Color3.fromRGB(74, 78, 92), Enum.Material.SmoothPlastic, false)
 	end
 
-	-- Spawn point (arrive facing the arena/north)
-	local spawnPos = HUB_ORIGIN + Vector3.new(0, 3, -edge + 4)
-	hubSpawnCFrame = CFrame.lookAt(spawnPos, spawnPos + Vector3.new(0, 0, 1))
+	-- Spawn just inside the north gate, facing south into the arena.
+	local spawnPos = HUB_ORIGIN + Vector3.new(0, 3, edge - 12)
+	hubSpawnCFrame = CFrame.lookAt(spawnPos, spawnPos + Vector3.new(0, 0, -1))
 
 	hubFolder.Parent = Workspace
 end
