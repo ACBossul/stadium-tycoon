@@ -1,13 +1,11 @@
-Fix HUD balance/income + nav by making the HUD self-contained; faster kart
+Fix HUD not rendering: build UI before requiring BuildingConfig
 
-Debug overlay proved the data is correct (coins 1,000,000+, upgrades applying) —
-the HUD just wasn't reading it. The cross-script name lookup that updated the
-balance/income labels and wired the nav was silently failing.
+My previous HUD rewrite put require(BuildingConfig) at the very top, before the
+ScreenGui was created. On a cold client that require could stall/fail, killing the
+whole script so the HUD (balance bar + nav) never appeared at all.
 
-- HUD.client.lua: now updates its OWN coin/gem/income labels straight from the
-  ProfileUpdated remote (with thousands separators), and wires its OWN bottom-nav
-  buttons to toggle the panels — no dependency on another script finding it.
-  Added a duplicate-HUD guard (StarterGui re-runs this on respawn).
-- KartService: bumped speeds (basic 48->75, pro 76->115) and turn rates.
+Now the HUD is built first; BuildingConfig is loaded afterward, safely (timeouts +
+pcall), and the income readout simply waits for it. Balance/gems/nav no longer
+depend on that require, so the HUD always renders.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

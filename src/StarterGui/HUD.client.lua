@@ -15,8 +15,6 @@ local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
 -- StarterGui re-runs this LocalScript on every respawn; don't stack duplicate HUDs.
 if PlayerGui:FindFirstChild("HUD") then return end
 
-local BuildingConfig = require(ReplicatedStorage:WaitForChild("Config"):WaitForChild("BuildingConfig"))
-
 local gui = Instance.new("ScreenGui")
 gui.Name           = "HUD"
 gui.ResetOnSpawn   = false
@@ -172,6 +170,18 @@ end
 
 -- ─── Live balance / income, straight from the server profile ────────────────
 
+-- BuildingConfig is only needed for the income number; load it AFTER the HUD is
+-- built (and safely) so a slow/failed require can never stop the HUD rendering.
+local BuildingConfig
+do
+	local cfg = ReplicatedStorage:FindFirstChild("Config") or ReplicatedStorage:WaitForChild("Config", 20)
+	local mod = cfg and (cfg:FindFirstChild("BuildingConfig") or cfg:WaitForChild("BuildingConfig", 20))
+	if mod then
+		local ok, result = pcall(require, mod)
+		if ok then BuildingConfig = result end
+	end
+end
+
 local Remotes = ReplicatedStorage:WaitForChild("Remotes", 30)
 if Remotes then
 	local profileEvent = Remotes:FindFirstChild("ProfileUpdated")
@@ -180,7 +190,7 @@ if Remotes then
 			if type(data) ~= "table" then return end
 			coinsLabel.Text = "💰 " .. commas(data.coins or 0)
 			gemsLabel.Text  = "💎 " .. commas(data.gems or 0)
-			if data.stadium then
+			if data.stadium and BuildingConfig then
 				local rate = BuildingConfig.totalPassiveRate(data.stadium)
 				if data.passes and data.passes.double_coins then rate = rate * 2 end
 				incomeLabel.Text = "Income: " .. commas(math.floor(rate)) .. "/sec"
