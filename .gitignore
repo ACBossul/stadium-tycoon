@@ -20,3 +20,7 @@ Thumbs.db
 desktop.ini
 *.swp
 *~
+
+# Local tooling + machine-specific Claude settings (absolute paths, not shareable)
+/tools/
+.claude/settings.local.json
