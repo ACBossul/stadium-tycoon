@@ -123,7 +123,7 @@ listLayout.Parent = scroll
 local function rewardText(r)
 	if not r then return "—" end
 	local parts = {}
-	if r.coins     then table.insert(parts, "🪙" .. r.coins) end
+	if r.coins     then table.insert(parts, "💰" .. r.coins) end
 	if r.gems      then table.insert(parts, "💎" .. r.gems) end
 	if r.packId    then table.insert(parts, "📦Pack") end
 	if r.cardFloor then table.insert(parts, "🃏" .. r.cardFloor) end

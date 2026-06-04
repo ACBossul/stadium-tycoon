@@ -65,7 +65,7 @@ end
 
 -- Labels (named "CoinsLabel"/"GemsLabel") are created and parented inside their
 -- frames by makeStatLabel; UIController updates them by name, so we only keep the frames.
-local coinsFrame = makeStatLabel("Coins", "🪙", Color3.fromRGB(255,215,0))
+local coinsFrame = makeStatLabel("Coins", "💰", Color3.fromRGB(255,215,0))
 local gemsFrame  = makeStatLabel("Gems",  "💎", Color3.fromRGB(100,200,255))
 coinsFrame.Parent = topBar
 gemsFrame.Parent  = topBar

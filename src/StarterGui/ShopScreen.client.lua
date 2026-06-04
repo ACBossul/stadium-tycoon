@@ -112,7 +112,7 @@ local function makePackCard(pack)
 	-- Buy button
 	local costText
 	if pack.costType == "coins" then
-		costText = "🪙 " .. tostring(pack.cost)
+		costText = "💰 " .. tostring(pack.cost)
 	else
 		costText = "💎 " .. tostring(pack.gemCost)
 	end
@@ -206,7 +206,7 @@ local function buildEventCard(event)
 	countdown.TextXAlignment   = Enum.TextXAlignment.Left
 	countdown.Parent           = card
 
-	local price  = (pack.costType == "gems") and ("💎" .. pack.gemCost) or ("🪙" .. pack.cost)
+	local price  = (pack.costType == "gems") and ("💎" .. pack.gemCost) or ("💰" .. pack.cost)
 	local buyBtn = Instance.new("TextButton")
 	buyBtn.Size             = UDim2.new(0, 120, 0, 58)
 	buyBtn.Position         = UDim2.new(1, -132, 0.5, -29)

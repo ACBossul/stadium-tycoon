@@ -93,7 +93,7 @@ function UIController.onProfileUpdated(data)
 	-- Labels live inside CoinsFrame/GemsFrame, so search descendants (recursive).
 	local coinsLabel = main:FindFirstChild("CoinsLabel", true)
 	if coinsLabel then
-		coinsLabel.Text = "🪙 " .. tostring(data.coins or 0)
+		coinsLabel.Text = "💰 " .. tostring(data.coins or 0)
 	end
 
 	local gemsLabel = main:FindFirstChild("GemsLabel", true)

@@ -106,7 +106,7 @@ for _, entry in ipairs(DailyRewardConfig.Rewards) do
 	coinLabel.Size = UDim2.new(1,-4,0,40)
 	coinLabel.Position = UDim2.new(0,2,0,34)
 	coinLabel.BackgroundTransparency = 1
-	coinLabel.Text = "🪙" .. entry.coins
+	coinLabel.Text = "💰" .. entry.coins
 	coinLabel.TextColor3 = Color3.fromRGB(255,215,0)
 	coinLabel.TextScaled = true
 	coinLabel.Font = Enum.Font.Gotham

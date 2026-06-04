@@ -109,7 +109,7 @@ local function applyToBuilding(buildingId, entry, data)
 		else
 			local cost = BuildingConfig.upgradeCost(buildingId, level)
 			local verb = level <= 0 and "Build" or "Upgrade"
-			entry.upgradeButton.Text = verb .. "  🪙" .. abbreviate(cost)
+			entry.upgradeButton.Text = verb .. "  💰" .. abbreviate(cost)
 			local affordable = (data.coins or 0) >= cost
 			entry.upgradeButton.BackgroundColor3 = affordable
 				and Color3.fromRGB(50, 180, 80)
@@ -166,7 +166,7 @@ local function wireBuilding(model)
 				if clickingPlayer ~= LocalPlayer then return end
 				Remotes:FindFirstChild("CollectBuilding"):FireServer(buildingId)
 				-- Optimistic juice (the exact amount comes via the toast).
-				floatText(part, "+ 🪙", Color3.fromRGB(255, 220, 60))
+				floatText(part, "+ 💰", Color3.fromRGB(255, 220, 60))
 				burstSparkle(part, Color3.fromRGB(255, 220, 60))
 			end)
 		end
