@@ -915,6 +915,80 @@ local function buildCityPad(plot, origin, player)
 	CollectionService:AddTag(pad, "ToCityPad")
 end
 
+-- A second level you climb to: stairs → viewing deck → Trophy Room + VIP Lounge.
+-- Built once per plot in a clear east-side spot.
+local function buildUpperTier(plot, origin, player)
+	local bx, bz   = 70, 18      -- deck centre (plot-local)
+	local deckY    = 18
+	local function up(sx, sy, sz, x, y, z, color, mat, collide)
+		local p = Instance.new("Part")
+		p.Name = "UpperTier"
+		p.Anchored = true
+		p.CanCollide = collide ~= false
+		p.Size = Vector3.new(sx, sy, sz)
+		p.Position = origin + Vector3.new(x, y, z)
+		p.Color = color
+		p.Material = mat or Enum.Material.SmoothPlastic
+		p.TopSurface = Enum.SurfaceType.Smooth
+		p.BottomSurface = Enum.SurfaceType.Smooth
+		p.Parent = plot
+		return p
+	end
+	local CONCRETE = Color3.fromRGB(86, 90, 104)
+	local GOLD     = Color3.fromRGB(245, 205, 70)
+
+	-- Support core
+	up(10, deckY, 10, bx, deckY / 2, bz, CONCRETE, Enum.Material.Concrete)
+	-- Staircase rising south→north up to the deck (auto-climbable 1.5-stud steps)
+	local steps = 12
+	for i = 1, steps do
+		local y = i * (deckY / steps)
+		local z = bz - 26 + (i - 1) * (22 / (steps - 1))
+		up(9, 0.8, 2.6, bx, y, z, CONCRETE, Enum.Material.Concrete)
+	end
+	-- Viewing deck
+	up(36, 1.5, 34, bx, deckY, bz, CONCRETE, Enum.Material.Concrete)
+	applyTexture(up(36, 1.5, 34, bx, deckY, bz, CONCRETE, Enum.Material.Concrete), TEXTURES.brick, 8, { Enum.NormalId.Top })
+	-- Deck railings (low, non-block on the stair side)
+	up(36, 2, 0.5, bx, deckY + 1.5, bz + 17, GOLD, Enum.Material.Metal, false)
+	up(0.5, 2, 34, bx + 18, deckY + 1.5, bz, GOLD, Enum.Material.Metal, false)
+	up(0.5, 2, 34, bx - 18, deckY + 1.5, bz, GOLD, Enum.Material.Metal, false)
+
+	-- ── Trophy Room (enclosed, west half of the deck) ──
+	local trX = bx - 9
+	up(16, 9, 0.6, trX, deckY + 5.5, bz - 7, Color3.fromRGB(40,44,58), Enum.Material.Concrete)   -- back/south wall
+	up(0.6, 9, 16, trX - 8, deckY + 5.5, bz + 1, Color3.fromRGB(40,44,58), Enum.Material.Concrete) -- west wall
+	up(16, 1, 16, trX, deckY + 10, bz + 1, Color3.fromRGB(34,38,50), Enum.Material.Metal)          -- roof
+	local trSignWall = up(16, 9, 0.6, trX, deckY + 5.5, bz + 9, Color3.fromRGB(40,44,58), Enum.Material.Concrete) -- front (north)
+	local trSg = Instance.new("SurfaceGui")
+	trSg.Face = Enum.NormalId.Back; trSg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	trSg.PixelsPerStud = 24; trSg.LightInfluence = 0; trSg.Parent = trSignWall
+	local trLbl = Instance.new("TextLabel")
+	trLbl.Size = UDim2.new(1,0,0.3,0); trLbl.Position = UDim2.new(0,0,0.05,0); trLbl.BackgroundTransparency = 1
+	trLbl.Text = "🏆 TROPHY ROOM"; trLbl.TextColor3 = GOLD; trLbl.TextScaled = true; trLbl.Font = Enum.Font.GothamBlack
+	trLbl.Parent = trSg
+	-- Trophy podiums + golden cups
+	for i = -1, 1 do
+		up(3, 2, 3, trX + i * 4.5, deckY + 1.5, bz - 3, Color3.fromRGB(60,64,78), Enum.Material.Concrete) -- podium
+		up(1.6, 2.4, 1.6, trX + i * 4.5, deckY + 3.7, bz - 3, GOLD, Enum.Material.Neon)                  -- cup
+	end
+
+	-- ── VIP Lounge (open, east half) ──
+	local vlX = bx + 10
+	up(14, 0.4, 16, vlX, deckY + 1, bz + 1, Color3.fromRGB(70, 40, 90), Enum.Material.Neon, false)  -- plush floor
+	local vlSign = up(13, 3, 0.5, vlX, deckY + 6, bz - 7, Color3.fromRGB(20,16,28), Enum.Material.SmoothPlastic)
+	local vlSg = Instance.new("SurfaceGui")
+	vlSg.Face = Enum.NormalId.Front; vlSg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	vlSg.PixelsPerStud = 26; vlSg.LightInfluence = 0; vlSg.Parent = vlSign
+	local vlLbl = Instance.new("TextLabel")
+	vlLbl.Size = UDim2.new(1,0,1,0); vlLbl.BackgroundTransparency = 1
+	vlLbl.Text = "⭐ VIP LOUNGE"; vlLbl.TextColor3 = Color3.fromRGB(255,215,120); vlLbl.TextScaled = true; vlLbl.Font = Enum.Font.GothamBold
+	vlLbl.Parent = vlSg
+	-- a couple of lounge benches
+	up(5, 1.4, 2, vlX - 3, deckY + 1.7, bz + 4, Color3.fromRGB(120,60,150), Enum.Material.SmoothPlastic)
+	up(5, 1.4, 2, vlX + 3, deckY + 1.7, bz + 4, Color3.fromRGB(120,60,150), Enum.Material.SmoothPlastic)
+end
+
 -- A rebirth/prestige pad (RebirthService wires the click via the "RebirthPad" tag).
 local function buildRebirthPad(plot, origin, player)
 	local pos = origin + Vector3.new(-24, 0.6, -PLOT_SIZE.Z / 2 + 12)
@@ -1057,6 +1131,7 @@ function PlotService.buildPlot(player)
 	buildKartStation(plot, origin, player)
 	buildCityPad(plot, origin, player)
 	buildRebirthPad(plot, origin, player)
+	buildUpperTier(plot, origin, player)
 
 	-- Place each building at its hand-picked spot (spacious, framing the plaza),
 	-- built to its current upgrade level (stands grow their seating with level).

@@ -1,9 +1,8 @@
-﻿Add Rebirth / prestige system
+Add stadium upper tier: stairs → viewing deck → Trophy Room + VIP Lounge
 
-Click the new neon "🔁 REBIRTH" pad on your plot to reset coins + building levels
-in exchange for a PERMANENT +50% income multiplier (stacks per rebirth) and a
-guaranteed Mythic card. Cards, cup progress, gems and game passes are kept.
-Eligibility scales: 25 total building levels for the first rebirth, +25 each time.
-Income (live + offline) and the HUD readout apply the multiplier.
+Each plot now has a second level on the east side: an auto-climbable staircase up
+to a viewing deck with gold railings. On the deck: an enclosed Trophy Room (three
+podiums with golden cups + a sign) and an open VIP Lounge (plush neon floor, sign,
+benches). Tagged "UpperTier".
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
