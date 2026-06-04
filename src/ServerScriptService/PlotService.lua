@@ -470,8 +470,17 @@ local function buildPitch(plot, origin)
 		p.Parent = plot
 	end
 
-	-- (Grass surface comes from the pad's grass texture; here we only paint the
-	-- white field markings on top of it.)
+	-- Mowed stripes — PROCEDURAL, so the pitch always reads as a pitch even if the
+	-- grass texture is still moderating or unavailable. When the texture does load
+	-- it sits underneath these on the field and shows on the surrounding ground.
+	local stripes = 8
+	local sw = PX / stripes
+	for i = 0, stripes - 1 do
+		local shade = (i % 2 == 0) and Color3.fromRGB(52, 140, 70) or Color3.fromRGB(44, 120, 60)
+		flat(-PX / 2 + sw / 2 + i * sw, 0, sw, PZ, shade, 0.12)
+	end
+
+	-- White field markings
 	local white = Color3.fromRGB(235, 238, 240)
 	local function line(cx, cz, sx, sz)
 		flat(cx, cz, sx, sz, white, 0.22, Enum.Material.SmoothPlastic)
