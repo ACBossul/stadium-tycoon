@@ -17,9 +17,20 @@ local PlotService = {}
 
 -- ─── Plot layout constants ───────────────────────────────────────────────────
 
-local PLOT_SPACING   = 200    -- studs between plot origins along X
-local PLOT_SIZE      = Vector3.new(120, 1, 120)
-local BUILDING_GAP   = 16     -- studs between buildings along Z
+local PLOT_SPACING   = 185    -- studs between plot origins (close enough to see neighbours)
+local PLOT_SIZE      = Vector3.new(150, 1, 150)
+
+-- Hand-placed building spots (offset from plot origin, on the ground plane). Gives
+-- the grounds room to breathe: an entrance plaza at the south (-Z), buildings framing
+-- it, a floodlight tower at the back corner. Every building faces -Z (the entrance).
+local BUILDING_LAYOUT = {
+	stands      = { x = -30, z =  50 },
+	bigscreen   = { x =  34, z =  52 },
+	floodlights = { x =  64, z =  60 },
+	concessions = { x = -52, z =  -6 },
+	merch       = { x = -52, z =  24 },
+	parking     = { x =  46, z = -28 },
+}
 
 -- Parody team palette (NO real club/national colors).
 local TEAM_GREEN = Color3.fromRGB( 45, 165,  85)
@@ -84,6 +95,19 @@ end
 local usedIndices = {}            -- index -> player.UserId
 local playerPlotIndex = {}        -- player.UserId -> index
 local playerPlotModel = {}        -- player.UserId -> plot Model
+local playerSpawnCFrame = {}      -- player.UserId -> CFrame to (re)spawn at
+local playerConns = {}            -- player.UserId -> CharacterAdded connection
+
+-- Put the player on their plot's entrance, now and on every respawn.
+local function teleportToPlot(player)
+	local cf = playerSpawnCFrame[player.UserId]
+	if not cf then return end
+	local char = player.Character or player.CharacterAdded:Wait()
+	local hrp  = char:WaitForChild("HumanoidRootPart", 10)
+	if hrp then
+		hrp.CFrame = cf
+	end
+end
 
 local function allocateIndex(player)
 	local i = 0
@@ -335,6 +359,51 @@ local function buildBuildingModel(buildingCfg, position, player)
 	return model
 end
 
+-- Perimeter wall (with a south entrance gap) + two goal frames, for "place" feel.
+local function buildSurrounds(plot, origin)
+	local half = PLOT_SIZE.X / 2
+	local wallH, wallT = 5, 2
+	local wallColor = Color3.fromRGB(70, 74, 86)
+
+	local function wall(cx, cz, sx, sz)
+		local p = Instance.new("Part")
+		p.Anchored = true
+		p.Size = Vector3.new(sx, wallH, sz)
+		p.Position = origin + Vector3.new(cx, wallH / 2, cz)
+		p.Color = wallColor
+		p.Material = Enum.Material.Concrete
+		p.TopSurface = Enum.SurfaceType.Smooth
+		p.BottomSurface = Enum.SurfaceType.Smooth
+		p.Parent = plot
+	end
+
+	wall(0,  half, PLOT_SIZE.X, wallT)   -- north
+	wall( half, 0, wallT, PLOT_SIZE.Z)   -- east
+	wall(-half, 0, wallT, PLOT_SIZE.Z)   -- west
+	local sideW = (PLOT_SIZE.X - 24) / 2 -- south wall split for a centre entrance
+	wall(-(12 + sideW / 2), -half, sideW, wallT)
+	wall( (12 + sideW / 2), -half, sideW, wallT)
+
+	-- Two simple white goal frames framing the central lane.
+	local function goal(cz)
+		local function bar(dx, dy, sx, sy, sz)
+			local p = Instance.new("Part")
+			p.Anchored = true
+			p.CanCollide = false
+			p.Size = Vector3.new(sx, sy, sz)
+			p.Position = origin + Vector3.new(dx, dy, cz)
+			p.Color = Color3.fromRGB(240, 240, 245)
+			p.Material = Enum.Material.SmoothPlastic
+			p.Parent = plot
+		end
+		bar(-7, 4, 1, 8, 1)    -- left post
+		bar( 7, 4, 1, 8, 1)    -- right post
+		bar( 0, 8, 15, 1, 1)   -- crossbar
+	end
+	goal(38)
+	goal(-44)
+end
+
 -- ─── Plot builder ────────────────────────────────────────────────────────────
 
 function PlotService.buildPlot(player)
@@ -367,25 +436,32 @@ function PlotService.buildPlot(player)
 	ownerValue.Value  = player
 	ownerValue.Parent = plot
 
-	local spawnPad = Instance.new("SpawnLocation")
+	-- Entrance plaza spawn at the south edge, facing north into the grounds.
+	local spawnPos = origin + Vector3.new(0, 1, -PLOT_SIZE.Z / 2 + 11)
+	local spawnPad = Instance.new("Part")
 	spawnPad.Name        = "PlotSpawn"
-	spawnPad.Size        = Vector3.new(6, 1, 6)
-	spawnPad.Position    = origin + Vector3.new(0, 1, -PLOT_SIZE.Z / 2 + 6)
+	spawnPad.Size        = Vector3.new(14, 1, 14)
+	spawnPad.Position    = spawnPos
 	spawnPad.Anchored    = true
-	spawnPad.Neutral     = true
-	spawnPad.Duration    = 0          -- no forcefield
-	spawnPad.Enabled     = false      -- not a global spawn; teleport handled manually
+	spawnPad.Color       = Color3.fromRGB(60, 64, 76)
+	spawnPad.Material    = Enum.Material.Concrete
+	spawnPad.TopSurface  = Enum.SurfaceType.Smooth
 	spawnPad.Parent      = plot
 
-	-- Lay out buildings in a row along Z. Shift the row north (+Z) of the spawn
-	-- pad so players never spawn inside the first building (the stands).
-	local n = #BuildingConfig.Buildings
-	local startZ = origin.Z - ((n - 1) * BUILDING_GAP) / 2 + 8
-	for i, buildingCfg in ipairs(BuildingConfig.Buildings) do
+	-- Stored facing +Z so the player looks into their stadium on (re)spawn.
+	playerSpawnCFrame[player.UserId] =
+		CFrame.lookAt(spawnPos + Vector3.new(0, 3, 0), spawnPos + Vector3.new(0, 3, 10))
+
+	-- Perimeter wall + goals
+	buildSurrounds(plot, origin)
+
+	-- Place each building at its hand-picked spot (spacious, framing the plaza).
+	for _, buildingCfg in ipairs(BuildingConfig.Buildings) do
+		local spot = BUILDING_LAYOUT[buildingCfg.id] or { x = 0, z = 0 }
 		local pos = Vector3.new(
-			origin.X,
+			origin.X + spot.x,
 			origin.Y + PLOT_SIZE.Y / 2,
-			startZ + (i - 1) * BUILDING_GAP
+			origin.Z + spot.z
 		)
 		buildBuildingModel(buildingCfg, pos, player).Parent = plot
 	end
@@ -393,19 +469,23 @@ function PlotService.buildPlot(player)
 	plot.Parent = plotsFolder
 	playerPlotModel[player.UserId] = plot
 
-	-- Teleport the player onto their plot once their character exists
-	task.spawn(function()
-		local char = player.Character or player.CharacterAdded:Wait()
-		local hrp  = char:WaitForChild("HumanoidRootPart", 10)
-		if hrp then
-			hrp.CFrame = CFrame.new(spawnPad.Position + Vector3.new(0, 3, 0))
-		end
+	-- Teleport onto the plot now AND on every respawn (fixes spawning at world origin).
+	playerConns[player.UserId] = player.CharacterAdded:Connect(function()
+		teleportToPlot(player)
 	end)
+	task.spawn(teleportToPlot, player)
 
 	return plot
 end
 
 function PlotService.removePlot(player)
+	local conn = playerConns[player.UserId]
+	if conn then
+		conn:Disconnect()
+		playerConns[player.UserId] = nil
+	end
+	playerSpawnCFrame[player.UserId] = nil
+
 	local plot = playerPlotModel[player.UserId]
 	if plot then
 		plot:Destroy()
