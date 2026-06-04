@@ -79,7 +79,15 @@ end
 
 -- ─── Player lifecycle ────────────────────────────────────────────────────────
 
+-- Guard: in Play Solo this can fire from BOTH PlayerAdded and the startup loop,
+-- which double-loads the profile and races the test-funds grant onto a copy that
+-- isn't the live one. Run the join exactly once per user.
+local joinedUsers = {}
+
 local function onPlayerJoin(player)
+	if joinedUsers[player.UserId] then return end
+	joinedUsers[player.UserId] = true
+
 	DataService.loadProfile(player)
 
 	-- Wait for DataService to finish loading (ProfileService is async)
@@ -101,6 +109,11 @@ local function onPlayerJoin(player)
 	if game:GetService("RunService"):IsStudio() then
 		data.coins = math.max(data.coins or 0, 1000000)
 	end
+
+	print(string.format("[SvJoin] %s coins=%s gems=%s stands=%s isStudio=%s",
+		player.Name, tostring(data.coins), tostring(data.gems),
+		tostring(data.stadium and data.stadium.stands),
+		tostring(game:GetService("RunService"):IsStudio())))
 
 	-- Sync game pass ownership into profile cache
 	MonetizationService.syncGamePasses(player)
@@ -155,6 +168,7 @@ local function onPlayerJoin(player)
 end
 
 local function onPlayerLeave(player)
+	joinedUsers[player.UserId] = nil
 	EconomyService.onPlayerLeave(player)
 	TradeService.onPlayerLeave(player)
 	PlotService.removePlot(player)
@@ -182,6 +196,13 @@ task.spawn(function()
 
 		for _, player in ipairs(Players:GetPlayers()) do
 			EconomyService.tickIncome(player, now)
+
+			-- Studio-only: keep coins topped up so upgrades are always testable,
+			-- even if the join-time grant raced the profile load.
+			if game:GetService("RunService"):IsStudio() then
+				local d = DataService.getData(player)
+				if d and (d.coins or 0) < 100000 then d.coins = 1000000 end
+			end
 
 			-- Resolve any matchdays that ticked over while player is online,
 			-- and notify them (popup + confetti + bracket update + countdown).
@@ -225,6 +246,7 @@ Remotes.UpgradeBuilding.OnServerEvent:Connect(function(player, buildingId)
 		local cfg = BuildingConfig.ById[buildingId]
 		notify(player, "Upgraded " .. (cfg and cfg.name or buildingId) .. "!", "green")
 	else
+		print("[SvUpgrade] " .. player.Name .. " " .. tostring(buildingId) .. " FAILED: " .. tostring(err))
 		notify(player, "Cannot upgrade: " .. tostring(err), "red")
 	end
 end)

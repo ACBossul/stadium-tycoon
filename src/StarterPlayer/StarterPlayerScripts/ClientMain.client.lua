@@ -77,6 +77,9 @@ end
 
 onEvent("ProfileUpdated", function(profileData)
 	ClientState.profile = profileData
+	print(string.format("[ClProfile] coins=%s stands=%s",
+		tostring(profileData and profileData.coins),
+		tostring(profileData and profileData.stadium and profileData.stadium.stands)))
 	if UIController then UIController.onProfileUpdated(profileData) end
 	if StadiumController then StadiumController.onProfileUpdated(profileData) end
 end)

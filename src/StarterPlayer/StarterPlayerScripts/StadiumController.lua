@@ -176,17 +176,33 @@ local function wireBuilding(model)
 		end)
 	end
 
-	-- Active-collect buildings: clicking the model collects coins
-	if cfg.activeOnly then
-		local detector = part:FindFirstChildOfClass("ClickDetector")
-		if detector then
+	-- ClickDetector on the building body: a RELIABLE input path (proven to work —
+	-- the kart pad uses one) as a fallback in case the billboard's TextButton
+	-- doesn't receive clicks. Active-collect buildings collect; the rest upgrade.
+	local detector = part:FindFirstChildOfClass("ClickDetector")
+	if detector then
+		if cfg.activeOnly then
 			detector.MouseClick:Connect(function(clickingPlayer)
 				if clickingPlayer ~= LocalPlayer then return end
+				-- If it isn't built yet, a body-click builds it (reliable path);
+				-- once built, a body-click collects its takings.
+				local level = (lastData and lastData.stadium and lastData.stadium[buildingId]) or 0
+				if level <= 0 then
+					local up = Remotes and Remotes:FindFirstChild("UpgradeBuilding")
+					if up then up:FireServer(buildingId) end
+					return
+				end
 				local remote = Remotes and Remotes:FindFirstChild("CollectBuilding")
 				if remote then remote:FireServer(buildingId) end
 				-- Optimistic juice (the exact amount comes via the toast).
 				floatText(part, "+ 💰", Color3.fromRGB(255, 220, 60))
 				burstSparkle(part, Color3.fromRGB(255, 220, 60))
+			end)
+		else
+			detector.MouseClick:Connect(function(clickingPlayer)
+				if clickingPlayer ~= LocalPlayer then return end
+				local remote = Remotes and Remotes:FindFirstChild("UpgradeBuilding")
+				if remote then remote:FireServer(buildingId) end
 			end)
 		end
 	end
