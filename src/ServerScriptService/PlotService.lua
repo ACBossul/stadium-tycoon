@@ -234,9 +234,10 @@ local function addBoothSign(part, text, color)
 	sg.LightInfluence = 0                       -- full-bright so it "lights up"
 	sg.Parent        = part
 
+	-- Near the very top of the storefront face, so the awning can't cover it.
 	local board = Instance.new("Frame")
-	board.Size = UDim2.new(1, 0, 0.34, 0)
-	board.Position = UDim2.new(0, 0, 0.06, 0)
+	board.Size = UDim2.new(1, 0, 0.2, 0)
+	board.Position = UDim2.new(0, 0, 0.02, 0)
 	board.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
 	board.BackgroundTransparency = 0.12
 	board.BorderSizePixel = 0
@@ -366,7 +367,7 @@ local function buildStandTiers(model, baseX, baseZ, level)
 	local midZ     = (frontZ + backZ) / 2
 	local depth    = (backZ - frontZ) + 8
 	local seatTopY = 3 + rows * stepUp           -- y at the top of the seating bank
-	local roofY    = seatTopY + 4                -- canopy height (scales with the bank)
+	local roofY    = seatTopY + 8                -- canopy floats high overhead (real clearance)
 
 	local STEP_C = Color3.fromRGB(74, 78, 92)
 	local WALL_C = Color3.fromRGB(88, 92, 106)
