@@ -109,6 +109,12 @@ local ALL_SIDES = {
 	Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left, Enum.NormalId.Right,
 }
 
+-- Invented parody sponsors for the pitch-side advertising boards (no real brands).
+local SPONSORS = {
+	"BRAINROT ENERGY", "THE GOBLET", "NEON COLA", "MEME MOBILE",
+	"SUS BANK", "GOBLINPAY", "RIZZ FUEL", "OHIO AIR",
+}
+
 -- Folder that holds all live plots
 local plotsFolder = Workspace:FindFirstChild("Plots")
 if not plotsFolder then
@@ -423,6 +429,43 @@ local function buildSurrounds(plot, origin)
 		p.BottomSurface = Enum.SurfaceType.Smooth
 		p.Parent = plot
 		applyTexture(p, TEXTURES.brick, 12, ALL_SIDES)
+
+		local horizontal = sx > sz
+		local sgnZ = (cz > 0) and 1 or ((cz < 0) and -1 or 0)
+		local sgnX = (cx > 0) and 1 or ((cx < 0) and -1 or 0)
+
+		-- Roof canopy: a slab on top that cantilevers inward over the stands.
+		local canopy = Instance.new("Part")
+		canopy.Anchored   = true
+		canopy.CanCollide = false
+		canopy.Color      = Color3.fromRGB(48, 52, 62)
+		canopy.Material   = Enum.Material.Metal
+		if horizontal then
+			canopy.Size     = Vector3.new(sx + 3, 1, 11)
+			canopy.Position = origin + Vector3.new(cx, wallH + 0.5, cz - sgnZ * 4.5)
+		else
+			canopy.Size     = Vector3.new(11, 1, sz + 3)
+			canopy.Position = origin + Vector3.new(cx - sgnX * 4.5, wallH + 0.5, cz)
+		end
+		canopy.Parent = plot
+
+		-- Buttress pillars spaced along the wall (rise just above it).
+		local span  = horizontal and sx or sz
+		local count = math.max(2, math.floor(span / 26))
+		for k = 0, count do
+			local t = -span / 2 + (span / count) * k
+			local pil = Instance.new("Part")
+			pil.Anchored = true
+			pil.Material  = Enum.Material.Concrete
+			pil.Color     = Color3.fromRGB(88, 92, 106)
+			pil.Size      = Vector3.new(horizontal and 5 or 3, wallH + 2.5, horizontal and 3 or 5)
+			if horizontal then
+				pil.Position = origin + Vector3.new(cx + t, (wallH + 2.5) / 2, cz + sgnZ * 1.4)
+			else
+				pil.Position = origin + Vector3.new(cx + sgnX * 1.4, (wallH + 2.5) / 2, cz + t)
+			end
+			pil.Parent = plot
+		end
 	end
 
 	wall(0,  half, PLOT_SIZE.X, wallT)   -- north
@@ -491,6 +534,54 @@ local function buildPitch(plot, origin)
 	line(-PX / 2, 0, 1, PZ)   -- west line
 	line(0, 0, PX, 1)         -- halfway line
 	line(0, 0, 4, 4)          -- centre spot
+end
+
+-- LED advertising hoardings ringing the pitch (parody sponsors) — a classic
+-- stadium detail. Low boards just outside the touchlines, facing the field.
+local function buildHoardings(plot, origin)
+	local PX, PZ = 80, 96
+	local seg = 18
+	local idx = 0
+	local cols = {
+		Color3.fromRGB(255, 80, 80), Color3.fromRGB(80, 200, 255),
+		Color3.fromRGB(120, 230, 140), Color3.fromRGB(255, 200, 60),
+	}
+
+	local function board(cx, cz, sx, sz, face)
+		local p = Instance.new("Part")
+		p.Anchored   = true
+		p.CanCollide = false
+		p.Size       = Vector3.new(sx, 2.4, sz)
+		p.Position   = origin + Vector3.new(cx, 1.3, cz)
+		p.Color      = Color3.fromRGB(18, 20, 28)
+		p.Material   = Enum.Material.SmoothPlastic
+		p.Parent     = plot
+
+		local sg = Instance.new("SurfaceGui")
+		sg.Face          = face
+		sg.SizingMode    = Enum.SurfaceGuiSizingMode.PixelsPerStud
+		sg.PixelsPerStud = 40
+		sg.LightInfluence = 0
+		sg.Parent        = p
+		local lbl = Instance.new("TextLabel")
+		lbl.Size = UDim2.new(1, 0, 1, 0)
+		lbl.BackgroundTransparency = 1
+		lbl.Text = SPONSORS[(idx % #SPONSORS) + 1]
+		lbl.TextColor3 = cols[(idx % #cols) + 1]
+		lbl.TextScaled = true
+		lbl.Font = Enum.Font.GothamBlack
+		lbl.Parent = sg
+		idx = idx + 1
+	end
+
+	for x = -PX / 2 + seg / 2, PX / 2 - seg / 2, seg do
+		board(x,  PZ / 2 + 1, seg - 2, 0.6, Enum.NormalId.Front)   -- north touchline
+		board(x, -PZ / 2 - 1, seg - 2, 0.6, Enum.NormalId.Back)    -- south touchline
+	end
+	for z = -PZ / 2 + seg / 2, PZ / 2 - seg / 2, seg do
+		board( PX / 2 + 1, z, 0.6, seg - 2, Enum.NormalId.Left)    -- east
+		board(-PX / 2 - 1, z, 0.6, seg - 2, Enum.NormalId.Right)   -- west
+	end
 end
 
 -- A force-field gate across the entrance + an owner-only toggle button.
@@ -641,8 +732,9 @@ function PlotService.buildPlot(player)
 	playerSpawnCFrame[player.UserId] =
 		CFrame.lookAt(spawnPos + Vector3.new(0, 3, 0), spawnPos + Vector3.new(0, 3, 10))
 
-	-- Pitch in the centre, perimeter wall + goals, and the defensible entrance gate
+	-- Pitch in the centre, advertising hoardings, perimeter wall + goals, gate
 	buildPitch(plot, origin)
+	buildHoardings(plot, origin)
 	buildSurrounds(plot, origin)
 	buildDoor(plot, origin, player)
 
