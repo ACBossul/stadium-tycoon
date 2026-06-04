@@ -8,6 +8,15 @@ local BracketController = {}
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
 
+-- The BracketScreen LocalScript shares its name with the ScreenGui it creates, so a
+-- plain FindFirstChild can return the SCRIPT. Resolve the real ScreenGui instead.
+local function bracketScreen()
+	for _, c in ipairs(PlayerGui:GetChildren()) do
+		if c:IsA("ScreenGui") and c.Name == "BracketScreen" then return c end
+	end
+	return nil
+end
+
 local nextMatchdayTimestamp = nil
 
 -- ─── Countdown ticker ───────────────────────────────────────────────────────
@@ -30,7 +39,7 @@ end
 RunService.Heartbeat:Connect(function()
 	if not nextMatchdayTimestamp then return end
 
-	local screen = PlayerGui:FindFirstChild("BracketScreen")
+	local screen = bracketScreen()
 	if not screen then return end
 
 	local countdownLabel = screen:FindFirstChild("CountdownLabel", true)
@@ -48,7 +57,7 @@ end
 
 function BracketController.onMatchResolved(result)
 	-- Refresh bracket screen if open
-	local screen = PlayerGui:FindFirstChild("BracketScreen")
+	local screen = bracketScreen()
 	if not screen or not screen.Enabled then return end
 
 	local stageLabel = screen:FindFirstChild("StageLabel", true)
@@ -70,7 +79,7 @@ function BracketController.onMatchResolved(result)
 end
 
 function BracketController.refreshFromProfile(data)
-	local screen = PlayerGui:FindFirstChild("BracketScreen")
+	local screen = bracketScreen()
 	if not screen then return end
 
 	local stageLabel = screen:FindFirstChild("StageLabel", true)

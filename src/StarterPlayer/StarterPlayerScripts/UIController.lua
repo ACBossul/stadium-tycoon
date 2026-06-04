@@ -17,6 +17,11 @@ local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
 -- ─── Screen references (found lazily) ────────────────────────────────────────
 
 local function getGui(name)
+	-- Panel LocalScripts share their name with the ScreenGui they create, so a plain
+	-- FindFirstChild can return the SCRIPT. Prefer a real ScreenGui match.
+	for _, c in ipairs(PlayerGui:GetChildren()) do
+		if c:IsA("ScreenGui") and c.Name == name then return c end
+	end
 	return PlayerGui:FindFirstChild(name)
 end
 

@@ -1,14 +1,17 @@
-Fix HUD never rendering + nav not opening: script/ScreenGui name collision
+Audit: fix remaining script/ScreenGui name-collision lookups
 
-The HUD LocalScript is itself named "HUD" (rojo names instances after files), so the
-duplicate-guard's FindFirstChild("HUD") matched the SCRIPT and returned before
-building any UI — the HUD has been invisible ever since the guard was added.
+Full codebase pass for the same class of bug as the HUD (LocalScript name ==
+ScreenGui name, so FindFirstChild can return the script):
 
-Same root cause broke the nav: each panel's LocalScript shares its name with the
-ScreenGui it creates, so FindFirstChild(name) could return the script, and toggling
-.Enabled on it did nothing.
+- BracketController: was resolving the BracketScreen by name and could grab the
+  script — cup countdown/result updates silently no-op'd. Now resolves the real
+  ScreenGui.
+- UIController.getGui: same; now prefers a real ScreenGui match (makes its
+  redundant HUD/nav/screen logic correct as a backup to the self-contained HUD).
 
-Both now match a real ScreenGui specifically (iterate children, check :IsA("ScreenGui")).
-HUD renders again and the bottom-nav buttons open their panels.
+Verified clean (no bugs): CardService (rarity/guarantee/squad-dupe security),
+MonetizationService (idempotent ProcessReceipt), TradeService (atomic, re-validated
+swap), Collection/Squad/Bracket/Shop screens (self-contained, close buttons,
+self-subscribe), and MatchdaySchedule timestamps (2026 dates correct).
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
