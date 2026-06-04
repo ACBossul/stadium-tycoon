@@ -542,7 +542,7 @@ end
 -- Perimeter wall (with a south entrance gap) + two goal frames, for "place" feel.
 local function buildSurrounds(plot, origin)
 	local half = PLOT_SIZE.X / 2
-	local wallH, wallT = 8, 2          -- tall enough that you can't jump over it
+	local wallH, wallT = 10, 2          -- tall enough that you can't jump over it
 	local wallColor = Color3.fromRGB(70, 74, 86)
 
 	local function wall(cx, cz, sx, sz)
@@ -564,15 +564,15 @@ local function buildSurrounds(plot, origin)
 		-- Roof canopy: a slab on top that cantilevers inward over the stands.
 		local canopy = Instance.new("Part")
 		canopy.Anchored   = true
-		canopy.CanCollide = false
+		canopy.CanCollide = true
 		canopy.Color      = Color3.fromRGB(48, 52, 62)
 		canopy.Material   = Enum.Material.Metal
 		if horizontal then
-			canopy.Size     = Vector3.new(sx + 3, 1, 11)
-			canopy.Position = origin + Vector3.new(cx, wallH + 0.5, cz - sgnZ * 4.5)
+			canopy.Size     = Vector3.new(sx + 4, 2.5, 16)
+			canopy.Position = origin + Vector3.new(cx, wallH + 1.25, cz - sgnZ * 7)
 		else
-			canopy.Size     = Vector3.new(11, 1, sz + 3)
-			canopy.Position = origin + Vector3.new(cx - sgnX * 4.5, wallH + 0.5, cz)
+			canopy.Size     = Vector3.new(16, 2.5, sz + 4)
+			canopy.Position = origin + Vector3.new(cx - sgnX * 7, wallH + 1.25, cz)
 		end
 		canopy.Parent = plot
 
@@ -607,7 +607,7 @@ local function buildSurrounds(plot, origin)
 		local function bar(dx, dy, sx, sy, sz)
 			local p = Instance.new("Part")
 			p.Anchored = true
-			p.CanCollide = false
+			p.CanCollide = true
 			p.Size = Vector3.new(sx, sy, sz)
 			p.Position = origin + Vector3.new(dx, dy, cz)
 			p.Color = Color3.fromRGB(240, 240, 245)
@@ -646,14 +646,16 @@ local function buildPitch(plot, origin)
 	local stripes = 8
 	local sw = PX / stripes
 	for i = 0, stripes - 1 do
-		local shade = (i % 2 == 0) and Color3.fromRGB(52, 140, 70) or Color3.fromRGB(44, 120, 60)
-		flat(-PX / 2 + sw / 2 + i * sw, 0, sw, PZ, shade, 0.12)
+		-- High-contrast alternating bands so the "mowed pitch" reads clearly on top
+		-- of the (uniform) grass texture below. Lifted to y=0.3 to avoid z-fighting.
+		local shade = (i % 2 == 0) and Color3.fromRGB(72, 168, 90) or Color3.fromRGB(32, 98, 50)
+		flat(-PX / 2 + sw / 2 + i * sw, 0, sw, PZ, shade, 0.30)
 	end
 
-	-- White field markings
-	local white = Color3.fromRGB(235, 238, 240)
+	-- White field markings (sit just above the stripes)
+	local white = Color3.fromRGB(238, 240, 244)
 	local function line(cx, cz, sx, sz)
-		flat(cx, cz, sx, sz, white, 0.22, Enum.Material.SmoothPlastic)
+		flat(cx, cz, sx, sz, white, 0.42, Enum.Material.SmoothPlastic)
 	end
 	line(0,  PZ / 2, PX, 1)   -- north line
 	line(0, -PZ / 2, PX, 1)   -- south line
@@ -677,7 +679,7 @@ local function buildHoardings(plot, origin)
 	local function board(cx, cz, sx, sz, face)
 		local p = Instance.new("Part")
 		p.Anchored   = true
-		p.CanCollide = false
+		p.CanCollide = true
 		p.Size       = Vector3.new(sx, 2.4, sz)
 		p.Position   = origin + Vector3.new(cx, 1.3, cz)
 		p.Color      = Color3.fromRGB(18, 20, 28)

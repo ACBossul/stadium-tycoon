@@ -1,17 +1,12 @@
-Make upgrades work: reliable click path + Studio funds that can't be raced
+Show balance, solidify pitch furniture, restore mowed stripes, beef up canopy
 
-Client boot is fixed (prices + toasts now show), so the remaining failures
-were: (1) coins stuck near 0 so every Build was rejected, and (2) the upgrade
-billboard TextButtons likely not receiving clicks (the kart ClickDetector works,
-so ClickDetectors are the reliable path here).
-
-- StadiumController: clicking the building BODY now upgrades it (build for
-  unbuilt active-collect buildings, collect once built) via the building's
-  ClickDetector — a reliable fallback to the billboard button.
-- Main: guard onPlayerJoin against double-firing in Play Solo (which raced the
-  test-funds grant onto the wrong profile copy). Studio coin top-up in the
-  income loop keeps coins >=1M so upgrades are always testable.
-- Diagnostics: [SvJoin] (server-side coins/stands/isStudio), [SvUpgrade] failure
-  reason, and [ClProfile] (what the client receives) so Output shows the truth.
+- HUD: stop ignoring the top inset so the coin/gem balance bar renders BELOW
+  Roblox's menu strip instead of hidden under it (you could only see income).
+- Pitch: high-contrast mowed stripes lifted above the now-rendering grass
+  texture so it reads as a striped pitch again, not flat turf.
+- Hoardings (advertising boards) and goal posts are now solid (CanCollide) —
+  no more walking through them.
+- Perimeter wall canopy: thicker (2.5), raised on taller 10-stud walls, larger
+  inward cantilever, and solid — a real stadium roof lip instead of a thin sheet.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

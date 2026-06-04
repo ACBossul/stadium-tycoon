@@ -11,7 +11,9 @@ local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
 local gui = Instance.new("ScreenGui")
 gui.Name         = "HUD"
 gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = true
+-- Respect the top inset so the coin/gem balance bar sits BELOW Roblox's menu
+-- strip instead of hiding underneath it.
+gui.IgnoreGuiInset = false
 gui.DisplayOrder = 1
 gui.Parent       = PlayerGui
 
