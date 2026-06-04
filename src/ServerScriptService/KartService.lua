@@ -24,18 +24,18 @@ local KartService = {}
 local KART_SPECS = {
 	basic = {
 		displayName = "Street Kart",
-		body   = Color3.fromRGB(220, 82, 70),
-		accent = Color3.fromRGB(38, 42, 52),
-		maxSpeed = 75,
-		turnRate = 2.6,
+		body   = Color3.fromRGB(150, 152, 162),   -- plain, average
+		accent = Color3.fromRGB(95, 98, 110),
+		maxSpeed = 52,                              -- average pace
+		turnRate = 2.2,
 		neon = false,
 	},
 	pro = {
 		displayName = "VIP Turbo Kart",
-		body   = Color3.fromRGB(34, 38, 50),
+		body   = Color3.fromRGB(30, 34, 48),
 		accent = Color3.fromRGB(120, 232, 255),
-		maxSpeed = 115,
-		turnRate = 3.0,
+		maxSpeed = 140,                             -- way faster — clearly worth VIP
+		turnRate = 3.4,
 		neon = true,
 	},
 }

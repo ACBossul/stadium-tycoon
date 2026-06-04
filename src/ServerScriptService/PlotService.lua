@@ -918,8 +918,8 @@ end
 -- A second level you climb to: stairs → viewing deck → Trophy Room + VIP Lounge.
 -- Built once per plot in a clear east-side spot.
 local function buildUpperTier(plot, origin, player)
-	local bx, bz   = 70, 18      -- deck centre (plot-local)
-	local deckY    = 18
+	local bx, bz = 70, 22       -- deck centre (plot-local)
+	local deckY  = 18
 	local function up(sx, sy, sz, x, y, z, color, mat, collide)
 		local p = Instance.new("Part")
 		p.Name = "UpperTier"
@@ -937,56 +937,71 @@ local function buildUpperTier(plot, origin, player)
 	local CONCRETE = Color3.fromRGB(86, 90, 104)
 	local GOLD     = Color3.fromRGB(245, 205, 70)
 
-	-- Support core
-	up(10, deckY, 10, bx, deckY / 2, bz, CONCRETE, Enum.Material.Concrete)
-	-- Staircase rising south→north up to the deck (auto-climbable 1.5-stud steps)
-	local steps = 12
+	-- Support cores at the BACK corners only — never in the staircase path.
+	up(6, deckY, 6, bx - 17, deckY / 2, bz + 16, CONCRETE, Enum.Material.Concrete)
+	up(6, deckY, 6, bx + 17, deckY / 2, bz + 16, CONCRETE, Enum.Material.Concrete)
+
+	-- Wide staircase up the SOUTH face, landing flush on the deck (auto-climbable).
+	local steps = 13
 	for i = 1, steps do
 		local y = i * (deckY / steps)
-		local z = bz - 26 + (i - 1) * (22 / (steps - 1))
-		up(9, 0.8, 2.6, bx, y, z, CONCRETE, Enum.Material.Concrete)
+		local z = bz - 36 + (i - 1) * (18 / (steps - 1))
+		up(16, 0.9, 2.4, bx, y, z, CONCRETE, Enum.Material.Concrete)
 	end
+
 	-- Viewing deck
-	up(36, 1.5, 34, bx, deckY, bz, CONCRETE, Enum.Material.Concrete)
-	applyTexture(up(36, 1.5, 34, bx, deckY, bz, CONCRETE, Enum.Material.Concrete), TEXTURES.brick, 8, { Enum.NormalId.Top })
-	-- Deck railings (low, non-block on the stair side)
-	up(36, 2, 0.5, bx, deckY + 1.5, bz + 17, GOLD, Enum.Material.Metal, false)
-	up(0.5, 2, 34, bx + 18, deckY + 1.5, bz, GOLD, Enum.Material.Metal, false)
-	up(0.5, 2, 34, bx - 18, deckY + 1.5, bz, GOLD, Enum.Material.Metal, false)
+	local deck = up(40, 1.5, 36, bx, deckY, bz, CONCRETE, Enum.Material.Concrete)
+	applyTexture(deck, TEXTURES.brick, 8, { Enum.NormalId.Top })
+	-- Railings (left/right + back; south is OPEN for the stairs)
+	up(0.5, 3, 36, bx + 20, deckY + 1.6, bz, GOLD, Enum.Material.Metal, false)
+	up(0.5, 3, 36, bx - 20, deckY + 1.6, bz, GOLD, Enum.Material.Metal, false)
+	up(40, 3, 0.5, bx, deckY + 1.6, bz + 18, GOLD, Enum.Material.Metal, false)
 
-	-- ── Trophy Room (enclosed, west half of the deck) ──
-	local trX = bx - 9
-	up(16, 9, 0.6, trX, deckY + 5.5, bz - 7, Color3.fromRGB(40,44,58), Enum.Material.Concrete)   -- back/south wall
-	up(0.6, 9, 16, trX - 8, deckY + 5.5, bz + 1, Color3.fromRGB(40,44,58), Enum.Material.Concrete) -- west wall
-	up(16, 1, 16, trX, deckY + 10, bz + 1, Color3.fromRGB(34,38,50), Enum.Material.Metal)          -- roof
-	local trSignWall = up(16, 9, 0.6, trX, deckY + 5.5, bz + 9, Color3.fromRGB(40,44,58), Enum.Material.Concrete) -- front (north)
-	local trSg = Instance.new("SurfaceGui")
-	trSg.Face = Enum.NormalId.Back; trSg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	trSg.PixelsPerStud = 24; trSg.LightInfluence = 0; trSg.Parent = trSignWall
-	local trLbl = Instance.new("TextLabel")
-	trLbl.Size = UDim2.new(1,0,0.3,0); trLbl.Position = UDim2.new(0,0,0.05,0); trLbl.BackgroundTransparency = 1
-	trLbl.Text = "🏆 TROPHY ROOM"; trLbl.TextColor3 = GOLD; trLbl.TextScaled = true; trLbl.Font = Enum.Font.GothamBlack
-	trLbl.Parent = trSg
-	-- Trophy podiums + golden cups
+	-- ── Trophy Room (west half; open to the deck, with a LIVE display board) ──
+	local trX = bx - 11
+	up(0.6, 9, 20, trX - 9, deckY + 5, bz, Color3.fromRGB(40,44,58), Enum.Material.Concrete)  -- west wall
+	up(20, 9, 0.6, trX, deckY + 5, bz + 9.5, Color3.fromRGB(40,44,58), Enum.Material.Concrete) -- back wall
+	up(20, 1, 20, trX, deckY + 9.5, bz, Color3.fromRGB(34,38,50), Enum.Material.Metal)         -- roof
 	for i = -1, 1 do
-		up(3, 2, 3, trX + i * 4.5, deckY + 1.5, bz - 3, Color3.fromRGB(60,64,78), Enum.Material.Concrete) -- podium
-		up(1.6, 2.4, 1.6, trX + i * 4.5, deckY + 3.7, bz - 3, GOLD, Enum.Material.Neon)                  -- cup
+		up(3, 2, 3, trX + i * 5.5, deckY + 1.5, bz + 5, Color3.fromRGB(60,64,78), Enum.Material.Concrete)
+		up(1.6, 2.4, 1.6, trX + i * 5.5, deckY + 3.7, bz + 5, GOLD, Enum.Material.Neon)
 	end
+	local trBoard = up(18, 6.5, 0.4, trX, deckY + 5.5, bz - 9, Color3.fromRGB(12,14,22), Enum.Material.SmoothPlastic)
+	trBoard.Name = "TrophyDisplay"
+	local trOwner = Instance.new("ObjectValue") trOwner.Name = "Owner" trOwner.Value = player trOwner.Parent = trBoard
+	local trSg = Instance.new("SurfaceGui")
+	trSg.Name = "Info"; trSg.Face = Enum.NormalId.Back; trSg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	trSg.PixelsPerStud = 22; trSg.LightInfluence = 0; trSg.Parent = trBoard
+	local trTitle = Instance.new("TextLabel")
+	trTitle.Size = UDim2.new(1,0,0.26,0); trTitle.BackgroundTransparency = 1; trTitle.Text = "🏆 TROPHY ROOM"
+	trTitle.TextColor3 = GOLD; trTitle.TextScaled = true; trTitle.Font = Enum.Font.GothamBlack; trTitle.Parent = trSg
+	local trInfo = Instance.new("TextLabel")
+	trInfo.Name = "Lines"; trInfo.Size = UDim2.new(1,-8,0.72,0); trInfo.Position = UDim2.new(0,4,0.27,0)
+	trInfo.BackgroundTransparency = 1; trInfo.Text = "Win cup matches to fill your case!"
+	trInfo.TextColor3 = Color3.fromRGB(225,225,240); trInfo.TextScaled = true; trInfo.Font = Enum.Font.Gotham
+	trInfo.TextWrapped = true; trInfo.Parent = trSg
+	CollectionService:AddTag(trBoard, "TrophyDisplay")
 
-	-- ── VIP Lounge (open, east half) ──
-	local vlX = bx + 10
-	up(14, 0.4, 16, vlX, deckY + 1, bz + 1, Color3.fromRGB(70, 40, 90), Enum.Material.Neon, false)  -- plush floor
-	local vlSign = up(13, 3, 0.5, vlX, deckY + 6, bz - 7, Color3.fromRGB(20,16,28), Enum.Material.SmoothPlastic)
+	-- ── VIP Lounge (east half; OPEN, advertises perks to everyone) ──
+	local vlX = bx + 11
+	up(16, 0.4, 18, vlX, deckY + 1, bz, Color3.fromRGB(70, 40, 90), Enum.Material.Neon, false)  -- plush floor
+	local vlBoard = up(16, 7, 0.4, vlX, deckY + 5.5, bz + 8.8, Color3.fromRGB(20,16,28), Enum.Material.SmoothPlastic)
 	local vlSg = Instance.new("SurfaceGui")
 	vlSg.Face = Enum.NormalId.Front; vlSg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	vlSg.PixelsPerStud = 26; vlSg.LightInfluence = 0; vlSg.Parent = vlSign
-	local vlLbl = Instance.new("TextLabel")
-	vlLbl.Size = UDim2.new(1,0,1,0); vlLbl.BackgroundTransparency = 1
-	vlLbl.Text = "⭐ VIP LOUNGE"; vlLbl.TextColor3 = Color3.fromRGB(255,215,120); vlLbl.TextScaled = true; vlLbl.Font = Enum.Font.GothamBold
-	vlLbl.Parent = vlSg
-	-- a couple of lounge benches
-	up(5, 1.4, 2, vlX - 3, deckY + 1.7, bz + 4, Color3.fromRGB(120,60,150), Enum.Material.SmoothPlastic)
-	up(5, 1.4, 2, vlX + 3, deckY + 1.7, bz + 4, Color3.fromRGB(120,60,150), Enum.Material.SmoothPlastic)
+	vlSg.PixelsPerStud = 20; vlSg.LightInfluence = 0; vlSg.Parent = vlBoard
+	local vlTitle = Instance.new("TextLabel")
+	vlTitle.Size = UDim2.new(1,0,0.2,0); vlTitle.BackgroundTransparency = 1; vlTitle.Text = "⭐ VIP PERKS"
+	vlTitle.TextColor3 = Color3.fromRGB(255,215,120); vlTitle.TextScaled = true; vlTitle.Font = Enum.Font.GothamBlack; vlTitle.Parent = vlSg
+	local vlList = Instance.new("TextLabel")
+	vlList.Size = UDim2.new(1,-10,0.62,0); vlList.Position = UDim2.new(0,5,0.22,0); vlList.BackgroundTransparency = 1
+	vlList.Text = "• Instant City teleport\n• VIP Turbo Kart (way faster)\n• Daily free gems\n• This exclusive lounge"
+	vlList.TextColor3 = Color3.new(1,1,1); vlList.TextScaled = true; vlList.Font = Enum.Font.Gotham
+	vlList.TextXAlignment = Enum.TextXAlignment.Left; vlList.Parent = vlSg
+	local vlCta = Instance.new("TextLabel")
+	vlCta.Size = UDim2.new(1,0,0.16,0); vlCta.Position = UDim2.new(0,0,0.84,0); vlCta.BackgroundTransparency = 1
+	vlCta.Text = "Get VIP in the 🛍 Shop!"; vlCta.TextColor3 = Color3.fromRGB(120,255,160); vlCta.TextScaled = true; vlCta.Font = Enum.Font.GothamBold; vlCta.Parent = vlSg
+	up(5, 1.4, 2, vlX - 4, deckY + 1.7, bz - 5, Color3.fromRGB(120,60,150), Enum.Material.SmoothPlastic)
+	up(5, 1.4, 2, vlX + 4, deckY + 1.7, bz - 5, Color3.fromRGB(120,60,150), Enum.Material.SmoothPlastic)
 end
 
 -- A rebirth/prestige pad (RebirthService wires the click via the "RebirthPad" tag).

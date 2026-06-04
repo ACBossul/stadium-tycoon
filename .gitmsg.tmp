@@ -1,11 +1,14 @@
-Expand card roster + rebirth-exclusive reward cards
+Make VIP tangibly better: faster kart, accessible lounge, live trophy room
 
-- CardCatalog: ~26 new parody-star cards (transformative pun names only, no real
-  players) across all rarities/positions ? roughly doubles the collection.
-- 5 rebirth-EXCLUSIVE Mythic cards (The Prestige, Golden Reaper, The Ascended One,
-  Phoenix Reborn, Infinity Striker) that never drop from packs.
-- CardService: packs/match rewards skip rebirthOnly cards; added grantSpecificCard.
-- RebirthService: each rebirth now grants a specific exclusive card (cycles through
-  the set) and names it in the toast.
+- KartService: normal kart is now plain & average (speed 52); VIP Turbo
+  Kart is much faster (speed 140) and flashier so VIP clearly pays off.
+- PlotService upper tier: support cores moved to the back corners so they
+  no longer block the staircase (the lounge was unreachable). Wider stairs
+  land flush on the deck. VIP Lounge is OPEN and advertises its perks to
+  everyone (perk list + "Get VIP in the Shop" CTA) instead of hiding them.
+- Trophy Room now has a live display board (tagged TrophyDisplay) showing
+  cup stage, matches won, rebirths and your best card.
+- New TrophyController (client) fills that board from the profile; wired
+  into ClientMain's boot + ProfileUpdated handler.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
