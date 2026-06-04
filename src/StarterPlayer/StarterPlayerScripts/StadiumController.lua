@@ -25,7 +25,8 @@ local Remotes
 -- Track wired buildings so we can refresh their labels on profile updates.
 -- Map: buildingId -> { model, part, levelLabel, upgradeButton, cfg, lastLevel }
 local ownedBuildings = {}
-local wiredModels    = setmetatable({}, { __mode = "k" })  -- model -> true (prevents double-wire)
+local processed  = setmetatable({}, { __mode = "k" })  -- model -> handled (ours & wired, or not-ours)
+local wiringNow  = setmetatable({}, { __mode = "k" })  -- model -> wireBuilding currently in flight
 local lastData = nil   -- most recent profile, to sync buildings wired after it arrives
 
 -- ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -129,30 +130,62 @@ end
 -- ─── Wiring a single building ────────────────────────────────────────────────
 
 local function wireBuilding(model)
-	-- Guard on the model instance (no yields before this) so a model can never be
-	-- wired twice — a double-wire would double-fire the upgrade remote per click.
-	if wiredModels[model] then return end
-	wiredModels[model] = true
+	if processed[model] or wiringNow[model] then return end
+	wiringNow[model] = true
 
-	-- The "StadiumBuilding" tag can replicate a beat BEFORE the model's value
-	-- objects and the (deeply-nested) billboard arrive on the client. The old code
-	-- used FindFirstChild and bailed on a miss with no retry, which left buildings
-	-- permanently unwired → "can't upgrade anything". Wait for each piece instead.
-	local idValue = model:FindFirstChild("BuildingId") or model:WaitForChild("BuildingId", 20)
+	-- The "StadiumBuilding" tag can replicate a beat BEFORE the value objects and
+	-- the (deeply-nested) billboard arrive, so wait for each piece.
+	local idValue = model:FindFirstChild("BuildingId") or model:WaitForChild("BuildingId", 30)
 	local buildingId = idValue and idValue.Value
-	if not buildingId then return end
+	if not buildingId then
+		wiringNow[model] = nil
+		return
+	end
 
-	local ownerValue = model:FindFirstChild("Owner") or model:WaitForChild("Owner", 20)
-	if not ownerValue or ownerValue.Value ~= LocalPlayer then return end  -- not ours
-	if ownedBuildings[buildingId] then return end                          -- already have ours
+	local ownerValue = model:FindFirstChild("Owner") or model:WaitForChild("Owner", 30)
+	if not ownerValue then
+		wiringNow[model] = nil
+		return
+	end
 
-	local cfg  = BuildingConfig.ById[buildingId]
-	if not cfg then return end
+	-- CRITICAL: an ObjectValue's reference resolves a beat AFTER the instance itself
+	-- replicates. Checking .Value too early (and never retrying) was the "had to load
+	-- twice before upgrades worked" bug. Wait for the reference to actually resolve.
+	local tries = 0
+	while ownerValue.Value == nil and tries < 100 do
+		task.wait(0.1)
+		tries += 1
+	end
+
+	if ownerValue.Value == nil then
+		wiringNow[model] = nil          -- unresolved; a later profile re-scan will retry
+		return
+	end
+	if ownerValue.Value ~= LocalPlayer then
+		processed[model] = true         -- definitively someone else's base
+		wiringNow[model] = nil
+		return
+	end
+
+	processed[model] = true             -- ours — handled (re-scans skip it now)
+	if ownedBuildings[buildingId] then
+		wiringNow[model] = nil
+		return
+	end
+
+	local cfg = BuildingConfig.ById[buildingId]
+	if not cfg then
+		wiringNow[model] = nil
+		return
+	end
 	local part = model.PrimaryPart
 		or model:FindFirstChild("Base")
 		or model:WaitForChild("Base", 20)
 		or model:FindFirstChildWhichIsA("BasePart")
-	if not part then return end
+	if not part then
+		wiringNow[model] = nil
+		return
+	end
 
 	local billboard     = part:WaitForChild("InfoBillboard", 20)
 	local frame         = billboard and billboard:WaitForChild("Frame", 10)
@@ -176,16 +209,13 @@ local function wireBuilding(model)
 		end)
 	end
 
-	-- ClickDetector on the building body: a RELIABLE input path (proven to work —
-	-- the kart pad uses one) as a fallback in case the billboard's TextButton
-	-- doesn't receive clicks. Active-collect buildings collect; the rest upgrade.
+	-- ClickDetector on the building body: the RELIABLE input path (the kart pad uses
+	-- one). Active-collect buildings collect once built; everything else upgrades.
 	local detector = part:FindFirstChildOfClass("ClickDetector")
 	if detector then
 		if cfg.activeOnly then
 			detector.MouseClick:Connect(function(clickingPlayer)
 				if clickingPlayer ~= LocalPlayer then return end
-				-- If it isn't built yet, a body-click builds it (reliable path);
-				-- once built, a body-click collects its takings.
 				local level = (lastData and lastData.stadium and lastData.stadium[buildingId]) or 0
 				if level <= 0 then
 					local up = Remotes and Remotes:FindFirstChild("UpgradeBuilding")
@@ -194,7 +224,6 @@ local function wireBuilding(model)
 				end
 				local remote = Remotes and Remotes:FindFirstChild("CollectBuilding")
 				if remote then remote:FireServer(buildingId) end
-				-- Optimistic juice (the exact amount comes via the toast).
 				floatText(part, "+ 💰", Color3.fromRGB(255, 220, 60))
 				burstSparkle(part, Color3.fromRGB(255, 220, 60))
 			end)
@@ -207,11 +236,10 @@ local function wireBuilding(model)
 		end
 	end
 
-	-- If profile data already arrived, sync this building immediately so it
-	-- doesn't sit on the default "Locked" until the next periodic update.
 	if lastData then
 		applyToBuilding(buildingId, ownedBuildings[buildingId], lastData)
 	end
+	wiringNow[model] = nil
 end
 
 local function wireAll()
@@ -228,6 +256,13 @@ end
 function StadiumController.onProfileUpdated(data)
 	if not data or not data.stadium then return end
 	lastData = data
+	-- Self-heal: wire any of our buildings a replication race left unwired, so the
+	-- player never has to rejoin to make upgrades work.
+	for _, model in ipairs(CollectionService:GetTagged("StadiumBuilding")) do
+		if not processed[model] and not wiringNow[model] then
+			task.spawn(wireBuilding, model)
+		end
+	end
 	for buildingId, entry in pairs(ownedBuildings) do
 		applyToBuilding(buildingId, entry, data)
 	end

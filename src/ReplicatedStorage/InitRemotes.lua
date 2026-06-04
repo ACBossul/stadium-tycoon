@@ -26,6 +26,7 @@ end
 makeEvent("CollectBuilding")        -- client → server: collect active building
 makeEvent("UpgradeBuilding")        -- client → server: upgrade building
 makeEvent("ProfileUpdated")         -- server → client: push updated profile snapshot
+makeEvent("RequestState")           -- client → server: "I'm ready, send my current state"
 
 -- Cards / Packs
 makeEvent("OpenPack")               -- client → server: buy & open pack

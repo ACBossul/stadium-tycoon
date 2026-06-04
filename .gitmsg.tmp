@@ -1,11 +1,19 @@
-Fix HUD not rendering: build UI before requiring BuildingConfig
+Reliability overhaul: fix load-twice, request state on boot, buildings grow
 
-My previous HUD rewrite put require(BuildingConfig) at the very top, before the
-ScreenGui was created. On a cold client that require could stall/fail, killing the
-whole script so the HUD (balance bar + nav) never appeared at all.
+Root-cause pass on the recurring "had to load twice" + flaky upgrades:
 
-Now the HUD is built first; BuildingConfig is loaded afterward, safely (timeouts +
-pcall), and the income readout simply waits for it. Balance/gems/nav no longer
-depend on that require, so the HUD always renders.
+- StadiumController: the building wiring checked Owner.Value the instant the
+  ObjectValue replicated, but the *reference* resolves a beat later — so on a cold
+  first load it read nil, bailed, and (being marked done) never retried. Now it
+  WAITS for Owner.Value to resolve, only marks a model handled once it's sure, and
+  RE-SCANS unwired buildings on every profile update so a race always self-heals.
+  This is the fix for upgrades needing a second join.
+- RequestState remote: client asks the server for its state once all handlers are
+  connected (x3), so the HUD balance/income populate immediately instead of waiting
+  for (or missing) the periodic push.
+- PlotService: every non-stands building now visibly scales up with its level
+  (re-seated on the ground), on both build and upgrade — upgrades finally feel
+  visible, not "useless".
+- Removed the green debug overlay (its job is done; data is confirmed flowing).
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

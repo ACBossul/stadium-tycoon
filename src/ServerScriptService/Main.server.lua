@@ -349,4 +349,18 @@ Remotes.ClaimBattlePassTier.OnServerEvent:Connect(function(player, payload)
 	end
 end)
 
+-- Client → "I'm booted and listening, send my state." Covers the race where the
+-- client connects its ProfileUpdated handler just after the join-time push.
+Remotes.RequestState.OnServerEvent:Connect(function(player)
+	local data = DataService.getData(player)
+	if not data then return end
+	pushProfile(player)
+	pushDailyRewardState(player)
+	local nextEntry = MatchdaySchedule.getNextEntry(data.bracket.lastResolvedMatchday)
+	local cdEvent = Remotes:FindFirstChild("MatchdayCountdown")
+	if nextEntry and cdEvent then
+		cdEvent:FireClient(player, { timestamp = nextEntry.timestamp, matchdayId = nextEntry.matchdayId })
+	end
+end)
+
 print("[StadiumTycoon] Server started.")

@@ -853,6 +853,19 @@ local function buildKartStation(plot, origin, player)
 	CollectionService:AddTag(pad, "KartSpawner")
 end
 
+-- Non-stands buildings visibly GROW with their upgrade level so progression is
+-- felt. Scales around the centre, then re-seats the base on the ground (y=0).
+local function scaleBuildingToLevel(model, level)
+	local base = model.PrimaryPart
+	if not base then return end
+	local targetScale = 1 + math.clamp(level, 0, 24) * 0.03   -- up to ~1.7x at high levels
+	model:ScaleTo(targetScale)
+	local baseBottom = base.Position.Y - base.Size.Y / 2
+	if math.abs(baseBottom) > 0.001 then
+		model:TranslateBy(Vector3.new(0, -baseBottom, 0))
+	end
+end
+
 -- ─── Plot builder ────────────────────────────────────────────────────────────
 
 function PlotService.buildPlot(player)
@@ -942,7 +955,11 @@ function PlotService.buildPlot(player)
 			origin.Z + spot.z
 		)
 		local level = (data and data.stadium and data.stadium[buildingCfg.id]) or 0
-		buildBuildingModel(buildingCfg, pos, player, level).Parent = plot
+		local m = buildBuildingModel(buildingCfg, pos, player, level)
+		m.Parent = plot
+		if buildingCfg.id ~= "stands" and level > 0 then
+			scaleBuildingToLevel(m, level)
+		end
 	end
 
 	plot.Parent = plotsFolder
@@ -959,15 +976,21 @@ end
 
 -- Called after a successful upgrade so the stadium visibly builds up in real time.
 function PlotService.onBuildingUpgraded(player, buildingId, level)
-	if buildingId ~= "stands" then return end   -- only stands grow geometry (for now)
 	local plot  = playerPlotModel[player.UserId]
 	local index = playerPlotIndex[player.UserId]
 	if not plot or not index then return end
-	local model = plot:FindFirstChild("stands")
+	local model = plot:FindFirstChild(buildingId)
 	if not model then return end
-	local origin = Vector3.new(index * PLOT_SPACING, 0, 0)
-	local spot   = BUILDING_LAYOUT.stands
-	buildStandTiers(model, origin.X + spot.x, origin.Z + spot.z, level)
+
+	if buildingId == "stands" then
+		-- The grandstand rebuilds its seating/crowd/roof to the new level.
+		local origin = Vector3.new(index * PLOT_SPACING, 0, 0)
+		local spot   = BUILDING_LAYOUT.stands
+		buildStandTiers(model, origin.X + spot.x, origin.Z + spot.z, level)
+	else
+		-- Everything else grows in scale.
+		scaleBuildingToLevel(model, level)
+	end
 end
 
 function PlotService.removePlot(player)

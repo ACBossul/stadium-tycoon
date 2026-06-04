@@ -7,50 +7,12 @@
 -- print progress so the Output window shows exactly how far boot got.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players           = game:GetService("Players")
-
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui   = LocalPlayer:WaitForChild("PlayerGui")
 
 print("[StadiumTycoon] Client booting…")
-
--- ─── On-screen debug readout (so state is visible WITHOUT the Output window) ─────
-local dbgGui = Instance.new("ScreenGui")
-dbgGui.Name           = "DebugOverlay"
-dbgGui.ResetOnSpawn   = false
-dbgGui.IgnoreGuiInset = true
-dbgGui.DisplayOrder   = 999
-dbgGui.Parent         = PlayerGui
-
-local dbgLabel = Instance.new("TextLabel")
-dbgLabel.Size                   = UDim2.new(0, 580, 0, 96)
-dbgLabel.Position               = UDim2.new(0.5, -290, 0, 130)
-dbgLabel.BackgroundColor3       = Color3.fromRGB(0, 0, 0)
-dbgLabel.BackgroundTransparency = 0.25
-dbgLabel.TextColor3             = Color3.fromRGB(0, 255, 120)
-dbgLabel.Font                   = Enum.Font.Code
-dbgLabel.TextSize               = 20
-dbgLabel.TextXAlignment         = Enum.TextXAlignment.Left
-dbgLabel.TextYAlignment         = Enum.TextYAlignment.Top
-dbgLabel.Text                   = "DEBUG: waiting for server data…"
-dbgLabel.Parent                 = dbgGui
-
-local profileUpdates = 0
-local lastMsg = "(none)"
-local function refreshDebug(p)
-	dbgLabel.Text = string.format(
-		"DEBUG  profile-updates=%d\ncoins=%s   stands=%s\nlast server msg: %s",
-		profileUpdates,
-		tostring(p and p.coins),
-		tostring(p and p.stadium and p.stadium.stands),
-		lastMsg
-	)
-end
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes", 30)
 if not Remotes then
 	warn("[Client] Remotes not found after 30s — did the server start?")
-	dbgLabel.Text = "DEBUG: Remotes NOT FOUND — server didn't start."
 	return
 end
 
@@ -115,19 +77,12 @@ end
 
 onEvent("ProfileUpdated", function(profileData)
 	ClientState.profile = profileData
-	profileUpdates += 1
-	refreshDebug(profileData)
-	print(string.format("[ClProfile] coins=%s stands=%s",
-		tostring(profileData and profileData.coins),
-		tostring(profileData and profileData.stadium and profileData.stadium.stands)))
 	-- Isolate each controller so one failing can't block the other.
 	pcall(function() if UIController then UIController.onProfileUpdated(profileData) end end)
 	pcall(function() if StadiumController then StadiumController.onProfileUpdated(profileData) end end)
 end)
 
 onEvent("ShowNotification", function(payload)
-	lastMsg = tostring(payload and payload.message)
-	refreshDebug(ClientState.profile)
 	if UIController then UIController.showToast(payload.message, payload.color) end
 end)
 
@@ -157,3 +112,14 @@ onEvent("TradeComplete", function(payload)
 end)
 
 print("[StadiumTycoon] Client ready.")
+
+-- Now that every handler is connected, ask the server for our current state a few
+-- times (covers the race where the join-time push landed before we were listening).
+task.spawn(function()
+	local req = Remotes:FindFirstChild("RequestState")
+	if not req then return end
+	for _ = 1, 3 do
+		req:FireServer()
+		task.wait(1.5)
+	end
+end)
