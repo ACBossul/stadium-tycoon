@@ -1,0 +1,16 @@
+Fix client boot dying silently (root cause of everything being unclickable)
+
+The real bug behind "can't upgrade / nav dead / income stuck at 0": a single
+require/runtime error in ClientMain halted the entire client boot, so NO
+controller initialised and the ProfileUpdated/ShowNotification handlers never
+connected. Every dead symptom traced to this one point.
+
+- ClientMain: isolate every require, init, and remote handler in pcall so one
+  bad module can never take down the rest. Added boot diagnostics
+  ("[StadiumTycoon] Client booting / initialised / ready") so the Output
+  console shows exactly how far boot gets.
+- StadiumController + PackOpenController: replace direct-index config requires
+  (ReplicatedStorage.Config.X) with WaitForChild, so a slow-replicating Config
+  on the client can't throw at require time.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

@@ -13,7 +13,9 @@ local CollectionService = game:GetService("CollectionService")
 local TweenService      = game:GetService("TweenService")
 local Debris            = game:GetService("Debris")
 
-local BuildingConfig = require(ReplicatedStorage.Config.BuildingConfig)
+-- WaitForChild (not a direct index) so a slow-replicating Config on the client
+-- can't throw at require time and take down the whole client boot.
+local BuildingConfig = require(ReplicatedStorage:WaitForChild("Config"):WaitForChild("BuildingConfig"))
 
 local StadiumController = {}
 

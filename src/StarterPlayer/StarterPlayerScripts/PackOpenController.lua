@@ -234,7 +234,7 @@ function PackOpenController.playReveal(cards)
 end
 
 function PackOpenController.init()
-	CardCatalog = require(ReplicatedStorage.Config.CardCatalog)
+	CardCatalog = require(ReplicatedStorage:WaitForChild("Config"):WaitForChild("CardCatalog"))
 end
 
 return PackOpenController
