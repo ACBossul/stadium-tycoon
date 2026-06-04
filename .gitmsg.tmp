@@ -1,15 +1,13 @@
-On-screen debug overlay + isolate data handlers + raise stand canopy/shop signs
+Fix HUD balance/income + nav by making the HUD self-contained; faster kart
 
-The balance bar now renders but reads 0, and billboards show default text, so the
-client is receiving empty/zero profile data. Since the Output window is hard to
-reach, surface the truth ON SCREEN:
+Debug overlay proved the data is correct (coins 1,000,000+, upgrades applying) —
+the HUD just wasn't reading it. The cross-script name lookup that updated the
+balance/income labels and wired the nav was silently failing.
 
-- ClientMain: a green DEBUG box shows profile-update count, the coins/stands the
-  client actually received, and the last server message. One screenshot now tells
-  us whether it's a no-data, zero-data, or UI-update problem. Also isolated the
-  UIController vs StadiumController profile handlers in separate pcalls so one
-  failing can't block the other (and the balance/billboards both update).
-- PlotService: stand canopy floats higher (real overhead clearance, not a lid);
-  storefront signs moved to the top of the shop face so the awning can't hide them.
+- HUD.client.lua: now updates its OWN coin/gem/income labels straight from the
+  ProfileUpdated remote (with thousands separators), and wires its OWN bottom-nav
+  buttons to toggle the panels — no dependency on another script finding it.
+  Added a duplicate-HUD guard (StarterGui re-runs this on respawn).
+- KartService: bumped speeds (basic 48->75, pro 76->115) and turn rates.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
