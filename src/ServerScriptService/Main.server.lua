@@ -207,6 +207,10 @@ Remotes.UpgradeBuilding.OnServerEvent:Connect(function(player, buildingId)
 	if ok then
 		BattlePassService.addXp(player, BattlePassConfig.XpAwards.upgrade)
 		pushProfile(player)
+		-- Grow the physical stadium to match the new level (live build-up).
+		local data = DataService.getData(player)
+		local lvl  = data and data.stadium and data.stadium[buildingId]
+		if lvl then PlotService.onBuildingUpgraded(player, buildingId, lvl) end
 		local cfg = BuildingConfig.ById[buildingId]
 		notify(player, "Upgraded " .. (cfg and cfg.name or buildingId) .. "!", "green")
 	else
