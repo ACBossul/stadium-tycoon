@@ -83,6 +83,32 @@ local DEFAULT_PIECES = {
 	{ size = Vector3.new(10,10,10), offset = Vector3.new(0,5,0), color = Color3.fromRGB(150,150,150), material = M.SmoothPlastic },
 }
 
+-- Uploaded surface textures (decals on the AC6005 account, via Open Cloud).
+local TEXTURES = {
+	grass   = "rbxassetid://70872978008715",
+	seats   = "rbxassetid://107539265030237",
+	brick   = "rbxassetid://100402802088606",
+	metal   = "rbxassetid://110788642331092",
+	asphalt = "rbxassetid://129383393602486",
+}
+
+-- Tile a texture across the given faces of a part.
+local function applyTexture(part, textureId, studs, faces)
+	if not part or not textureId then return end
+	for _, face in ipairs(faces) do
+		local t = Instance.new("Texture")
+		t.Texture      = textureId
+		t.Face         = face
+		t.StudsPerTileU = studs
+		t.StudsPerTileV = studs
+		t.Parent       = part
+	end
+end
+
+local ALL_SIDES = {
+	Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left, Enum.NormalId.Right,
+}
+
 -- Folder that holds all live plots
 local plotsFolder = Workspace:FindFirstChild("Plots")
 if not plotsFolder then
@@ -333,6 +359,22 @@ local function buildBuildingModel(buildingCfg, position, player)
 	end
 	model.PrimaryPart = primary
 
+	-- Surface textures per building
+	local id = buildingCfg.id
+	if id == "stands" then
+		for i = 2, #partsByIndex do   -- the seating tiers
+			applyTexture(partsByIndex[i], TEXTURES.seats, 5, { Enum.NormalId.Top, Enum.NormalId.Front })
+		end
+	elseif id == "concessions" or id == "merch" then
+		applyTexture(partsByIndex[1], TEXTURES.brick, 6, ALL_SIDES)
+	elseif id == "parking" then
+		applyTexture(partsByIndex[1], TEXTURES.asphalt, 12, { Enum.NormalId.Top })
+	elseif id == "bigscreen" then
+		applyTexture(partsByIndex[1], TEXTURES.metal, 8, ALL_SIDES)
+	elseif id == "floodlights" then
+		applyTexture(partsByIndex[1], TEXTURES.metal, 5, ALL_SIDES)
+	end
+
 	local idValue = Instance.new("StringValue")
 	idValue.Name   = "BuildingId"
 	idValue.Value  = buildingCfg.id
@@ -380,6 +422,7 @@ local function buildSurrounds(plot, origin)
 		p.TopSurface = Enum.SurfaceType.Smooth
 		p.BottomSurface = Enum.SurfaceType.Smooth
 		p.Parent = plot
+		applyTexture(p, TEXTURES.brick, 12, ALL_SIDES)
 	end
 
 	wall(0,  half, PLOT_SIZE.X, wallT)   -- north
@@ -427,15 +470,8 @@ local function buildPitch(plot, origin)
 		p.Parent = plot
 	end
 
-	-- Mowed stripes
-	local stripes = 8
-	local sw = PX / stripes
-	for i = 0, stripes - 1 do
-		local shade = (i % 2 == 0) and Color3.fromRGB(52, 140, 70) or Color3.fromRGB(44, 120, 60)
-		flat(-PX / 2 + sw / 2 + i * sw, 0, sw, PZ, shade, 0.12)
-	end
-
-	-- White markings
+	-- (Grass surface comes from the pad's grass texture; here we only paint the
+	-- white field markings on top of it.)
 	local white = Color3.fromRGB(235, 238, 240)
 	local function line(cx, cz, sx, sz)
 		flat(cx, cz, sx, sz, white, 0.22, Enum.Material.SmoothPlastic)
@@ -553,6 +589,7 @@ function PlotService.buildPlot(player)
 	pad.BottomSurface = Enum.SurfaceType.Smooth
 	pad.Parent       = plot
 	plot.PrimaryPart = pad
+	applyTexture(pad, TEXTURES.grass, 24, { Enum.NormalId.Top })   -- mowed-grass surface
 
 	-- Owner reference + spawn point
 	local ownerValue = Instance.new("ObjectValue")
