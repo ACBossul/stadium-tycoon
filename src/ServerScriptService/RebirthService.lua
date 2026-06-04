@@ -2,7 +2,6 @@
 -- permanent income multiplier (+50% each) and an exclusive Mythic card. Cards,
 -- cup progress, gems and game passes are KEPT.
 
-local Players             = game:GetService("Players")
 local ReplicatedStorage   = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local CollectionService   = game:GetService("CollectionService")
