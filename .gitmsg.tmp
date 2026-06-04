@@ -1,8 +1,9 @@
-City towers are now real skyscrapers (setbacks, lit windows, spire, marquee)
+﻿Add Rebirth / prestige system
 
-Replaced the flat name-boxes with proper skyscrapers: stepped setback silhouette
-(three tiers narrowing upward), a grid of lit/dark windows on the main faces, a
-rooftop mast with a neon beacon, and a small street-level marquee instead of a
-giant name plastered across a rectangle.
+Click the new neon "🔁 REBIRTH" pad on your plot to reset coins + building levels
+in exchange for a PERMANENT +50% income multiplier (stacks per rebirth) and a
+guaranteed Mythic card. Cards, cup progress, gems and game passes are kept.
+Eligibility scales: 25 total building levels for the first rebirth, +25 each time.
+Income (live + offline) and the HUD readout apply the multiplier.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

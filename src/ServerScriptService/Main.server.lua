@@ -18,6 +18,7 @@ local MonetizationService = require(ServerScriptService.MonetizationService)
 local PlotService        = require(ServerScriptService.PlotService)
 local KartService        = require(ServerScriptService.KartService)
 local HubService         = require(ServerScriptService.HubService)
+local RebirthService     = require(ServerScriptService.RebirthService)
 local DailyRewardService = require(ServerScriptService.DailyRewardService)
 local BattlePassService  = require(ServerScriptService.BattlePassService)
 local BuildingConfig     = require(ReplicatedStorage.Config.BuildingConfig)
@@ -29,6 +30,9 @@ KartService.init()
 
 -- Build the shared Brainrot City hub + arena coin event, wire travel pads.
 HubService.init()
+
+-- Wire rebirth pads (tagged "RebirthPad").
+RebirthService.init()
 
 -- ─── Helpers ─────────────────────────────────────────────────────────────────
 

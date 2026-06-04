@@ -32,6 +32,12 @@ local function getOfflineMultiplier(data)
 	return 1
 end
 
+-- Permanent income multiplier from rebirths (+50% per rebirth).
+local function getRebirthMultiplier(data)
+	return 1 + (data.rebirths or 0) * 0.5
+end
+EconomyService.getRebirthMultiplier = getRebirthMultiplier
+
 -- Computes and grants offline earnings on player join
 function EconomyService.applyOfflineEarnings(player)
 	local data = DataService.getData(player)
@@ -47,7 +53,7 @@ function EconomyService.applyOfflineEarnings(player)
 	local passiveRate = BuildingConfig.totalPassiveRate(data.stadium)
 	local offlineMult = BuildingConfig.OFFLINE_RATE_MULT * getOfflineMultiplier(data)
 	local coinMult    = getCoinMultiplier(data)
-	local earned      = math.floor(passiveRate * offlineMult * coinMult * awaySeconds)
+	local earned      = math.floor(passiveRate * offlineMult * coinMult * getRebirthMultiplier(data) * awaySeconds)
 
 	if earned > 0 then
 		data.coins += earned
@@ -71,7 +77,7 @@ function EconomyService.tickIncome(player, now)
 
 	local passiveRate = BuildingConfig.totalPassiveRate(data.stadium)
 	local coinMult    = getCoinMultiplier(data)
-	local earned      = math.floor(passiveRate * coinMult * delta)
+	local earned      = math.floor(passiveRate * coinMult * getRebirthMultiplier(data) * delta)
 
 	if earned > 0 then
 		data.coins += earned

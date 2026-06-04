@@ -212,6 +212,7 @@ if Remotes then
 			if data.stadium and BuildingConfig then
 				local rate = BuildingConfig.totalPassiveRate(data.stadium)
 				if data.passes and data.passes.double_coins then rate = rate * 2 end
+				rate = rate * (1 + (data.rebirths or 0) * 0.5)   -- permanent rebirth bonus
 				incomeLabel.Text = "Income: " .. commas(math.floor(rate)) .. "/sec"
 			end
 		end)
