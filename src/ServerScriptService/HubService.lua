@@ -141,6 +141,10 @@ local function buildStadiumPad(x, z)
 	local pad = block(hubFolder, Vector3.new(10, 1.2, 10),
 		HUB_ORIGIN + Vector3.new(x, 0.6, z), Color3.fromRGB(120, 230, 140), Enum.Material.Neon, true)
 	pad.Name = "ToStadiumPad"
+	local cd = Instance.new("ClickDetector")
+	cd.Name = "StadiumClick"
+	cd.MaxActivationDistance = 26
+	cd.Parent = pad
 	local bb = Instance.new("BillboardGui")
 	bb.Size = UDim2.new(0, 180, 0, 36)
 	bb.StudsOffset = Vector3.new(0, 3, 0)
@@ -272,24 +276,33 @@ local function canTeleport(player)
 end
 
 local function wireCityPad(pad)
-	pad.Touched:Connect(function(hit)
-		local char = hit and hit.Parent
-		local player = char and Players:GetPlayerFromCharacter(char)
+	local cd = pad:FindFirstChildOfClass("ClickDetector") or pad:WaitForChild("CityClick", 10)
+	if not cd or not cd:IsA("ClickDetector") then return end
+	cd.MouseClick:Connect(function(player)
 		if not player or not hubSpawnCFrame then return end
+		local data = DataService.getData(player)
+		if not (data and data.passes and data.passes.vip) then
+			notify(player, "⭐ Instant City travel is VIP-only — or walk/drive there!", "red")
+			return
+		end
 		if not canTeleport(player) then return end
-		char:PivotTo(hubSpawnCFrame)
-		notify(player, "🏙 Welcome to Brainrot City!", "gold")
+		local char = player.Character
+		if char then
+			char:PivotTo(hubSpawnCFrame)
+			notify(player, "🏙 Welcome to Brainrot City!", "gold")
+		end
 	end)
 end
 
 local function wireStadiumPad(pad)
-	pad.Touched:Connect(function(hit)
-		local char = hit and hit.Parent
-		local player = char and Players:GetPlayerFromCharacter(char)
+	local cd = pad:FindFirstChildOfClass("ClickDetector") or pad:WaitForChild("StadiumClick", 10)
+	if not cd or not cd:IsA("ClickDetector") then return end
+	cd.MouseClick:Connect(function(player)
 		if not player then return end
 		if not canTeleport(player) then return end
+		local char = player.Character
 		local cf = PlotService.getSpawnCFrame(player)
-		if cf then char:PivotTo(cf + Vector3.new(0, 3, 0)) end
+		if char and cf then char:PivotTo(cf + Vector3.new(0, 3, 0)) end
 	end)
 end
 

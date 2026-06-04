@@ -873,8 +873,14 @@ local function buildCityPad(plot, origin, player)
 	owner.Value = player
 	owner.Parent = pad
 
+	-- Click (not touch) so you don't get yanked away while walking your plot.
+	local cd = Instance.new("ClickDetector")
+	cd.Name = "CityClick"
+	cd.MaxActivationDistance = 26
+	cd.Parent = pad
+
 	local bb = Instance.new("BillboardGui")
-	bb.Size        = UDim2.new(0, 190, 0, 56)
+	bb.Size        = UDim2.new(0, 200, 0, 56)
 	bb.StudsOffset = Vector3.new(0, 3.4, 0)
 	bb.AlwaysOnTop = true
 	bb.MaxDistance = 80
@@ -900,8 +906,8 @@ local function buildCityPad(plot, origin, player)
 	s.Size = UDim2.new(1, -8, 0.4, 0)
 	s.Position = UDim2.new(0, 4, 0.57, 0)
 	s.BackgroundTransparency = 1
-	s.Text = "Step on to travel"
-	s.TextColor3 = Color3.fromRGB(200, 200, 220)
+	s.Text = "⭐ VIP: click to teleport"
+	s.TextColor3 = Color3.fromRGB(255, 215, 120)
 	s.TextScaled = true
 	s.Font = Enum.Font.Gotham
 	s.Parent = frame

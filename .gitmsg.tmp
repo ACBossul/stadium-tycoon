@@ -1,7 +1,12 @@
-Flesh out Brainrot City: more skyline, lampposts, lit path to the arena
+City travel = VIP click (no accidental teleports); Studio VIP; debug readout
 
-The plaza read a bit empty, so: four more parody towers on the open side/front
-edges (Meme Mobile, Neon Cola, The Goblet, Rizz Fuel), a ring of neon lampposts
-around the perimeter, and a lit path leading from the spawn up to the arena.
+- The "Go to City" pad teleported on TOUCH, so walking near the plot entrance
+  yanked you to the city repeatedly — making the plot feel unusable (likely behind
+  the "upgrade/purchase stopped working" report). It's now a CLICK, and the instant
+  teleport is VIP-gated (non-VIP told to walk/drive). "Back to Stadium" pads are
+  clicks too. No more accidental teleports.
+- Studio now grants VIP (alongside test coins) so VIP-gated features are testable.
+- Re-added a small top-right debug readout (coins/gems/stands + last server msg) to
+  pin down the purchase/upgrade report on the plot. Will remove once confirmed.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

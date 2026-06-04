@@ -21,6 +21,34 @@ local ClientState = {
 	remotes = Remotes,
 }
 
+-- Temporary diagnostic (small, top-right) so we can see the server's reply to each
+-- upgrade/purchase while chasing the regression. Removed once confirmed behaving.
+local PlayerGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+local _dbgGui = Instance.new("ScreenGui")
+_dbgGui.Name = "DebugOverlay"
+_dbgGui.ResetOnSpawn = false
+_dbgGui.IgnoreGuiInset = true
+_dbgGui.DisplayOrder = 999
+_dbgGui.Parent = PlayerGui
+local _dbg = Instance.new("TextLabel")
+_dbg.Size = UDim2.new(0, 360, 0, 58)
+_dbg.Position = UDim2.new(1, -372, 0, 86)
+_dbg.BackgroundColor3 = Color3.new(0, 0, 0)
+_dbg.BackgroundTransparency = 0.35
+_dbg.TextColor3 = Color3.fromRGB(0, 255, 120)
+_dbg.Font = Enum.Font.Code
+_dbg.TextSize = 15
+_dbg.TextXAlignment = Enum.TextXAlignment.Left
+_dbg.TextYAlignment = Enum.TextYAlignment.Top
+_dbg.Text = "DEBUG: waiting for data…"
+_dbg.Parent = _dbgGui
+local _lastMsg = "(none)"
+local function _dbgRefresh(p)
+	_dbg.Text = string.format("coins=%s  gems=%s\nstands=%s\nlast: %s",
+		tostring(p and p.coins), tostring(p and p.gems),
+		tostring(p and p.stadium and p.stadium.stands), _lastMsg)
+end
+
 -- ─── Isolated require / init ───────────────────────────────────────────────────
 
 local function safeRequire(name)
@@ -79,12 +107,15 @@ end
 
 onEvent("ProfileUpdated", function(profileData)
 	ClientState.profile = profileData
+	_dbgRefresh(profileData)
 	-- Isolate each controller so one failing can't block the other.
 	pcall(function() if UIController then UIController.onProfileUpdated(profileData) end end)
 	pcall(function() if StadiumController then StadiumController.onProfileUpdated(profileData) end end)
 end)
 
 onEvent("ShowNotification", function(payload)
+	_lastMsg = tostring(payload and payload.message)
+	_dbgRefresh(ClientState.profile)
 	if UIController then UIController.showToast(payload.message, payload.color) end
 end)
 

@@ -112,6 +112,8 @@ local function onPlayerJoin(player)
 	-- affects live players.
 	if game:GetService("RunService"):IsStudio() then
 		data.coins = math.max(data.coins or 0, 1000000)
+		data.passes = data.passes or {}
+		data.passes.vip = true   -- so VIP-gated features (city teleport, Pro kart) are testable
 	end
 
 	print(string.format("[SvJoin] %s coins=%s gems=%s stands=%s isStudio=%s",
