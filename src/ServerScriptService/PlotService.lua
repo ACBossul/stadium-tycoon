@@ -853,6 +853,62 @@ local function buildKartStation(plot, origin, player)
 	CollectionService:AddTag(pad, "KartSpawner")
 end
 
+-- A pad that teleports the player to the shared Brainrot City hub (HubService
+-- wires the actual teleport via the "ToCityPad" tag).
+local function buildCityPad(plot, origin, player)
+	local pos = origin + Vector3.new(24, 0.6, -PLOT_SIZE.Z / 2 + 12)
+
+	local pad = Instance.new("Part")
+	pad.Name        = "ToCityPad"
+	pad.Anchored    = true
+	pad.Size        = Vector3.new(10, 1.2, 10)
+	pad.Position    = pos
+	pad.Material    = Enum.Material.Neon
+	pad.Color       = Color3.fromRGB(255, 170, 55)
+	pad.TopSurface  = Enum.SurfaceType.Smooth
+	pad.Parent      = plot
+
+	local owner = Instance.new("ObjectValue")
+	owner.Name  = "Owner"
+	owner.Value = player
+	owner.Parent = pad
+
+	local bb = Instance.new("BillboardGui")
+	bb.Size        = UDim2.new(0, 190, 0, 56)
+	bb.StudsOffset = Vector3.new(0, 3.4, 0)
+	bb.AlwaysOnTop = true
+	bb.MaxDistance = 80
+	bb.Adornee     = pad
+	bb.Parent      = pad
+	local frame = Instance.new("Frame")
+	frame.Size = UDim2.new(1, 0, 1, 0)
+	frame.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+	frame.BackgroundTransparency = 0.25
+	frame.BorderSizePixel = 0
+	frame.Parent = bb
+	local fcc = Instance.new("UICorner") fcc.CornerRadius = UDim.new(0, 8) fcc.Parent = frame
+	local t = Instance.new("TextLabel")
+	t.Size = UDim2.new(1, -8, 0.56, 0)
+	t.Position = UDim2.new(0, 4, 0, 2)
+	t.BackgroundTransparency = 1
+	t.Text = "🏙 BRAINROT CITY"
+	t.TextColor3 = Color3.fromRGB(255, 195, 90)
+	t.TextScaled = true
+	t.Font = Enum.Font.GothamBlack
+	t.Parent = frame
+	local s = Instance.new("TextLabel")
+	s.Size = UDim2.new(1, -8, 0.4, 0)
+	s.Position = UDim2.new(0, 4, 0.57, 0)
+	s.BackgroundTransparency = 1
+	s.Text = "Step on to travel"
+	s.TextColor3 = Color3.fromRGB(200, 200, 220)
+	s.TextScaled = true
+	s.Font = Enum.Font.Gotham
+	s.Parent = frame
+
+	CollectionService:AddTag(pad, "ToCityPad")
+end
+
 -- Non-stands buildings visibly GROW with their upgrade level so progression is
 -- felt. Scales around the centre, then re-seats the base on the ground (y=0).
 local function scaleBuildingToLevel(model, level)
@@ -943,6 +999,7 @@ function PlotService.buildPlot(player)
 	buildSurrounds(plot, origin)
 	buildDoor(plot, origin, player)
 	buildKartStation(plot, origin, player)
+	buildCityPad(plot, origin, player)
 
 	-- Place each building at its hand-picked spot (spacious, framing the plaza),
 	-- built to its current upgrade level (stands grow their seating with level).
@@ -991,6 +1048,11 @@ function PlotService.onBuildingUpgraded(player, buildingId, level)
 		-- Everything else grows in scale.
 		scaleBuildingToLevel(model, level)
 	end
+end
+
+-- Where the player (re)spawns on their plot — used by HubService to send them home.
+function PlotService.getSpawnCFrame(player)
+	return playerSpawnCFrame[player.UserId]
 end
 
 function PlotService.removePlot(player)

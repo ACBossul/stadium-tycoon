@@ -255,8 +255,7 @@ end
 -- ─── Wiring: kart station click pads (built by PlotService, tagged "KartSpawner") ─
 
 local function wireStation(pad)
-	local ownerVal = pad:FindFirstChild("Owner") or pad:WaitForChild("Owner", 15)
-	if not ownerVal then return end
+	local ownerVal = pad:FindFirstChild("Owner")   -- nil = shared garage (anyone may use)
 	local detector = pad:FindFirstChildOfClass("ClickDetector") or pad:WaitForChild("KartClick", 10)
 	if not detector or not detector:IsA("ClickDetector") then
 		detector = pad:FindFirstChildOfClass("ClickDetector")
@@ -264,7 +263,7 @@ local function wireStation(pad)
 	if not detector then return end
 
 	detector.MouseClick:Connect(function(clicker)
-		if clicker ~= ownerVal.Value then return end   -- only the base owner
+		if ownerVal and clicker ~= ownerVal.Value then return end   -- gated to owner if owned
 		-- Stash the station position so the kart spawns right here.
 		if pad:IsA("BasePart") then
 			clicker:SetAttribute("KartStationPos", pad.Position + Vector3.new(0, 0, 7))

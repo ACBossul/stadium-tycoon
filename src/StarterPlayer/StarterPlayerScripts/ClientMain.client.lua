@@ -42,6 +42,7 @@ local UIController       = safeRequire("UIController")
 local PackOpenController = safeRequire("PackOpenController")
 local BracketController  = safeRequire("BracketController")
 local KartController     = safeRequire("KartController")
+local HubController      = safeRequire("HubController")
 
 local function safeInit(controller, name)
 	if not controller or type(controller.init) ~= "function" then return end
@@ -56,6 +57,7 @@ safeInit(UIController,       "UIController")
 safeInit(PackOpenController, "PackOpenController")
 safeInit(BracketController,  "BracketController")
 safeInit(KartController,     "KartController")
+safeInit(HubController,      "HubController")
 
 print("[StadiumTycoon] Client controllers initialised.")
 

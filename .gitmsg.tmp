@@ -1,8 +1,17 @@
-CS:GO-style pack opening: decelerating roll reel that lands on your card
+Add Brainrot City hub + central arena coin-task event
 
-Replaces the instant reveal with a horizontal reel of card tiles that scrolls fast
-and eases to a stop (Quint-out, ~4.6s) under a center ticker, landing on the
-rarest card in the pull (with slight jitter so it isn't always dead-centre). After
-it lands, the full pull fans out below, with confetti for Legendary/Mythic.
+New shared world hub players travel to from their plot:
+
+- HubService (server): builds a shared city plaza with a parody skyline (Brainrot
+  Tower, Ohio Plaza, Sus Bank HQ, Rizz Mall, Goblinpay), shop/trade kiosks, a Kart
+  Garage, and a central "Brainrot Arena". Runs the arena event loop: glowing coin
+  orbs spawn periodically (500–2500 each) that anyone can grab; pushes profile so
+  the HUD updates instantly. Wires teleport pads both ways.
+- PlotService: each plot gets a neon "Brainrot City" pad (step on to travel) and
+  exposes getSpawnCFrame so the hub can send players home.
+- KartService: KartSpawner pads may now be ownerless (shared Kart Garage).
+- HubController (client): clicking a kiosk opens its panel (Shop/Trade) locally.
+
+Reaches the hub via ToCityPad → hubSpawnCFrame; returns via ToStadiumPad pads.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

@@ -17,6 +17,7 @@ local TradeService       = require(ServerScriptService.TradeService)
 local MonetizationService = require(ServerScriptService.MonetizationService)
 local PlotService        = require(ServerScriptService.PlotService)
 local KartService        = require(ServerScriptService.KartService)
+local HubService         = require(ServerScriptService.HubService)
 local DailyRewardService = require(ServerScriptService.DailyRewardService)
 local BattlePassService  = require(ServerScriptService.BattlePassService)
 local BuildingConfig     = require(ReplicatedStorage.Config.BuildingConfig)
@@ -25,6 +26,9 @@ local BattlePassConfig   = require(ReplicatedStorage.Config.BattlePassConfig)
 
 -- Wire kart-station click pads → spawn rideable karts (tagged "KartSpawner").
 KartService.init()
+
+-- Build the shared Brainrot City hub + arena coin event, wire travel pads.
+HubService.init()
 
 -- ─── Helpers ─────────────────────────────────────────────────────────────────
 
