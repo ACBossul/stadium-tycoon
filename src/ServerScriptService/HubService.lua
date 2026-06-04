@@ -94,6 +94,14 @@ local function buildTower(x, z, w, h, d, color, name, signColor)
 	return tower
 end
 
+-- A neon lamppost.
+local function buildLamppost(x, z)
+	block(hubFolder, Vector3.new(0.8, 14, 0.8), HUB_ORIGIN + Vector3.new(x, 7, z),
+		Color3.fromRGB(40, 44, 54), Enum.Material.Metal, false)
+	block(hubFolder, Vector3.new(2.6, 1.4, 2.6), HUB_ORIGIN + Vector3.new(x, 14.2, z),
+		Color3.fromRGB(255, 240, 180), Enum.Material.Neon, false)
+end
+
 -- A clickable kiosk that opens a client panel (tagged "HubKiosk" + Panel attribute).
 local function buildKiosk(x, z, color, title, signColor, panelName)
 	local booth = block(hubFolder, Vector3.new(12, 9, 10),
@@ -222,6 +230,28 @@ local function build()
 	-- Travel-home pads flanking the spawn
 	buildStadiumPad(-20, -edge + 4)
 	buildStadiumPad( 20, -edge + 4)
+
+	-- Extra skyline on the side/front edges so the plaza feels enclosed by a city.
+	buildTower(-edge, -42,      24, 40, 24, Color3.fromRGB(58, 52, 64), "MEME MOBILE", Color3.fromRGB(255, 130, 200))
+	buildTower( edge, -42,      24, 50, 24, Color3.fromRGB(52, 58, 64), "NEON COLA",   Color3.fromRGB(120, 255, 200))
+	buildTower(-edge,  edge-60, 22, 36, 22, Color3.fromRGB(60, 56, 50), "THE GOBLET",  Color3.fromRGB(255, 215, 90))
+	buildTower( edge,  edge-60, 22, 44, 22, Color3.fromRGB(54, 50, 64), "RIZZ FUEL",   Color3.fromRGB(255, 150, 90))
+
+	-- Neon lampposts around the plaza perimeter.
+	local lampInset = PLAZA / 2 - 8
+	for _, lp in ipairs({
+		{ -lampInset, -lampInset }, { 0, -lampInset }, { lampInset, -lampInset },
+		{ -lampInset, 0 }, { lampInset, 0 },
+		{ -lampInset, lampInset }, { 0, lampInset }, { lampInset, lampInset },
+	}) do
+		buildLamppost(lp[1], lp[2])
+	end
+
+	-- A lit path from the spawn up to the arena.
+	for z = -edge + 14, -12, 14 do
+		block(hubFolder, Vector3.new(11, 0.3, 8), HUB_ORIGIN + Vector3.new(0, 0.25, z),
+			Color3.fromRGB(74, 78, 92), Enum.Material.SmoothPlastic, false)
+	end
 
 	-- Spawn point (arrive facing the arena/north)
 	local spawnPos = HUB_ORIGIN + Vector3.new(0, 3, -edge + 4)

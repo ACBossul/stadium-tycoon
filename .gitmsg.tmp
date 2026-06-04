@@ -1,17 +1,7 @@
-Add Brainrot City hub + central arena coin-task event
+Flesh out Brainrot City: more skyline, lampposts, lit path to the arena
 
-New shared world hub players travel to from their plot:
-
-- HubService (server): builds a shared city plaza with a parody skyline (Brainrot
-  Tower, Ohio Plaza, Sus Bank HQ, Rizz Mall, Goblinpay), shop/trade kiosks, a Kart
-  Garage, and a central "Brainrot Arena". Runs the arena event loop: glowing coin
-  orbs spawn periodically (500–2500 each) that anyone can grab; pushes profile so
-  the HUD updates instantly. Wires teleport pads both ways.
-- PlotService: each plot gets a neon "Brainrot City" pad (step on to travel) and
-  exposes getSpawnCFrame so the hub can send players home.
-- KartService: KartSpawner pads may now be ownerless (shared Kart Garage).
-- HubController (client): clicking a kiosk opens its panel (Shop/Trade) locally.
-
-Reaches the hub via ToCityPad → hubSpawnCFrame; returns via ToStadiumPad pads.
+The plaza read a bit empty, so: four more parody towers on the open side/front
+edges (Meme Mobile, Neon Cola, The Goblet, Rizz Fuel), a ring of neon lampposts
+around the perimeter, and a lit path leading from the spawn up to the arena.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
