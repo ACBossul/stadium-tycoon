@@ -420,6 +420,45 @@ local function buildSurrounds(plot, origin)
 	goal(-44)
 end
 
+-- A striped grass pitch with white markings in the centre, so the grounds read
+-- as an actual stadium instead of an empty floor. Buildings frame it.
+local function buildPitch(plot, origin)
+	local PX, PZ = 80, 96
+
+	local function flat(cx, cz, sx, sz, color, yy, material)
+		local p = Instance.new("Part")
+		p.Anchored = true
+		p.CanCollide = false
+		p.Size = Vector3.new(sx, 0.2, sz)
+		p.Position = origin + Vector3.new(cx, yy, cz)
+		p.Color = color
+		p.Material = material or Enum.Material.Grass
+		p.TopSurface = Enum.SurfaceType.Smooth
+		p.BottomSurface = Enum.SurfaceType.Smooth
+		p.Parent = plot
+	end
+
+	-- Mowed stripes
+	local stripes = 8
+	local sw = PX / stripes
+	for i = 0, stripes - 1 do
+		local shade = (i % 2 == 0) and Color3.fromRGB(52, 140, 70) or Color3.fromRGB(44, 120, 60)
+		flat(-PX / 2 + sw / 2 + i * sw, 0, sw, PZ, shade, 0.12)
+	end
+
+	-- White markings
+	local white = Color3.fromRGB(235, 238, 240)
+	local function line(cx, cz, sx, sz)
+		flat(cx, cz, sx, sz, white, 0.22, Enum.Material.SmoothPlastic)
+	end
+	line(0,  PZ / 2, PX, 1)   -- north line
+	line(0, -PZ / 2, PX, 1)   -- south line
+	line( PX / 2, 0, 1, PZ)   -- east line
+	line(-PX / 2, 0, 1, PZ)   -- west line
+	line(0, 0, PX, 1)         -- halfway line
+	line(0, 0, 4, 4)          -- centre spot
+end
+
 -- A force-field gate across the entrance + an owner-only toggle button.
 -- Closed: touching it insta-kills NON-owners (the owner passes freely).
 -- Open:   anyone may walk in. Owner clicks the button to open/close.
@@ -536,7 +575,8 @@ function PlotService.buildPlot(player)
 	playerSpawnCFrame[player.UserId] =
 		CFrame.lookAt(spawnPos + Vector3.new(0, 3, 0), spawnPos + Vector3.new(0, 3, 10))
 
-	-- Perimeter wall + goals + the defensible entrance gate
+	-- Pitch in the centre, perimeter wall + goals, and the defensible entrance gate
+	buildPitch(plot, origin)
 	buildSurrounds(plot, origin)
 	buildDoor(plot, origin, player)
 
