@@ -20,11 +20,13 @@ local StadiumController  = require(script.Parent.StadiumController)
 local UIController       = require(script.Parent.UIController)
 local PackOpenController = require(script.Parent.PackOpenController)
 local BracketController  = require(script.Parent.BracketController)
+local KartController      = require(script.Parent.KartController)
 
 StadiumController.init(ClientState)
 UIController.init(ClientState)
 PackOpenController.init(ClientState)
 BracketController.init(ClientState)
+KartController.init(ClientState)
 
 -- ─── Server → client events ───────────────────────────────────────────────
 

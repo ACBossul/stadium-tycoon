@@ -23,19 +23,10 @@ local Remotes
 -- Track wired buildings so we can refresh their labels on profile updates.
 -- Map: buildingId -> { model, part, levelLabel, upgradeButton, cfg, lastLevel }
 local ownedBuildings = {}
+local wiredModels    = setmetatable({}, { __mode = "k" })  -- model -> true (prevents double-wire)
 local lastData = nil   -- most recent profile, to sync buildings wired after it arrives
 
 -- ─── Helpers ─────────────────────────────────────────────────────────────────
-
-local function getBuildingId(model)
-	local v = model:FindFirstChild("BuildingId")
-	return v and v.Value or nil
-end
-
-local function isOwnedByLocal(model)
-	local owner = model:FindFirstChild("Owner")
-	return owner and owner.Value == LocalPlayer
-end
 
 local function abbreviate(n)
 	if n >= 1e9 then return string.format("%.1fB", n / 1e9) end
@@ -136,41 +127,35 @@ end
 -- ─── Wiring a single building ────────────────────────────────────────────────
 
 local function wireBuilding(model)
-	if not isOwnedByLocal(model) then return end
+	-- Guard on the model instance (no yields before this) so a model can never be
+	-- wired twice — a double-wire would double-fire the upgrade remote per click.
+	if wiredModels[model] then return end
+	wiredModels[model] = true
 
-	local buildingId = getBuildingId(model)
+	-- The "StadiumBuilding" tag can replicate a beat BEFORE the model's value
+	-- objects and the (deeply-nested) billboard arrive on the client. The old code
+	-- used FindFirstChild and bailed on a miss with no retry, which left buildings
+	-- permanently unwired → "can't upgrade anything". Wait for each piece instead.
+	local idValue = model:FindFirstChild("BuildingId") or model:WaitForChild("BuildingId", 20)
+	local buildingId = idValue and idValue.Value
 	if not buildingId then return end
-	if ownedBuildings[buildingId] then return end  -- already wired
+
+	local ownerValue = model:FindFirstChild("Owner") or model:WaitForChild("Owner", 20)
+	if not ownerValue or ownerValue.Value ~= LocalPlayer then return end  -- not ours
+	if ownedBuildings[buildingId] then return end                          -- already have ours
 
 	local cfg  = BuildingConfig.ById[buildingId]
-	local part = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
-	if not cfg or not part then return end
+	if not cfg then return end
+	local part = model.PrimaryPart
+		or model:FindFirstChild("Base")
+		or model:WaitForChild("Base", 20)
+		or model:FindFirstChildWhichIsA("BasePart")
+	if not part then return end
 
-	local billboard     = part:FindFirstChild("InfoBillboard")
-	local frame         = billboard and billboard:FindFirstChildWhichIsA("Frame")
-	local levelLabel    = frame and frame:FindFirstChild("LevelLabel")
-	local upgradeButton = frame and frame:FindFirstChild("UpgradeButton")
-
-	-- Upgrade button → server
-	if upgradeButton then
-		upgradeButton.Activated:Connect(function()
-			Remotes:FindFirstChild("UpgradeBuilding"):FireServer(buildingId)
-		end)
-	end
-
-	-- Active-collect buildings: clicking the model collects coins
-	if cfg.activeOnly then
-		local detector = part:FindFirstChildOfClass("ClickDetector")
-		if detector then
-			detector.MouseClick:Connect(function(clickingPlayer)
-				if clickingPlayer ~= LocalPlayer then return end
-				Remotes:FindFirstChild("CollectBuilding"):FireServer(buildingId)
-				-- Optimistic juice (the exact amount comes via the toast).
-				floatText(part, "+ 💰", Color3.fromRGB(255, 220, 60))
-				burstSparkle(part, Color3.fromRGB(255, 220, 60))
-			end)
-		end
-	end
+	local billboard     = part:WaitForChild("InfoBillboard", 20)
+	local frame         = billboard and billboard:WaitForChild("Frame", 10)
+	local levelLabel    = frame and frame:WaitForChild("LevelLabel", 10)
+	local upgradeButton = frame and frame:WaitForChild("UpgradeButton", 10)
 
 	ownedBuildings[buildingId] = {
 		model         = model,
@@ -180,6 +165,29 @@ local function wireBuilding(model)
 		cfg           = cfg,
 		lastLevel     = nil,
 	}
+
+	-- Upgrade button → server
+	if upgradeButton then
+		upgradeButton.Activated:Connect(function()
+			local remote = Remotes and Remotes:FindFirstChild("UpgradeBuilding")
+			if remote then remote:FireServer(buildingId) end
+		end)
+	end
+
+	-- Active-collect buildings: clicking the model collects coins
+	if cfg.activeOnly then
+		local detector = part:FindFirstChildOfClass("ClickDetector")
+		if detector then
+			detector.MouseClick:Connect(function(clickingPlayer)
+				if clickingPlayer ~= LocalPlayer then return end
+				local remote = Remotes and Remotes:FindFirstChild("CollectBuilding")
+				if remote then remote:FireServer(buildingId) end
+				-- Optimistic juice (the exact amount comes via the toast).
+				floatText(part, "+ 💰", Color3.fromRGB(255, 220, 60))
+				burstSparkle(part, Color3.fromRGB(255, 220, 60))
+			end)
+		end
+	end
 
 	-- If profile data already arrived, sync this building immediately so it
 	-- doesn't sit on the default "Locked" until the next periodic update.
