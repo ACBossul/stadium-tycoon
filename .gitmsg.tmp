@@ -1,18 +1,14 @@
-Building-wiring safety-net + ground-truth debug; VIP via purchase (no auto-grant)
+Fix kart driving (Owner.Value race), VIP kart redesign, connected ground + roads
 
-Chasing the recurring "buildings show no price / can't upgrade" regression:
-
-- StadiumController: added a standalone retry loop (1s x30) that re-attempts wiring
-  any unwired building independent of profile pushes, so a replication race can't
-  leave one permanently dead. Exposes wiredCount() for diagnostics.
-- ClientMain debug overlay now shows GROUND TRUTH: which controllers loaded
-  (S/U/P/B/K/H +/-), stadium wired=N/tagged=M, and captures StadiumController
-  onProfileUpdated errors into the readout.
-
-VIP (as requested — buy it yourself, no auto-grant):
-- Removed the Studio auto-VIP grant.
-- MonetizationService: PromptGamePassPurchaseFinished now grants a pass the instant
-  its purchase completes (Studio test purchases included) + pushes profile, so
-  buying VIP works live without rejoining.
+- KartController: driving silently failed because it checked the kart's Owner.Value
+  the instant you sat, before the reference replicated (same race that hit the
+  buildings). Now it detects the kart seat by attribute and WAITS for Owner.Value to
+  resolve before starting the drive loop. KartService defers SetNetworkOwner until
+  the unanchor commits, so ownership handoff is reliable.
+- VIP kart: added a rear wing, neon underglow, sleek neon nose tip, and side skirts
+  so the premium kart actually looks premium (not just a recolor).
+- HubService: a big shared ground now links the plot row to the city (no more
+  floating islands) with an east-west boulevard + a main street down to the centre,
+  so you can drive from any plot to Brainrot City.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

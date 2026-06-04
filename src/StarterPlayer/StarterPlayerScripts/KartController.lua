@@ -24,14 +24,6 @@ local function stopDriving()
 	end
 end
 
-local function isOurKartSeat(seat)
-	if not seat or not seat:IsA("VehicleSeat") then return false end
-	local model = seat.Parent
-	if not model or not model:GetAttribute("Kart") then return false end
-	local owner = model:FindFirstChild("Owner")
-	return owner ~= nil and owner.Value == LocalPlayer
-end
-
 local function startDriving(seat)
 	local chassis = seat
 	local drive = chassis:FindFirstChild("Drive")
@@ -76,10 +68,21 @@ function KartController.init(_clientState)
 		local humanoid = character:WaitForChild("Humanoid", 10)
 		if not humanoid then return end
 		humanoid.Seated:Connect(function(active, seat)
-			if active and isOurKartSeat(seat) then
+			stopDriving()                       -- always end the previous drive loop
+			if not active then return end
+			if not (seat and seat:IsA("VehicleSeat")) then return end
+			local model = seat.Parent
+			if not (model and model:GetAttribute("Kart")) then return end
+			-- Wait for the Owner reference to resolve (it can land a beat after the
+			-- kart replicates — checking too early was making driving silently fail).
+			local owner = model:FindFirstChild("Owner") or model:WaitForChild("Owner", 5)
+			local tries = 0
+			while owner and owner.Value == nil and tries < 50 do
+				task.wait(0.1)
+				tries += 1
+			end
+			if owner and owner.Value == LocalPlayer and humanoid.SeatPart == seat then
 				startDriving(seat)
-			else
-				stopDriving()
 			end
 		end)
 	end

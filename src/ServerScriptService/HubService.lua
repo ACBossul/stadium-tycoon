@@ -198,6 +198,25 @@ local function build()
 	hubFolder = Instance.new("Model")
 	hubFolder.Name = "BrainrotCity"
 
+	-- Big shared ground linking the plot row (z≈0) to the city (z≈-700): no more
+	-- floating islands, and you can walk/drive across it. Sits just below the plot
+	-- pads (top y = -0.2) so the pads still read as the play surface.
+	block(hubFolder, Vector3.new(2600, 4, 1100), Vector3.new(1000, -2.2, -380),
+		Color3.fromRGB(74, 110, 74), Enum.Material.Grass, true)
+
+	-- Roads: an east-west boulevard along the plot row's south side + a main street
+	-- running down to the city, so every plot can drive to the centre.
+	local function road(cx, cz, sx, sz)
+		block(hubFolder, Vector3.new(sx, 0.3, sz), Vector3.new(cx, 0.05, cz),
+			Color3.fromRGB(48, 50, 58), Enum.Material.Asphalt, false)
+	end
+	road(960, -110, 2500, 46)        -- boulevard
+	road(0,  -335, 46, 460)          -- main street to the city
+	for z = -130, -540, -26 do       -- dashed centre line
+		block(hubFolder, Vector3.new(2, 0.34, 10), Vector3.new(0, 0.08, z),
+			Color3.fromRGB(240, 220, 90), Enum.Material.SmoothPlastic, false)
+	end
+
 	-- Plaza floor
 	block(hubFolder, Vector3.new(PLAZA, 4, PLAZA), HUB_ORIGIN + Vector3.new(0, -2, 0),
 		Color3.fromRGB(58, 60, 70), Enum.Material.Concrete, true)

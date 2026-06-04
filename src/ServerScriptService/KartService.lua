@@ -131,6 +131,17 @@ local function buildKart(tier, spawnCFrame, player)
 	wheel(-2.7,  2.8)
 	wheel( 2.7,  2.8)
 
+	-- Premium (VIP) flourishes: rear wing, neon underglow, sleek nose + side skirts.
+	if spec.neon then
+		bolt("SpoilerL", Vector3.new(0.4, 1.7, 0.4), Vector3.new(-1.7, 2.5, 4.3), spec.body,   Enum.Material.Metal)
+		bolt("SpoilerR", Vector3.new(0.4, 1.7, 0.4), Vector3.new( 1.7, 2.5, 4.3), spec.body,   Enum.Material.Metal)
+		bolt("Wing",     Vector3.new(5.4, 0.4, 1.8), Vector3.new(0,   3.4, 4.5), spec.accent, Enum.Material.Neon)
+		bolt("Underglow",Vector3.new(5.0, 0.3, 8.4), Vector3.new(0,  -0.7, 0),   spec.accent, Enum.Material.Neon)
+		bolt("NoseTip",  Vector3.new(2.6, 0.7, 1.8), Vector3.new(0,   0.1, -6.1),spec.accent, Enum.Material.Neon)
+		bolt("SkirtL",   Vector3.new(0.5, 0.7, 7.2), Vector3.new(-2.55,0.0, 0),  spec.accent, Enum.Material.Neon)
+		bolt("SkirtR",   Vector3.new(0.5, 0.7, 7.2), Vector3.new( 2.55,0.0, 0),  spec.accent, Enum.Material.Neon)
+	end
+
 	-- Control attachment + constraints (set live by the driver's client).
 	local root = Instance.new("Attachment")
 	root.Name = "Root"
@@ -230,7 +241,13 @@ function KartService.spawnKart(player)
 		local sittingPlayer = occupant and Players:GetPlayerFromCharacter(occupant.Parent)
 		if sittingPlayer then
 			chassis.Anchored = false
-			pcall(function() chassis:SetNetworkOwner(sittingPlayer) end)
+			-- Defer so the unanchor is committed before we hand over ownership
+			-- (SetNetworkOwner errors on an anchored part).
+			task.defer(function()
+				if chassis.Parent and not chassis.Anchored then
+					pcall(function() chassis:SetNetworkOwner(sittingPlayer) end)
+				end
+			end)
 		else
 			-- Freeze in place when nobody is driving.
 			chassis.Anchored = true
