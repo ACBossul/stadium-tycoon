@@ -1213,8 +1213,8 @@ local function buildUpperTier(plot, origin, player)
 		local pl = Instance.new("PointLight")
 		pl.Brightness = 2.6; pl.Range = 32; pl.Color = Color3.fromRGB(255, 248, 220); pl.Parent = fixture
 	end
-	-- Railings — SOLID walls so you can't fall off the deck (south is OPEN for stairs)
-	up(1, 4, 36, bx + 20, deckY + 2, bz, GOLD, Enum.Material.Metal, true)
+	-- Railings — SOLID. South is OPEN for the stairs; the EAST side is open so the
+	-- deck flows onto the perimeter ring walkway built below.
 	up(1, 4, 36, bx - 20, deckY + 2, bz, GOLD, Enum.Material.Metal, true)
 	up(40, 4, 1, bx, deckY + 2, bz + 18, GOLD, Enum.Material.Metal, true)
 
@@ -1287,11 +1287,43 @@ local function buildUpperTier(plot, origin, player)
 	local mlLbl = Instance.new("TextLabel")
 	mlLbl.Size = UDim2.new(1,0,1,0); mlLbl.BackgroundTransparency = 1; mlLbl.Text = "🧑‍💼 MANAGER'S LOUNGE"
 	mlLbl.TextColor3 = Color3.fromRGB(150,200,255); mlLbl.TextScaled = true; mlLbl.Font = Enum.Font.GothamBlack; mlLbl.Parent = mlSg
+
+	-- ── VIP perimeter ring: a walkway that wraps the EAST → SOUTH → WEST sides
+	-- around the pitch (open at the grandstand on the north). You reach it from the
+	-- deck; walk the whole upper ring past the rooms + the rebirth pad. ──
+	local R = 76          -- walkway centreline distance from plot centre
+	-- Support pillars at the ring corners.
+	for _, c in ipairs({ {R,-R}, {-R,-R}, {R,48}, {-R,48} }) do
+		up(4, deckY, 4, c[1], deckY/2, c[2], CONCRETE, Enum.Material.Concrete)
+	end
+	-- Walkway decks (E, S, W).
+	local eWalk = up(10, 1.4, 124, R, deckY, -14, CONCRETE, Enum.Material.Concrete)
+	local wWalk = up(10, 1.4, 124, -R, deckY, -14, CONCRETE, Enum.Material.Concrete)
+	local sWalk = up(2*R + 10, 1.4, 10, 0, deckY, -R, CONCRETE, Enum.Material.Concrete)
+	applyTexture(eWalk, TEXTURES.brick, 8, { Enum.NormalId.Top })
+	applyTexture(wWalk, TEXTURES.brick, 8, { Enum.NormalId.Top })
+	applyTexture(sWalk, TEXTURES.brick, 8, { Enum.NormalId.Top })
+	-- Outer railings (along the walls) so you can't fall off the ring.
+	up(1, 4, 130, R + 4, deckY + 2, -14, GOLD, Enum.Material.Metal, true)
+	up(1, 4, 130, -R - 4, deckY + 2, -14, GOLD, Enum.Material.Metal, true)
+	up(2*R + 10, 4, 1, 0, deckY + 2, -R - 4, GOLD, Enum.Material.Metal, true)
+	-- Inner railings (pitch side) on the open south + the south halves of E/W.
+	up(2*R - 12, 3, 1, 0, deckY + 2, -R + 4, GOLD, Enum.Material.Metal, true)
+	up(1, 3, 72, R - 4, deckY + 2, -40, GOLD, Enum.Material.Metal, true)
+	up(1, 3, 124, -R + 4, deckY + 2, -14, GOLD, Enum.Material.Metal, true)
+	-- Lampposts around the ring.
+	for _, c in ipairs({ {R,-R}, {-R,-R}, {0,-R}, {R,20}, {-R,20} }) do
+		up(1, 6, 1, c[1], deckY + 3.4, c[2], Color3.fromRGB(60,64,80), Enum.Material.Metal, false)
+		local bulb = up(2, 1.4, 2, c[1], deckY + 7, c[2], Color3.fromRGB(255,250,225), Enum.Material.Neon, false)
+		local pl = Instance.new("PointLight") pl.Brightness = 2 pl.Range = 24 pl.Color = Color3.fromRGB(255,248,220) pl.Parent = bulb
+	end
 end
 
 -- A rebirth/prestige pad (RebirthService wires the click via the "RebirthPad" tag).
+-- Sits on the SECOND FLOOR (the upper-tier deck, y≈18.75) — you climb up to it,
+-- and it only works once you've built everything up (see RebirthService.requirement).
 local function buildRebirthPad(plot, origin, player)
-	local pos = origin + Vector3.new(-24, 0.6, -PLOT_SIZE.Z / 2 + 12)
+	local pos = origin + Vector3.new(0, 19.4, -76)   -- on the upper-ring south walkway (2nd floor)
 
 	local pad = Instance.new("Part")
 	pad.Name        = "RebirthPad"

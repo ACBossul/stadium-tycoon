@@ -39,9 +39,10 @@ function RebirthService.totalLevels(data)
 end
 
 -- Required total building levels for the player's NEXT rebirth (scales each time).
--- Gentle early bar so the first prestige comes quickly (addictive loop), then ramps.
+-- Set high so rebirth unlocks only once you've built EVERYTHING up to ~max (the
+-- visual caps total ~120 levels across all buildings — that's the "finished" bar).
 function RebirthService.requirement(data)
-	return 15 * ((data.rebirths or 0) + 1)
+	return 120 * ((data.rebirths or 0) + 1)
 end
 
 function RebirthService.canRebirth(data)
