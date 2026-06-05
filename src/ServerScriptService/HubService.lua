@@ -266,23 +266,27 @@ local function build()
 	hubFolder = Instance.new("Model")
 	hubFolder.Name = "BrainrotCity"
 
-	-- Big shared ground linking the plot row (z≈0) to the city (z≈-700): no more
-	-- floating islands, and you can walk/drive across it. Sits just below the plot
-	-- pads (top y = -0.2) so the pads still read as the play surface.
-	local ground = block(hubFolder, Vector3.new(2700, 4, 1100), Vector3.new(1050, -2.2, -380),
+	-- One big shared ground covering the whole plot GRID (the rectangle of claimable
+	-- plots in front of the city) plus the city itself — no floating islands, drive
+	-- anywhere. Top y = -0.2 so plot pads read as the play surface. Keep the bounds
+	-- in sync with PlotService.PLOT_SLOTS.
+	local ground = block(hubFolder, Vector3.new(1760, 4, 1500), Vector3.new(0, -2.2, -200),
 		Color3.fromRGB(74, 110, 74), Enum.Material.Grass, true)
 	applyTexture(ground, TEXTURES.grass, 48, { Enum.NormalId.Top })
 
-	-- Roads: an east-west boulevard along the plot row's south side + a main street
-	-- running down to the city, so every plot can drive to the centre.
+	-- Road network: a central boulevard from the city's north gate up through the
+	-- grid, plus an east-west cross street at each row of plots, so every plot —
+	-- near or far — has a clear drive to the centre.
 	local function road(cx, cz, sx, sz)
 		local r = block(hubFolder, Vector3.new(sx, 0.3, sz), Vector3.new(cx, 0.05, cz),
 			Color3.fromRGB(48, 50, 58), Enum.Material.Asphalt, false)
 		applyTexture(r, TEXTURES.asphalt, 18, { Enum.NormalId.Top })
 	end
-	road(1050, -110, 2700, 46)       -- boulevard (spans the spread-out plot row)
-	road(0,  -335, 46, 460)          -- main street to the city
-	for z = -130, -540, -26 do       -- dashed centre line
+	road(0, -67, 46, 1018)                       -- central avenue (gate → back of grid)
+	for _, cz in ipairs({ -479, -229, 21, 271 }) do
+		road(0, cz, 1640, 34)                    -- cross street at each plot row's entrance
+	end
+	for z = -560, 430, 26 do                     -- dashed centre line up the boulevard
 		block(hubFolder, Vector3.new(2, 0.34, 10), Vector3.new(0, 0.08, z),
 			Color3.fromRGB(240, 220, 90), Enum.Material.SmoothPlastic, false)
 	end

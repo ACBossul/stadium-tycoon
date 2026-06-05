@@ -1,14 +1,19 @@
-Make VIP tangibly better: faster kart, accessible lounge, live trophy room
+Claimable plot grid around the city + connected road network
 
-- KartService: normal kart is now plain & average (speed 52); VIP Turbo
-  Kart is much faster (speed 140) and flashier so VIP clearly pays off.
-- PlotService upper tier: support cores moved to the back corners so they
-  no longer block the staircase (the lounge was unreachable). Wider stairs
-  land flush on the deck. VIP Lounge is OPEN and advertises its perks to
-  everyone (perk list + "Get VIP in the Shop" CTA) instead of hiding them.
-- Trophy Room now has a live display board (tagged TrophyDisplay) showing
-  cup stage, matches won, rebirths and your best card.
-- New TrophyController (client) fills that board from the profile; wired
-  into ClientMain's boot + ProfileUpdated handler.
+The world was a single stretched row with one visible plot and a road that
+didn't line up. Reworked it into a proper grid of claimable plots in front
+of the city:
+
+- PlotService: PLOT_SLOTS is now a 6x4 grid (24 spots) flanking a central
+  avenue, ordered closest-to-city first. New allocateSlot() gives VIP players
+  the CLOSEST free slot and free players the FARTHEST — prime spots are a VIP
+  perk. Every unclaimed slot shows an "OPEN PLOT" placeholder (lit corner
+  posts + floating sign) so the world looks populated and players can see
+  where plots are. Slots are freed + the placeholder restored on leave.
+- PlotService.initWorld() lays out all placeholders at server start; called
+  from Main after the city is built.
+- HubService: ground resized/recentred to cover the whole grid + city; roads
+  rebuilt as a central avenue (city gate -> back of grid) plus an east-west
+  cross street at every plot row, so near and far plots all drive to centre.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

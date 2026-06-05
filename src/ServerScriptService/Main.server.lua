@@ -31,6 +31,9 @@ KartService.init()
 -- Build the shared Brainrot City hub + arena coin event, wire travel pads.
 HubService.init()
 
+-- Lay out the claimable plot grid ("OPEN PLOT" placeholders) around the city.
+PlotService.initWorld()
+
 -- Wire rebirth pads (tagged "RebirthPad").
 RebirthService.init()
 

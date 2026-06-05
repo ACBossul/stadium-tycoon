@@ -20,8 +20,22 @@ local PlotService = {}
 
 -- ─── Plot layout constants ───────────────────────────────────────────────────
 
-local PLOT_SIZE      = Vector3.new(180, 1, 180)
-local PLOT_SPACING   = PLOT_SIZE.X + 60   -- 60-stud drivable lane between neighbouring plots
+local PLOT_SIZE = Vector3.new(180, 1, 180)
+
+-- Claimable plot slots: a grid of spots in front of the city (the city sits at
+-- z ≈ -700). Ordered BEST → WORST (row nearest the city first, centre columns
+-- first) so VIP players get the prime close spots and free players the farther
+-- ones. The row Z values must line up with the cross streets drawn in HubService.
+local PLOT_SLOTS = {}
+do
+	local rows = { -400, -150, 100, 350 }                 -- nearest the city first
+	local cols = { -150, 150, -430, 430, -710, 710 }      -- flank the central avenue, out
+	for _, rz in ipairs(rows) do
+		for _, cx in ipairs(cols) do
+			table.insert(PLOT_SLOTS, Vector3.new(cx, 0, rz))
+		end
+	end
+end
 
 -- Hand-placed building spots (offset from plot origin, on the ground plane). The
 -- central pitch occupies x[-40,40] z[-48,48]; buildings live in the margins around
@@ -132,11 +146,12 @@ end
 
 -- ─── Plot index allocation ───────────────────────────────────────────────────
 
-local usedIndices = {}            -- index -> player.UserId
-local playerPlotIndex = {}        -- player.UserId -> index
-local playerPlotModel = {}        -- player.UserId -> plot Model
+local usedSlots         = {}      -- slotIndex -> player.UserId
+local playerPlotIndex   = {}      -- player.UserId -> slotIndex (into PLOT_SLOTS)
+local playerPlotModel   = {}      -- player.UserId -> plot Model
 local playerSpawnCFrame = {}      -- player.UserId -> CFrame to (re)spawn at
-local playerConns = {}            -- player.UserId -> CharacterAdded connection
+local playerConns       = {}      -- player.UserId -> CharacterAdded connection
+local emptyPlots        = {}      -- slotIndex -> "OPEN PLOT" placeholder Model
 
 -- Put the player on their plot's entrance, now and on every respawn.
 local function teleportToPlot(player)
@@ -149,20 +164,93 @@ local function teleportToPlot(player)
 	end
 end
 
-local function allocateIndex(player)
-	local i = 0
-	while usedIndices[i] do i += 1 end
-	usedIndices[i] = player.UserId
-	playerPlotIndex[player.UserId] = i
-	return i
+-- A dim "OPEN PLOT" placeholder so the world looks populated and players can see
+-- where the unclaimed plots are. Replaced by a real plot when someone claims it.
+local function buildEmptyPlot(slot)
+	if emptyPlots[slot] then return end
+	local origin = PLOT_SLOTS[slot]
+	if not origin then return end
+
+	local m = Instance.new("Model")
+	m.Name = "OpenPlot_" .. slot
+
+	local pad = Instance.new("Part")
+	pad.Name = "Ground"; pad.Anchored = true; pad.CanCollide = true
+	pad.Size = Vector3.new(PLOT_SIZE.X, 1, PLOT_SIZE.Z)
+	pad.Position = origin + Vector3.new(0, -0.5, 0)   -- top at y = 0
+	pad.Color = Color3.fromRGB(58, 76, 60); pad.Material = Enum.Material.Grass
+	pad.TopSurface = Enum.SurfaceType.Smooth; pad.BottomSurface = Enum.SurfaceType.Smooth
+	pad.Parent = m
+	applyTexture(pad, TEXTURES.grass, 24, { Enum.NormalId.Top })
+	m.PrimaryPart = pad
+
+	-- glowing corner posts to read as a marked-out lot
+	for _, c in ipairs({ {-1,-1}, {1,-1}, {-1,1}, {1,1} }) do
+		local post = Instance.new("Part")
+		post.Anchored = true; post.CanCollide = false
+		post.Size = Vector3.new(2, 8, 2)
+		post.Position = origin + Vector3.new(c[1] * (PLOT_SIZE.X/2 - 3), 4, c[2] * (PLOT_SIZE.Z/2 - 3))
+		post.Color = Color3.fromRGB(230, 200, 90); post.Material = Enum.Material.Neon
+		post.Parent = m
+	end
+
+	local sign = Instance.new("Part")
+	sign.Name = "Sign"; sign.Anchored = true; sign.CanCollide = false
+	sign.Transparency = 1; sign.Size = Vector3.new(2, 2, 2)
+	sign.Position = origin + Vector3.new(0, 12, 0); sign.Parent = m
+	local bb = Instance.new("BillboardGui")
+	bb.Size = UDim2.new(0, 250, 0, 72); bb.AlwaysOnTop = true; bb.MaxDistance = 700
+	bb.Adornee = sign; bb.Parent = sign
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.new(1, 0, 1, 0); lbl.BackgroundTransparency = 1
+	lbl.Text = "🏗️ OPEN PLOT\nclaimed when a player joins"
+	lbl.TextColor3 = Color3.fromRGB(255, 235, 150); lbl.TextScaled = true
+	lbl.Font = Enum.Font.GothamBold; lbl.TextStrokeTransparency = 0.4; lbl.Parent = bb
+
+	m.Parent = plotsFolder
+	emptyPlots[slot] = m
 end
 
-local function freeIndex(player)
+local function removeEmptyPlot(slot)
+	local m = emptyPlots[slot]
+	if m then m:Destroy(); emptyPlots[slot] = nil end
+end
+
+-- Allocate the best available slot. VIP players take the CLOSEST free slot; free
+-- players take the FARTHEST — so the prime, close-to-city spots are a VIP perk.
+local function allocateSlot(player)
+	local data  = DataService.getData(player)
+	local isVip = data and data.passes and data.passes.vip
+	local chosen
+	if isVip then
+		for i = 1, #PLOT_SLOTS do
+			if not usedSlots[i] then chosen = i; break end
+		end
+	else
+		for i = #PLOT_SLOTS, 1, -1 do
+			if not usedSlots[i] then chosen = i; break end
+		end
+	end
+	if not chosen then
+		-- Grid full (more players than slots): overflow onto slot 1.
+		for i = 1, #PLOT_SLOTS do
+			if not usedSlots[i] then chosen = i; break end
+		end
+		chosen = chosen or 1
+	end
+	usedSlots[chosen] = player.UserId
+	playerPlotIndex[player.UserId] = chosen
+	removeEmptyPlot(chosen)
+	return chosen
+end
+
+local function freeSlot(player)
 	local i = playerPlotIndex[player.UserId]
 	if i ~= nil then
-		usedIndices[i] = nil
+		usedSlots[i] = nil
 		playerPlotIndex[player.UserId] = nil
 	end
+	return i
 end
 
 -- ─── Building model builder ──────────────────────────────────────────────────
@@ -1075,8 +1163,8 @@ function PlotService.buildPlot(player)
 		return playerPlotModel[player.UserId]
 	end
 
-	local index  = allocateIndex(player)
-	local origin = Vector3.new(index * PLOT_SPACING, 0, 0)
+	local slot   = allocateSlot(player)
+	local origin = PLOT_SLOTS[slot]
 
 	local plot = Instance.new("Model")
 	plot.Name = "Plot_" .. player.UserId
@@ -1188,7 +1276,7 @@ function PlotService.onBuildingUpgraded(player, buildingId, level)
 
 	if buildingId == "stands" then
 		-- The grandstand rebuilds its seating/crowd/roof to the new level.
-		local origin = Vector3.new(index * PLOT_SPACING, 0, 0)
+		local origin = PLOT_SLOTS[index]
 		local spot   = BUILDING_LAYOUT.stands
 		buildStandTiers(model, origin.X + spot.x, origin.Z + spot.z, level)
 	else
@@ -1215,7 +1303,19 @@ function PlotService.removePlot(player)
 		plot:Destroy()
 		playerPlotModel[player.UserId] = nil
 	end
-	freeIndex(player)
+	-- Free the slot and put the "OPEN PLOT" placeholder back so the spot is reusable.
+	local slot = freeSlot(player)
+	if slot then buildEmptyPlot(slot) end
+end
+
+-- Build "OPEN PLOT" placeholders on every slot not currently claimed. Called once
+-- at server start (after the city exists) so the world looks populated from join 1.
+function PlotService.initWorld()
+	for i = 1, #PLOT_SLOTS do
+		if not usedSlots[i] then
+			buildEmptyPlot(i)
+		end
+	end
 end
 
 return PlotService
