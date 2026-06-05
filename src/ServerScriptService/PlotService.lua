@@ -49,9 +49,9 @@ local BUILDING_LAYOUT = {
 	stands      = { x = -18, z =  70 },   -- north stand, set well back behind the goal
 	bigscreen   = { x =  46, z =  70 },   -- north-east, beside the stand
 	floodlights = { x = -72, z =  72 },   -- north-west corner tower
-	concessions = { x = -68, z =  14 },   -- west margin
-	merch       = { x = -68, z = -22 },   -- west margin
-	parking     = { x =  64, z = -60 },   -- south-east corner, clear of the pitch
+	concessions = { x = -70, z =  18 },   -- west concourse, faces the pitch (east)
+	merch       = { x =  70, z =  18 },   -- east concourse, faces the pitch (west)
+	parking     = { x =  64, z = -64 },   -- south-east corner, clear of the pitch
 }
 
 -- Parody team palette (NO real club/national colors).
@@ -69,18 +69,23 @@ local BUILDING_PIECES = {
 	stands = {
 		{ size = Vector3.new(46, 3, 26), offset = Vector3.new(0, 1.5, 0), color = CONCRETE, material = M.Concrete },
 	},
-	-- Front faces -Z (the concourse side); all pieces solid so you can't clip through.
+	-- A proper snack-bar storefront. Front faces -Z (rotated to face the pitch).
 	concessions = {
-		{ size = Vector3.new(13, 11, 11),  offset = Vector3.new(0,  5.5,  0),   color = Color3.fromRGB(232,150,60),  material = M.SmoothPlastic, collide = true },  -- hut
-		{ size = Vector3.new(11, 2.4, 1),  offset = Vector3.new(0,  4.4, -5.4),  color = Color3.fromRGB(120,84,52),   material = M.WoodPlanks,    collide = true },  -- counter
-		{ size = Vector3.new(15, 1.0, 4),  offset = Vector3.new(0,  8.7, -6.0),  color = Color3.fromRGB(205,72,72),   material = M.SmoothPlastic, collide = true },  -- awning
-		{ size = Vector3.new(14, 1.4, 12), offset = Vector3.new(0, 11.5,  0),    color = Color3.fromRGB(205,72,72),   material = M.SmoothPlastic, collide = true },  -- roof cap
+		{ size = Vector3.new(15, 10, 12),    offset = Vector3.new(0,  5.0,  1.0),  color = Color3.fromRGB(243,232,205), material = M.SmoothPlastic, collide = true },  -- plaster body (base)
+		{ size = Vector3.new(11, 4.6, 0.6),  offset = Vector3.new(0,  5.6, -5.0),  color = Color3.fromRGB(34,38,46),    material = M.SmoothPlastic, collide = true },  -- dark serving window
+		{ size = Vector3.new(12.6, 1.3, 2.6),offset = Vector3.new(0,  3.0, -6.0),  color = Color3.fromRGB(150,110,70),  material = M.WoodPlanks,    collide = true },  -- counter shelf
+		{ size = Vector3.new(15.6, 0.8, 4.6),offset = Vector3.new(0,  8.1, -6.2),  color = Color3.fromRGB(208,70,70),   material = M.SmoothPlastic, collide = false }, -- red awning
+		{ size = Vector3.new(15.6, 0.85,1.5),offset = Vector3.new(0,  8.15,-7.7),  color = Color3.fromRGB(245,245,245), material = M.SmoothPlastic, collide = false }, -- white awning trim
+		{ size = Vector3.new(16.5, 1.5, 13), offset = Vector3.new(0, 10.5,  1.0),  color = Color3.fromRGB(150,60,55),   material = M.SmoothPlastic, collide = true },  -- roof
 	},
+	-- A retail store with a glass storefront + display window.
 	merch = {
-		{ size = Vector3.new(14, 12, 11),  offset = Vector3.new(0,  6.0,  0),   color = Color3.fromRGB(60,120,220),  material = M.SmoothPlastic, collide = true },  -- shop
-		{ size = Vector3.new(12, 3.2, 1),  offset = Vector3.new(0,  5.6, -5.4),  color = Color3.fromRGB(180,205,245), material = M.Glass,         collide = true },  -- window
-		{ size = Vector3.new(16, 1.0, 4),  offset = Vector3.new(0,  9.4, -6.0),  color = TEAM_GOLD,                   material = M.SmoothPlastic, collide = true },  -- awning
-		{ size = Vector3.new(15, 1.4, 12), offset = Vector3.new(0, 12.7,  0),    color = Color3.fromRGB(35,80,170),   material = M.SmoothPlastic, collide = true },  -- roof cap
+		{ size = Vector3.new(15, 11, 12),    offset = Vector3.new(0,  5.5,  1.0),  color = Color3.fromRGB(54,92,168),   material = M.SmoothPlastic, collide = true },  -- store body (base)
+		{ size = Vector3.new(12, 7.0, 0.5),  offset = Vector3.new(0,  5.0, -5.0),  color = Color3.fromRGB(182,216,245), material = M.Glass,         collide = true },  -- glass front
+		{ size = Vector3.new(2.0, 7.0, 0.7), offset = Vector3.new(0,  5.0, -5.1),  color = Color3.fromRGB(235,238,248), material = M.SmoothPlastic, collide = false }, -- window mullion
+		{ size = Vector3.new(15.6, 0.9, 4.2),offset = Vector3.new(0,  9.1, -6.0),  color = TEAM_GOLD,                   material = M.SmoothPlastic, collide = false }, -- gold awning
+		{ size = Vector3.new(16.5, 1.5, 13), offset = Vector3.new(0, 11.5,  1.0),  color = Color3.fromRGB(38,64,130),   material = M.SmoothPlastic, collide = true },  -- roof
+		{ size = Vector3.new(16.5, 1.8, 1.0),offset = Vector3.new(0, 12.6, -5.4),  color = TEAM_GOLD,                   material = M.SmoothPlastic, collide = false }, -- sign band
 	},
 	parking = {
 		{ size = Vector3.new(26, 0.6, 20), offset = Vector3.new(0,  0.3, 0), color = Color3.fromRGB(60,62,68),    material = M.Concrete },
@@ -189,15 +194,21 @@ local function buildEmptyPlot(slot)
 	applyTexture(pad, TEXTURES.grass, 24, { Enum.NormalId.Top })
 	m.PrimaryPart = pad
 
-	-- glowing corner posts to read as a marked-out lot
-	for _, c in ipairs({ {-1,-1}, {1,-1}, {-1,1}, {1,1} }) do
-		local post = Instance.new("Part")
-		post.Anchored = true; post.CanCollide = false
-		post.Size = Vector3.new(2, 8, 2)
-		post.Position = origin + Vector3.new(c[1] * (PLOT_SIZE.X/2 - 3), 4, c[2] * (PLOT_SIZE.Z/2 - 3))
-		post.Color = Color3.fromRGB(230, 200, 90); post.Material = Enum.Material.Neon
-		post.Parent = m
+	-- A flat painted border (NOT glowing neon posts — those lit up the whole skyline
+	-- and were visual spam). Reads as a reserved, marked-out lot instead.
+	local function border(sx, sz, ox, oz)
+		local b = Instance.new("Part")
+		b.Anchored = true; b.CanCollide = false
+		b.Size = Vector3.new(sx, 0.4, sz)
+		b.Position = origin + Vector3.new(ox, 0.2, oz)
+		b.Color = Color3.fromRGB(220, 178, 55); b.Material = Enum.Material.SmoothPlastic
+		b.Parent = m
 	end
+	local hw, hl = PLOT_SIZE.X/2 - 2, PLOT_SIZE.Z/2 - 2
+	border(PLOT_SIZE.X - 4, 2.5, 0,  hl)   -- north edge
+	border(PLOT_SIZE.X - 4, 2.5, 0, -hl)   -- south edge
+	border(2.5, PLOT_SIZE.Z - 4,  hw, 0)   -- east edge
+	border(2.5, PLOT_SIZE.Z - 4, -hw, 0)   -- west edge
 
 	local sign = Instance.new("Part")
 	sign.Name = "Sign"; sign.Anchored = true; sign.CanCollide = false
@@ -1045,10 +1056,10 @@ local function buildUpperTier(plot, origin, player)
 	-- Viewing deck
 	local deck = up(40, 1.5, 36, bx, deckY, bz, CONCRETE, Enum.Material.Concrete)
 	applyTexture(deck, TEXTURES.brick, 8, { Enum.NormalId.Top })
-	-- Railings (left/right + back; south is OPEN for the stairs)
-	up(0.5, 3, 36, bx + 20, deckY + 1.6, bz, GOLD, Enum.Material.Metal, false)
-	up(0.5, 3, 36, bx - 20, deckY + 1.6, bz, GOLD, Enum.Material.Metal, false)
-	up(40, 3, 0.5, bx, deckY + 1.6, bz + 18, GOLD, Enum.Material.Metal, false)
+	-- Railings — SOLID walls so you can't fall off the deck (south is OPEN for stairs)
+	up(1, 4, 36, bx + 20, deckY + 2, bz, GOLD, Enum.Material.Metal, true)
+	up(1, 4, 36, bx - 20, deckY + 2, bz, GOLD, Enum.Material.Metal, true)
+	up(40, 4, 1, bx, deckY + 2, bz + 18, GOLD, Enum.Material.Metal, true)
 
 	-- ── Trophy Room (west half; open to the deck, with a LIVE display board) ──
 	local trX = bx - 11
@@ -1254,6 +1265,11 @@ function PlotService.buildPlot(player)
 		local level = (data and data.stadium and data.stadium[buildingCfg.id]) or 0
 		local m = buildBuildingModel(buildingCfg, pos, player, level)
 		m.Parent = plot
+		-- Turn the concourse shops so their storefronts face the pitch.
+		if buildingCfg.id == "concessions" or buildingCfg.id == "merch" then
+			local target = Vector3.new(origin.X, m:GetPivot().Position.Y, origin.Z + 6)
+			m:PivotTo(CFrame.lookAt(m:GetPivot().Position, target))
+		end
 		if buildingCfg.id ~= "stands" and level > 0 then
 			scaleBuildingToLevel(m, level)
 		end

@@ -38,6 +38,12 @@ local function getRebirthMultiplier(data)
 end
 EconomyService.getRebirthMultiplier = getRebirthMultiplier
 
+-- VIP earns +25% income (a tangible VIP perk on top of speed/kart/teleport).
+local function getVipMultiplier(data)
+	return (data.passes and data.passes.vip) and 1.25 or 1
+end
+EconomyService.getVipMultiplier = getVipMultiplier
+
 -- Computes and grants offline earnings on player join
 function EconomyService.applyOfflineEarnings(player)
 	local data = DataService.getData(player)
@@ -53,7 +59,7 @@ function EconomyService.applyOfflineEarnings(player)
 	local passiveRate = BuildingConfig.totalPassiveRate(data.stadium)
 	local offlineMult = BuildingConfig.OFFLINE_RATE_MULT * getOfflineMultiplier(data)
 	local coinMult    = getCoinMultiplier(data)
-	local earned      = math.floor(passiveRate * offlineMult * coinMult * getRebirthMultiplier(data) * awaySeconds)
+	local earned      = math.floor(passiveRate * offlineMult * coinMult * getRebirthMultiplier(data) * getVipMultiplier(data) * awaySeconds)
 
 	if earned > 0 then
 		data.coins += earned
@@ -77,7 +83,7 @@ function EconomyService.tickIncome(player, now)
 
 	local passiveRate = BuildingConfig.totalPassiveRate(data.stadium)
 	local coinMult    = getCoinMultiplier(data)
-	local earned      = math.floor(passiveRate * coinMult * getRebirthMultiplier(data) * delta)
+	local earned      = math.floor(passiveRate * coinMult * getRebirthMultiplier(data) * getVipMultiplier(data) * delta)
 
 	if earned > 0 then
 		data.coins += earned

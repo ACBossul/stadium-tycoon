@@ -175,8 +175,16 @@ local function buildKiosk(x, z, color, title, signColor, panelName)
 	local booth = block(hubFolder, Vector3.new(12, 9, 10),
 		HUB_ORIGIN + Vector3.new(x, 4.5, z), color, Enum.Material.SmoothPlastic, true)
 	booth.Name = "HubKiosk"
+	-- flat roof + sign band
 	block(hubFolder, Vector3.new(14, 1.2, 12),
 		HUB_ORIGIN + Vector3.new(x, 9.4, z), signColor, Enum.Material.SmoothPlastic, true)
+	-- storefront detailing on the FRONT (+Z) face the players approach from
+	block(hubFolder, Vector3.new(13, 0.8, 4),                      -- awning
+		HUB_ORIGIN + Vector3.new(x, 8.2, z + 6.2), signColor, Enum.Material.SmoothPlastic, false)
+	block(hubFolder, Vector3.new(10.5, 4.4, 0.5),                  -- glass display front
+		HUB_ORIGIN + Vector3.new(x, 4.8, z + 5.1), Color3.fromRGB(185, 218, 245), Enum.Material.Glass, true)
+	block(hubFolder, Vector3.new(11.5, 1.4, 2.4),                  -- counter
+		HUB_ORIGIN + Vector3.new(x, 2.3, z + 5.9), Color3.fromRGB(150, 110, 70), Enum.Material.WoodPlanks, true)
 	neonSign(booth, title, signColor, Enum.NormalId.Front)
 
 	local cd = Instance.new("ClickDetector")

@@ -138,6 +138,16 @@ local function onPlayerJoin(player)
 	-- Build the player's stadium plot (runtime-generated, tagged buildings)
 	PlotService.buildPlot(player)
 
+	-- VIP movement perk: faster on foot. Applied now + on every respawn (reads the
+	-- live profile so it kicks in after a mid-session VIP purchase + respawn).
+	local function applyVipSpeed(character)
+		if not (data.passes and data.passes.vip) then return end
+		local hum = character:FindFirstChildOfClass("Humanoid") or character:WaitForChild("Humanoid", 10)
+		if hum then hum.WalkSpeed = 26 end
+	end
+	player.CharacterAdded:Connect(applyVipSpeed)
+	if player.Character then task.spawn(applyVipSpeed, player.Character) end
+
 	-- Compute offline earnings
 	local offlineEarned = EconomyService.applyOfflineEarnings(player)
 
