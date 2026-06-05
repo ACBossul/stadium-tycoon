@@ -24,6 +24,10 @@ local hubFolder
 local hubSpawnCFrame
 local kothPad
 
+-- Live arena-event state (a cycle of football-themed events runs in the centre).
+local currentEvent            -- id of the active event, or nil during intermission
+local eventBannerL1, eventBannerL2   -- the jumbotron labels (set in build())
+
 -- Uploaded surface textures (same decals the plots use).
 local TEXTURES = {
 	grass   = "rbxassetid://70872978008715",
@@ -358,11 +362,34 @@ local function build()
 		applyTexture(r, TEXTURES.asphalt, 18, { Enum.NormalId.Top })
 	end
 	local GRID_LEN = 1500
-	for _, cx in ipairs({ -450, -150, 150, 450 }) do
+	local STREETS = { -450, -150, 150, 450 }
+	for _, cx in ipairs(STREETS) do
 		road(cx, HUB_ORIGIN.Z, 50, GRID_LEN)              -- north-south streets
 	end
-	for _, off in ipairs({ -450, -150, 150, 450 }) do
+	for _, off in ipairs(STREETS) do
 		road(0, HUB_ORIGIN.Z + off, GRID_LEN, 50)         -- east-west streets
+	end
+
+	-- Road markings: dashed yellow centre lines, white edge lines + zebra
+	-- crosswalks at the central intersections, so the streets read as real roads.
+	local YEL, WHT = Color3.fromRGB(240, 215, 70), Color3.fromRGB(235, 238, 245)
+	local zc = HUB_ORIGIN.Z
+	local function paint(sx, sz, x, z, color)
+		block(hubFolder, Vector3.new(sx, 0.34, sz), Vector3.new(x, 0.09, z), color, Enum.Material.SmoothPlastic, false)
+	end
+	for _, cx in ipairs(STREETS) do
+		for z = zc - GRID_LEN/2 + 24, zc + GRID_LEN/2 - 24, 42 do paint(2, 11, cx, z, YEL) end
+		paint(1.2, GRID_LEN, cx - 22, zc, WHT); paint(1.2, GRID_LEN, cx + 22, zc, WHT)
+	end
+	for _, off in ipairs(STREETS) do
+		local cz = zc + off
+		for x = -GRID_LEN/2 + 24, GRID_LEN/2 - 24, 42 do paint(11, 2, x, cz, YEL) end
+		paint(GRID_LEN, 1.2, 0, cz - 22, WHT); paint(GRID_LEN, 1.2, 0, cz + 22, WHT)
+	end
+	for _, cx in ipairs({ -150, 150 }) do
+		for _, off in ipairs({ -150, 150 }) do
+			for i = -2, 2 do paint(3.5, 16, cx + i * 7, zc + off, WHT) end   -- zebra crossing
+		end
 	end
 
 	-- Plaza floor
@@ -407,8 +434,24 @@ local function build()
 	kl1.TextScaled = true; kl1.Font = Enum.Font.GothamBlack; kl1.TextStrokeTransparency = 0.4; kl1.Parent = kbb
 	local kl2 = Instance.new("TextLabel")
 	kl2.Size = UDim2.new(1, 0, 0.4, 0); kl2.Position = UDim2.new(0, 0, 0.6, 0); kl2.BackgroundTransparency = 1
-	kl2.Text = "stand to earn"; kl2.TextColor3 = Color3.fromRGB(220, 220, 235)
+	kl2.Text = "active during 👑 events"; kl2.TextColor3 = Color3.fromRGB(220, 220, 235)
 	kl2.TextScaled = true; kl2.Font = Enum.Font.Gotham; kl2.Parent = kbb
+
+	-- ── Event jumbotron: a tall screen above the arena announcing the live event. ──
+	block(hubFolder, Vector3.new(2.5, 32, 2.5), HUB_ORIGIN + Vector3.new(0, 16, 0), Color3.fromRGB(40,44,56), Enum.Material.Metal, false)
+	local jumbo = block(hubFolder, Vector3.new(2, 2, 2), HUB_ORIGIN + Vector3.new(0, 35, 0), Color3.fromRGB(10,12,18), Enum.Material.SmoothPlastic, false)
+	jumbo.Transparency = 1
+	local jbb = Instance.new("BillboardGui")
+	jbb.Size = UDim2.new(0, 380, 0, 116); jbb.StudsOffset = Vector3.new(0, 4, 0); jbb.AlwaysOnTop = true; jbb.MaxDistance = 1200; jbb.Adornee = jumbo; jbb.Parent = jumbo
+	local jframe = Instance.new("Frame")
+	jframe.Size = UDim2.new(1,0,1,0); jframe.BackgroundColor3 = Color3.fromRGB(12,14,22); jframe.BackgroundTransparency = 0.18; jframe.BorderSizePixel = 0; jframe.Parent = jbb
+	local jc = Instance.new("UICorner") jc.CornerRadius = UDim.new(0,12) jc.Parent = jframe
+	eventBannerL1 = Instance.new("TextLabel")
+	eventBannerL1.Size = UDim2.new(1,-12,0.6,0); eventBannerL1.Position = UDim2.new(0,6,0,4); eventBannerL1.BackgroundTransparency = 1
+	eventBannerL1.Text = "⚡ ARENA EVENTS"; eventBannerL1.TextColor3 = Color3.fromRGB(255,210,80); eventBannerL1.TextScaled = true; eventBannerL1.Font = Enum.Font.GothamBlack; eventBannerL1.Parent = jframe
+	eventBannerL2 = Instance.new("TextLabel")
+	eventBannerL2.Size = UDim2.new(1,-12,0.36,0); eventBannerL2.Position = UDim2.new(0,6,0.62,0); eventBannerL2.BackgroundTransparency = 1
+	eventBannerL2.Text = "next event soon…"; eventBannerL2.TextColor3 = Color3.fromRGB(220,220,235); eventBannerL2.TextScaled = true; eventBannerL2.Font = Enum.Font.GothamBold; eventBannerL2.Parent = jframe
 
 	local edge = PLAZA / 2 - 14   -- 126
 
@@ -470,6 +513,38 @@ local function build()
 	-- Spawn just inside the north gate, facing south into the arena.
 	local spawnPos = HUB_ORIGIN + Vector3.new(0, 3, edge - 12)
 	hubSpawnCFrame = CFrame.lookAt(spawnPos, spawnPos + Vector3.new(0, 0, -1))
+
+	-- ── Environment: sky + a vast surrounding plain + a perimeter border wall, so
+	-- the world reads as a real place instead of a floating island. ──
+	local Lighting = game:GetService("Lighting")
+	if not Lighting:FindFirstChildOfClass("Atmosphere") then
+		local atmo = Instance.new("Atmosphere")
+		atmo.Density = 0.32; atmo.Offset = 0.1; atmo.Haze = 1.9; atmo.Glare = 0.2
+		atmo.Color = Color3.fromRGB(199, 215, 235); atmo.Decay = Color3.fromRGB(106, 134, 168)
+		atmo.Parent = Lighting
+	end
+	if not Lighting:FindFirstChildOfClass("Sky") then
+		local sky = Instance.new("Sky"); sky.Name = "StadiumSky"; sky.Parent = Lighting
+	end
+	Lighting.ClockTime = 14; Lighting.Brightness = 2.4
+
+	-- A huge low plain extending to the horizon (no more void under the edges).
+	local plain = block(hubFolder, Vector3.new(6500, 10, 6500), HUB_ORIGIN + Vector3.new(0, -6, 0),
+		Color3.fromRGB(58, 96, 60), Enum.Material.Grass, true)
+	applyTexture(plain, TEXTURES.grass, 120, { Enum.NormalId.Top })
+
+	-- Tall perimeter border wall enclosing the whole play area.
+	local B, H = 745, 60
+	local function borderWall(sx, sz, x, z)
+		block(hubFolder, Vector3.new(sx, H, sz), HUB_ORIGIN + Vector3.new(x, H/2, z),
+			Color3.fromRGB(46, 50, 64), Enum.Material.Concrete, true)
+		block(hubFolder, Vector3.new(sx + 2, 2.5, sz + 2), HUB_ORIGIN + Vector3.new(x, H, z),
+			Color3.fromRGB(120, 200, 255), Enum.Material.Neon, false)   -- glowing top trim
+	end
+	borderWall(2*B + 10, 10, 0,  B)
+	borderWall(2*B + 10, 10, 0, -B)
+	borderWall(10, 2*B, B, 0)
+	borderWall(10, 2*B, -B, 0)
 
 	hubFolder.Parent = Workspace
 end
@@ -574,34 +649,91 @@ local function spawnCoinOrb()
 	end)
 end
 
-local function eventLoop()
+-- ─── event cycle: a rotation of announced, football-themed arena events ─────────
+
+local function notifyAll(msg, color)
+	for _, p in ipairs(Players:GetPlayers()) do notify(p, msg, color) end
+end
+local function setBanner(l1, l2)
+	if eventBannerL1 then eventBannerL1.Text = l1 end
+	if eventBannerL2 then eventBannerL2.Text = l2 end
+end
+
+local EVENTS = {
+	{ id = "coinrush",   name = "Coin Rush",       emoji = "🪙", dur = 45, blurb = "Coins are raining in the arena — grab them all!" },
+	{ id = "koth",       name = "King of the Hill", emoji = "👑", dur = 40, blurb = "Hold the centre spot to bank coins fast!" },
+	{ id = "goldengoal", name = "Golden Goal",     emoji = "⚽", dur = 30, blurb = "First to touch the golden ball wins a JACKPOT!" },
+	{ id = "fanfrenzy",  name = "Fan Frenzy",      emoji = "📣", dur = 40, blurb = "The crowd's going wild — everyone in the arena earns!" },
+}
+
+-- Golden Goal: a big golden ball; first touch wins a jackpot + ends the event.
+local function spawnGoldenGoal()
+	local ball = Instance.new("Part")
+	ball.Name = "GoldenGoal"; ball.Shape = Enum.PartType.Ball; ball.Size = Vector3.new(5.5, 5.5, 5.5)
+	ball.Position = HUB_ORIGIN + Vector3.new(0, 4, 0); ball.Anchored = true; ball.CanCollide = false
+	ball.Material = Enum.Material.Neon; ball.Color = Color3.fromRGB(255, 215, 60); ball.Parent = hubFolder
+	local bb = Instance.new("BillboardGui") bb.Size = UDim2.new(0,80,0,40); bb.StudsOffset = Vector3.new(0,4,0); bb.AlwaysOnTop = true; bb.MaxDistance = 200; bb.Adornee = ball; bb.Parent = ball
+	local l = Instance.new("TextLabel") l.Size = UDim2.new(1,0,1,0); l.BackgroundTransparency = 1; l.Text = "⚽ JACKPOT!"; l.TextColor3 = Color3.fromRGB(255,235,120); l.TextScaled = true; l.Font = Enum.Font.GothamBlack; l.Parent = bb
+	local claimed = false
+	ball.Touched:Connect(function(hit)
+		if claimed then return end
+		local plr = Players:GetPlayerFromCharacter(hit and hit.Parent)
+		if not plr then return end
+		claimed = true
+		EconomyService.addCoins(plr, 50000); pushProfile(plr)
+		notifyAll("⚽ " .. plr.DisplayName .. " scored the GOLDEN GOAL! +50,000", "gold")
+		ball:Destroy()
+		currentEvent = nil   -- ends the event early
+	end)
+	task.delay(35, function() if ball and ball.Parent then ball:Destroy() end end)
+end
+
+-- Coin-rush orb spawner (only while Coin Rush is live).
+local function orbLoop()
 	while true do
-		task.wait(9)
-		if #Players:GetPlayers() == 0 then continue end
-		if countOrbs() < 6 then
-			for _ = 1, math.random(1, 2) do
-				spawnCoinOrb()
+		task.wait(2.4)
+		if currentEvent == "coinrush" and #Players:GetPlayers() > 0 and countOrbs() < 12 then
+			for _ = 1, 2 do spawnCoinOrb() end
+		end
+	end
+end
+
+-- Earning loop for King-of-the-Hill (centre pad) + Fan Frenzy (anywhere in arena).
+local function earnLoop()
+	while true do
+		task.wait(1)
+		for _, player in ipairs(Players:GetPlayers()) do
+			local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				local dx, dz = hrp.Position.X - HUB_ORIGIN.X, hrp.Position.Z - HUB_ORIGIN.Z
+				local d2 = dx * dx + dz * dz
+				if currentEvent == "koth" and d2 <= 49 and math.abs(hrp.Position.Y - HUB_ORIGIN.Y) < 12 then
+					EconomyService.addCoins(player, 80); pushProfile(player)
+				elseif currentEvent == "fanfrenzy" and d2 <= (ARENA_R + 12) ^ 2 then
+					EconomyService.addCoins(player, 60); pushProfile(player)
+				end
 			end
 		end
 	end
 end
 
--- King-of-the-Hill: anyone standing on the centre pad earns a trickle of coins.
-local function kothLoop()
+-- The cycle manager: announce each event, run it, brief intermission, repeat.
+local function eventManager()
+	local idx = 0
 	while true do
-		task.wait(1)
-		if not kothPad then continue end
-		local c = kothPad.Position
-		for _, player in ipairs(Players:GetPlayers()) do
-			local char = player.Character
-			local hrp  = char and char:FindFirstChild("HumanoidRootPart")
-			if hrp then
-				local dx, dz = hrp.Position.X - c.X, hrp.Position.Z - c.Z
-				if (dx * dx + dz * dz) <= 49 and math.abs(hrp.Position.Y - c.Y) < 8 then
-					EconomyService.addCoins(player, 50)
-					pushProfile(player)
-				end
-			end
+		currentEvent = nil
+		setBanner("⚡ ARENA EVENTS", "next event soon…")
+		task.wait(10)
+		if #Players:GetPlayers() == 0 then continue end
+		idx = idx % #EVENTS + 1
+		local ev = EVENTS[idx]
+		currentEvent = ev.id
+		notifyAll("📣 EVENT: " .. ev.emoji .. " " .. ev.name .. " — " .. ev.blurb, "gold")
+		if ev.id == "goldengoal" then spawnGoldenGoal() end
+		local t = ev.dur
+		while t > 0 and currentEvent == ev.id do
+			setBanner(ev.emoji .. "  NOW: " .. ev.name, t .. "s left")
+			task.wait(1); t -= 1
 		end
 	end
 end
@@ -617,8 +749,9 @@ function HubService.init()
 	for _, pad in ipairs(CollectionService:GetTagged("ToStadiumPad")) do task.spawn(wireStadiumPad, pad) end
 	CollectionService:GetInstanceAddedSignal("ToStadiumPad"):Connect(function(pad) task.spawn(wireStadiumPad, pad) end)
 
-	task.spawn(eventLoop)
-	task.spawn(kothLoop)
+	task.spawn(orbLoop)
+	task.spawn(earnLoop)
+	task.spawn(eventManager)
 end
 
 return HubService
