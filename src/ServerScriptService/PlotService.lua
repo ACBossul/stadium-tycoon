@@ -513,7 +513,7 @@ local function buildStandTiers(model, baseX, baseZ, level)
 		if c.Name == "StandPart" then c:Destroy() end
 	end
 
-	local rows     = math.clamp(math.floor((level - 1) / 4) + 1, 1, 7)   -- +1 row every 4 levels
+	local rows     = math.clamp(math.floor((level - 1) / 3) + 1, 1, 7)   -- maxes (7 rows) ~level 19
 	local stepUp   = 1.8
 	local stepBack = 2.4
 	local W        = 40                          -- stand width
@@ -1445,7 +1445,7 @@ local function buildStadiumBowl(plot, origin, level)
 	if (level or 0) < 1 then return end   -- level 0 (e.g. after rebirth) = just clear
 	local HX, HZ = 40, 48                 -- pitch half-extents
 	local APR    = 5                      -- apron between pitch edge and row 1
-	local rows = math.clamp(math.floor((level - 1) / 4) + 1, 1, 6)   -- +1 row every 4 levels (slow)
+	local rows = math.clamp(math.floor((level - 1) / 3) + 1, 1, 6)   -- maxes (6 rows) ~level 16
 	local stepUp, stepBack = 1.5, 2.2           -- a little smaller than before
 	local SEAT   = { Color3.fromRGB(58,118,200), Color3.fromRGB(222,72,72), Color3.fromRGB(245,205,55) }
 	local STEP_C = Color3.fromRGB(116, 120, 132)

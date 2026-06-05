@@ -192,6 +192,27 @@ function CardService.grantSpecificCard(player, cardId, powerBonus)
 	return { instanceId = id, cardId = cardId, power = power, rarity = def.rarity }
 end
 
+-- Sell a card to the transfer market for coins (rarer/stronger = more). Can't
+-- sell a card that's in your squad. Returns success, coinsGained or errorCode.
+function CardService.sellCard(player, instanceId)
+	local data = DataService.getData(player)
+	if not data then return false, "no_data" end
+	local card = data.cards[instanceId]
+	if not card then return false, "not_owned" end
+
+	for _, iid in ipairs(data.squad) do
+		if iid == instanceId then return false, "equipped" end
+	end
+
+	local def    = CardCatalog.ById[card.cardId]
+	local rarity = (def and def.rarity) or "Common"
+	local value  = CardCatalog.sellValue(rarity, card.power)
+
+	data.cards[instanceId] = nil
+	EconomyService.addCoins(player, value)
+	return true, value
+end
+
 -- ─── Squad management ─────────────────────────────────────────────────────
 
 -- Sets the squad. instanceIds is an ordered array of up to 11 instanceIds the player owns.

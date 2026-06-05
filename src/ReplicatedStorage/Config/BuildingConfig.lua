@@ -29,86 +29,18 @@ BuildingConfig.Buildings = {
 	-- Progressive build: you start with NOTHING built. Lay the pitch first (cheap),
 	-- then the lower-stands bowl, then the big grandstand, then the rest — each is a
 	-- "Build" then "Upgrade". Costs roughly enforce that order.
-	{
-		id = "pitch", name = "The Pitch",
-		baseRate = 2, baseCost = 40, costMult = 1.15, maxLevel = 0, activeOnly = false, collectCooldown = 0,
-	},
-	{
-		id = "lowerstands", name = "Lower Stands",
-		baseRate = 4, baseCost = 150, costMult = 1.15, maxLevel = 0, activeOnly = false, collectCooldown = 0,
-	},
-	{
-		id             = "stands",
-		name           = "Grandstand",
-		baseRate       = 8,
-		baseCost       = 350,
-		costMult       = 1.15,
-		maxLevel       = 0,
-		activeOnly     = false,
-		collectCooldown = 0,
-	},
-	{
-		id             = "concessions",
-		name           = "Concession Stand",
-		baseRate       = 3,
-		baseCost       = 600,
-		costMult       = 1.15,
-		maxLevel       = 0,
-		activeOnly     = false,   -- now feeds the Cash Stand like the others
-		collectCooldown = 0,
-	},
-	{
-		id             = "parking",
-		name           = "Parking Lot",
-		baseRate       = 6,
-		baseCost       = 900,
-		costMult       = 1.18,
-		maxLevel       = 0,
-		activeOnly     = false,
-		collectCooldown = 0,
-	},
-	{
-		id             = "merch",
-		name           = "Merch Shop",
-		baseRate       = 18,
-		baseCost       = 1400,
-		costMult       = 1.18,
-		maxLevel       = 0,
-		activeOnly     = false,
-		collectCooldown = 0,
-	},
-	{
-		id             = "bigscreen",
-		name           = "Big Screen",
-		baseRate       = 30,
-		baseCost       = 2200,
-		costMult       = 1.20,
-		maxLevel       = 0,
-		activeOnly     = false,
-		collectCooldown = 0,
-	},
-	{
-		id             = "floodlights",
-		name           = "Floodlights",
-		baseRate       = 55,
-		baseCost       = 4500,
-		costMult       = 1.22,
-		maxLevel       = 0,
-		activeOnly     = false,
-		collectCooldown = 0,
-	},
-	{
-		-- The end-game structural upgrade: walls rise into a facade and a roof ring
-		-- grows in + up each level, turning the ground into an enclosed stadium.
-		id             = "structure",
-		name           = "Stadium Roof",
-		baseRate       = 25,
-		baseCost       = 8000,
-		costMult       = 1.26,
-		maxLevel       = 0,
-		activeOnly     = false,
-		collectCooldown = 0,
-	},
+	-- Costs are tuned so MAXING everything (visual caps ~level 15-18) totals roughly
+	-- 3,000,000 coins, with a steady stream of affordable upgrades along the way.
+	{ id = "pitch",       name = "The Pitch",        baseRate = 2,   baseCost = 30,    costMult = 1.15, maxLevel = 0, activeOnly = false, collectCooldown = 0 },
+	{ id = "lowerstands", name = "Lower Stands",     baseRate = 4,   baseCost = 120,   costMult = 1.15, maxLevel = 0, activeOnly = false, collectCooldown = 0 },
+	{ id = "stands",      name = "Grandstand",       baseRate = 8,   baseCost = 400,   costMult = 1.16, maxLevel = 0, activeOnly = false, collectCooldown = 0 },
+	{ id = "concessions", name = "Concession Stand", baseRate = 16,  baseCost = 1000,  costMult = 1.16, maxLevel = 0, activeOnly = false, collectCooldown = 0 },
+	{ id = "parking",     name = "Parking Lot",      baseRate = 26,  baseCost = 2400,  costMult = 1.16, maxLevel = 0, activeOnly = false, collectCooldown = 0 },
+	{ id = "merch",       name = "Merch Shop",       baseRate = 45,  baseCost = 5000,  costMult = 1.17, maxLevel = 0, activeOnly = false, collectCooldown = 0 },
+	{ id = "bigscreen",   name = "Big Screen",       baseRate = 75,  baseCost = 9000,  costMult = 1.17, maxLevel = 0, activeOnly = false, collectCooldown = 0 },
+	{ id = "floodlights", name = "Floodlights",      baseRate = 120, baseCost = 16000, costMult = 1.18, maxLevel = 0, activeOnly = false, collectCooldown = 0 },
+	-- End-game structural upgrade: walls rise into a facade + a roof ring grows in.
+	{ id = "structure",   name = "Stadium Roof",     baseRate = 180, baseCost = 24000, costMult = 1.18, maxLevel = 0, activeOnly = false, collectCooldown = 0 },
 }
 
 -- Build lookup by id

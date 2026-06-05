@@ -32,6 +32,7 @@ makeEvent("RequestState")           -- client → server: "I'm ready, send my cu
 makeEvent("OpenPack")               -- client → server: buy & open pack
 makeEvent("PackOpenResult")         -- server → client: send card results for animation
 makeEvent("EquipSquad")             -- client → server: set lineup (array of instanceIds)
+makeEvent("SellCard")               -- client → server: sell a card to the transfer market
 
 -- Bracket
 makeEvent("MatchdayResolved")       -- server → client: broadcast match result

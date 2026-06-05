@@ -126,9 +126,10 @@ local function onPlayerJoin(player)
 	-- build up. RunService:IsStudio() is false on real servers, so this never
 	-- affects live players.
 	if game:GetService("RunService"):IsStudio() then
-		-- Modest test funds (not instant-everything) so the slower progression is
-		-- actually testable; the loop refills if you go broke so you never get stuck.
-		data.coins = math.max(data.coins or 0, 10000)
+		-- Test funds: enough to build + watch the stadium evolve, but well short of
+		-- the ~3M needed to max everything (so the new scale is felt). Refills only
+		-- when truly broke so you never get stuck.
+		data.coins = math.max(data.coins or 0, 500000)
 		data.gems  = math.max(data.gems or 0, 500)   -- so snacks are testable in Studio
 	end
 
@@ -271,7 +272,7 @@ task.spawn(function()
 			-- even if the join-time grant raced the profile load.
 			if game:GetService("RunService"):IsStudio() then
 				local d = DataService.getData(player)
-				if d and (d.coins or 0) < 1000 then d.coins = 10000 end   -- refill if broke (Studio)
+				if d and (d.coins or 0) < 5000 then d.coins = 200000 end   -- refill if broke (Studio)
 				if d and (d.gems or 0) < 50 then d.gems = 500 end   -- keep snacks testable
 			end
 
@@ -357,6 +358,20 @@ Remotes.EquipSquad.OnServerEvent:Connect(function(player, instanceIds)
 		pushProfile(player)
 	else
 		notify(player, "Squad error: " .. tostring(err), "red")
+	end
+end)
+
+-- SellCard: client sells a card to the transfer market for coins
+Remotes.SellCard.OnServerEvent:Connect(function(player, instanceId)
+	if type(instanceId) ~= "string" then return end
+	local ok, result = CardService.sellCard(player, instanceId)
+	if ok then
+		pushProfile(player)
+		notify(player, "💰 Sold card for " .. result .. " coins!", "gold")
+	else
+		local msg = result == "equipped" and "Can't sell a card in your squad."
+			or "Couldn't sell that card."
+		notify(player, msg, "red")
 	end
 end)
 

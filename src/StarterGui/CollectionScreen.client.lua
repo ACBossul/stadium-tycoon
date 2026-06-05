@@ -132,7 +132,7 @@ local function buildCardTile(cardDef, instanceData)
 	local hasArt = artId ~= "rbxassetid://0" and artId ~= ""
 
 	local art = Instance.new("ImageLabel")
-	art.Size = UDim2.new(1,-4,0.55,0)
+	art.Size = UDim2.new(1,-4,0.48,0)
 	art.Position = UDim2.new(0,2,0,2)
 	art.BackgroundColor3 = (RARITY_COLORS[cardDef.rarity] or Color3.new(1,1,1)):Lerp(Color3.new(0,0,0), 0.55)
 	art.BackgroundTransparency = hasArt and 1 or 0
@@ -147,8 +147,8 @@ local function buildCardTile(cardDef, instanceData)
 	end
 
 	local nameLabel = Instance.new("TextLabel")
-	nameLabel.Size = UDim2.new(1,0,0.28,0)
-	nameLabel.Position = UDim2.new(0,0,0.57,0)
+	nameLabel.Size = UDim2.new(1,0,0.20,0)
+	nameLabel.Position = UDim2.new(0,0,0.50,0)
 	nameLabel.BackgroundTransparency = 1
 	nameLabel.Text = cardDef.name
 	nameLabel.TextColor3 = Color3.new(1,1,1)
@@ -158,14 +158,33 @@ local function buildCardTile(cardDef, instanceData)
 	nameLabel.Parent = tile
 
 	local powerLabel = Instance.new("TextLabel")
-	powerLabel.Size = UDim2.new(1,0,0.18,0)
-	powerLabel.Position = UDim2.new(0,0,0.82,0)
+	powerLabel.Size = UDim2.new(1,0,0.13,0)
+	powerLabel.Position = UDim2.new(0,0,0.70,0)
 	powerLabel.BackgroundTransparency = 1
 	powerLabel.Text = instanceData and ("⚡" .. instanceData.power) or "Not owned"
 	powerLabel.TextColor3 = instanceData and Color3.fromRGB(255,220,50) or Color3.fromRGB(100,100,100)
 	powerLabel.TextScaled = true
 	powerLabel.Font = Enum.Font.GothamBold
 	powerLabel.Parent = tile
+
+	-- Transfer-market sell button (owned cards only).
+	if instanceData and Remotes then
+		local value = CardCatalog.sellValue(cardDef.rarity, instanceData.power)
+		local sellBtn = Instance.new("TextButton")
+		sellBtn.Size = UDim2.new(1,-8,0.15,0)
+		sellBtn.Position = UDim2.new(0,4,0.84,0)
+		sellBtn.BackgroundColor3 = Color3.fromRGB(40,140,70)
+		sellBtn.Text = "💰 " .. value
+		sellBtn.TextColor3 = Color3.new(1,1,1)
+		sellBtn.TextScaled = true
+		sellBtn.Font = Enum.Font.GothamBold
+		sellBtn.Parent = tile
+		local sc = Instance.new("UICorner") sc.CornerRadius = UDim.new(0,6) sc.Parent = sellBtn
+		sellBtn.Activated:Connect(function()
+			sellBtn.Text = "…"
+			Remotes.SellCard:FireServer(instanceData.instanceId)
+		end)
+	end
 
 	if not instanceData then
 		local overlay = Instance.new("Frame")
@@ -187,11 +206,13 @@ local function refresh(filter)
 
 	if not currentProfile then return end
 
-	-- Build owned set by cardId
+	-- Build owned set by cardId (keep the highest-power copy; remember its id so it
+	-- can be sold to the transfer market).
 	local ownedByCardId = {}
-	for _, cardInst in pairs(currentProfile.cards) do
-		if not ownedByCardId[cardInst.cardId] or ownedByCardId[cardInst.cardId].power < cardInst.power then
-			ownedByCardId[cardInst.cardId] = cardInst
+	for iid, cardInst in pairs(currentProfile.cards) do
+		local existing = ownedByCardId[cardInst.cardId]
+		if not existing or existing.power < cardInst.power then
+			ownedByCardId[cardInst.cardId] = { cardId = cardInst.cardId, power = cardInst.power, instanceId = iid }
 		end
 	end
 

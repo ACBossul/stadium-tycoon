@@ -12,14 +12,26 @@ CardCatalog.Rarities = {
 	MYTHIC    = "Mythic",
 }
 
--- Drop rates must sum to 1.0
+-- Drop rates must sum to 1.0. High rarities are now much rarer (Legendary/Mythic
+-- are real chase pulls) so the transfer-market value of top cards holds up.
 CardCatalog.DropRates = {
-	Common    = 0.60,
-	Rare      = 0.25,
-	Epic      = 0.11,
-	Legendary = 0.035,
-	Mythic    = 0.005,
+	Common    = 0.70,
+	Rare      = 0.22,
+	Epic      = 0.065,
+	Legendary = 0.012,
+	Mythic    = 0.003,
 }
+
+-- Transfer-market sell value: a base per rarity, scaled by the card's power, so
+-- rarer / higher-power cards are worth far more to sell. Used by both the server
+-- (CardService.sellCard) and the client (sell button label) so they always agree.
+CardCatalog.SellBase = {
+	Common = 30, Rare = 150, Epic = 700, Legendary = 4000, Mythic = 18000,
+}
+function CardCatalog.sellValue(rarity, power)
+	local base = CardCatalog.SellBase[rarity] or 30
+	return math.floor(base * (1 + (power or 0) / 150))
+end
 
 -- Power ranges per rarity (min, max) — rolled uniformly on pack open
 CardCatalog.PowerRanges = {
