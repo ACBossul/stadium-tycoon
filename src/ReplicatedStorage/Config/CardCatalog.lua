@@ -112,6 +112,20 @@ CardCatalog.Cards = {
 	{ id = "marcus_flashford",  name = "Marcus Flashford",       rarity = "Rare",      position = "FWD", emoji = "⚡", art = "rbxassetid://0" },
 	{ id = "benchwarmer_bob",   name = "Benchwarmer Bob",        rarity = "Common",    position = "FWD", emoji = "🪑", art = "rbxassetid://0" },
 
+	-- ── More roster (parody puns only) ──
+	{ id = "ederzone",          name = "Ederzone",               rarity = "Epic",      position = "GK",  emoji = "🧅", art = "rbxassetid://0" },
+	{ id = "keylor_naptime",    name = "Keylor Naptime",         rarity = "Rare",      position = "GK",  emoji = "😴", art = "rbxassetid://0" },
+	{ id = "ruben_diabolical",  name = "Ruben Diabolical",       rarity = "Epic",      position = "DEF", emoji = "😈", art = "rbxassetid://0" },
+	{ id = "theo_hern_and_ez",  name = "Theo Hern-and-Ez",       rarity = "Rare",      position = "DEF", emoji = "🔧", art = "rbxassetid://0" },
+	{ id = "koulibricky",       name = "Kalidou Koulibricky",    rarity = "Epic",      position = "DEF", emoji = "🧱", art = "rbxassetid://0" },
+	{ id = "toni_crouton",      name = "Toni Crouton",           rarity = "Epic",      position = "MID", emoji = "🥖", art = "rbxassetid://0" },
+	{ id = "kant_stop",         name = "Kant-Stop",              rarity = "Legendary", position = "MID", emoji = "🏃", art = "rbxassetid://0" },
+	{ id = "bruno_fernandoh",   name = "Bruno Fernandoh",        rarity = "Epic",      position = "MID", emoji = "😤", art = "rbxassetid://0" },
+	{ id = "ped_rye_bread",     name = "Ped-Rye Bread",          rarity = "Rare",      position = "MID", emoji = "🍞", art = "rbxassetid://0" },
+	{ id = "vlahovroom",        name = "Vlahovroom",             rarity = "Epic",      position = "FWD", emoji = "🏎️", art = "rbxassetid://0" },
+	{ id = "osi_when",          name = "Victor Osi-When?",       rarity = "Legendary", position = "FWD", emoji = "⏰", art = "rbxassetid://0" },
+	{ id = "raheem_steam",      name = "Raheem Steam",           rarity = "Rare",      position = "FWD", emoji = "♨️", art = "rbxassetid://0" },
+
 	-- ── Rebirth-exclusive cards (never drop in packs — only from rebirthing) ──
 	{ id = "rb_the_prestige",   name = "The Prestige",           rarity = "Mythic",    position = "MID", emoji = "🌟", art = "rbxassetid://0", rebirthOnly = true },
 	{ id = "rb_golden_reaper",  name = "Golden Reaper",          rarity = "Mythic",    position = "FWD", emoji = "💀", art = "rbxassetid://0", rebirthOnly = true },

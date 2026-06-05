@@ -1,19 +1,10 @@
-Claimable plot grid around the city + connected road network
+More parody cards + tune arena so it's a supplement, not main income
 
-The world was a single stretched row with one visible plot and a road that
-didn't line up. Reworked it into a proper grid of claimable plots in front
-of the city:
-
-- PlotService: PLOT_SLOTS is now a 6x4 grid (24 spots) flanking a central
-  avenue, ordered closest-to-city first. New allocateSlot() gives VIP players
-  the CLOSEST free slot and free players the FARTHEST — prime spots are a VIP
-  perk. Every unclaimed slot shows an "OPEN PLOT" placeholder (lit corner
-  posts + floating sign) so the world looks populated and players can see
-  where plots are. Slots are freed + the placeholder restored on leave.
-- PlotService.initWorld() lays out all placeholders at server start; called
-  from Main after the city is built.
-- HubService: ground resized/recentred to cover the whole grid + city; roads
-  rebuilt as a central avenue (city gate -> back of grid) plus an east-west
-  cross street at every plot row, so near and far plots all drive to centre.
+- CardCatalog: +12 parody-pun cards (Ederzone, Keylor Naptime, Ruben
+  Diabolical, Toni Crouton, Kant-Stop, Vlahovroom, Victor Osi-When?, etc.)
+  across GK/DEF/MID/FWD and Rare→Legendary. Transformative puns only.
+- HubService arena balance: coin orbs 300-1200 -> 120-420, spawn 1-2 (was
+  1-3) up to 6 (was 8); KOTH trickle 70/s -> 50/s. The arena is now a fun
+  bonus rather than out-earning your stadium.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>

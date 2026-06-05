@@ -479,7 +479,7 @@ local function spawnCoinOrb()
 	lbl.Font = Enum.Font.GothamBold
 	lbl.Parent = bb
 
-	local reward  = math.random(300, 1200)
+	local reward  = math.random(120, 420)
 	local claimed = false
 	orb.Touched:Connect(function(hit)
 		if claimed then return end
@@ -501,8 +501,8 @@ local function eventLoop()
 	while true do
 		task.wait(9)
 		if #Players:GetPlayers() == 0 then continue end
-		if countOrbs() < 8 then
-			for _ = 1, math.random(1, 3) do
+		if countOrbs() < 6 then
+			for _ = 1, math.random(1, 2) do
 				spawnCoinOrb()
 			end
 		end
@@ -521,7 +521,7 @@ local function kothLoop()
 			if hrp then
 				local dx, dz = hrp.Position.X - c.X, hrp.Position.Z - c.Z
 				if (dx * dx + dz * dz) <= 49 and math.abs(hrp.Position.Y - c.Y) < 8 then
-					EconomyService.addCoins(player, 70)
+					EconomyService.addCoins(player, 50)
 					pushProfile(player)
 				end
 			end
