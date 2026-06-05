@@ -204,9 +204,12 @@ function KartService.spawnKart(player)
 	local data = DataService.getData(player)
 	if not data then return end
 
+	-- The shared CITY garage hands anyone a kart (VIP → Turbo). Your own plot
+	-- station still requires you to have built the Parking Lot.
 	local parkingLevel = (data.stadium and data.stadium.parking) or 0
-	if parkingLevel < 1 then
-		notify(player, "Build the Parking Lot first to unlock your kart!", "red")
+	local sharedGarage = player:GetAttribute("KartStationShared")
+	if not sharedGarage and parkingLevel < 1 then
+		notify(player, "Build the Parking Lot first to unlock your kart! (Or grab one at the City garage.)", "red")
 		return
 	end
 
@@ -285,6 +288,7 @@ local function wireStation(pad)
 		if pad:IsA("BasePart") then
 			clicker:SetAttribute("KartStationPos", pad.Position + Vector3.new(0, 0, 7))
 		end
+		clicker:SetAttribute("KartStationShared", ownerVal == nil)   -- shared city garage skips the parking gate
 		KartService.spawnKart(clicker)
 	end)
 end

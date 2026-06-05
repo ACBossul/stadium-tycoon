@@ -22,19 +22,24 @@ local PlotService = {}
 
 local PLOT_SIZE = Vector3.new(180, 1, 180)
 
--- Claimable plot slots: a grid of spots in front of the city (the city sits at
--- z ≈ -700). Ordered BEST → WORST (row nearest the city first, centre columns
--- first) so VIP players get the prime close spots and free players the farther
--- ones. The row Z values must line up with the cross streets drawn in HubService.
+-- The city sits dead centre; claimable plots ring it in a 5x5 grid (centre cell =
+-- the city) so the centre really is in the middle of all the plots. Sorted
+-- closest-first so VIP players get the prime spots nearest the city and free
+-- players the outer ones. SPACING/centre must match HubService's road grid.
+local CITY_CENTER = Vector3.new(0, 0, -700)   -- must equal HubService HUB_ORIGIN
+local PLOT_SPACING = 300
 local PLOT_SLOTS = {}
 do
-	local rows = { -400, -150, 100, 350 }                 -- nearest the city first
-	local cols = { -150, 150, -430, 430, -710, 710 }      -- flank the central avenue, out
-	for _, rz in ipairs(rows) do
-		for _, cx in ipairs(cols) do
-			table.insert(PLOT_SLOTS, Vector3.new(cx, 0, rz))
+	for i = -2, 2 do
+		for j = -2, 2 do
+			if not (i == 0 and j == 0) then   -- centre cell is the city itself
+				table.insert(PLOT_SLOTS, CITY_CENTER + Vector3.new(i * PLOT_SPACING, 0, j * PLOT_SPACING))
+			end
 		end
 	end
+	table.sort(PLOT_SLOTS, function(a, b)
+		return (a - CITY_CENTER).Magnitude < (b - CITY_CENTER).Magnitude
+	end)
 end
 
 -- Hand-placed building spots (offset from plot origin, on the ground plane). The

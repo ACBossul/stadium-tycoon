@@ -266,29 +266,27 @@ local function build()
 	hubFolder = Instance.new("Model")
 	hubFolder.Name = "BrainrotCity"
 
-	-- One big shared ground covering the whole plot GRID (the rectangle of claimable
-	-- plots in front of the city) plus the city itself — no floating islands, drive
-	-- anywhere. Top y = -0.2 so plot pads read as the play surface. Keep the bounds
-	-- in sync with PlotService.PLOT_SLOTS.
-	local ground = block(hubFolder, Vector3.new(1760, 4, 1500), Vector3.new(0, -2.2, -200),
+	-- One big shared ground CENTRED on the city, covering the whole 5x5 plot ring —
+	-- no floating islands, drive anywhere. Top y = -0.2 so plot pads read as the
+	-- play surface. Centre/extent must match PlotService.PLOT_SLOTS (city at
+	-- z=-700, plots out to ±600 → ±690 with margin).
+	local ground = block(hubFolder, Vector3.new(1560, 4, 1560), Vector3.new(0, -2.2, HUB_ORIGIN.Z),
 		Color3.fromRGB(74, 110, 74), Enum.Material.Grass, true)
 	applyTexture(ground, TEXTURES.grass, 48, { Enum.NormalId.Top })
 
-	-- Road network: a central boulevard from the city's north gate up through the
-	-- grid, plus an east-west cross street at each row of plots, so every plot —
-	-- near or far — has a clear drive to the centre.
+	-- Road GRID: streets run between every row/column of plots and frame the central
+	-- city, so every plot — on any side — has a clear, connected drive to the centre.
 	local function road(cx, cz, sx, sz)
 		local r = block(hubFolder, Vector3.new(sx, 0.3, sz), Vector3.new(cx, 0.05, cz),
 			Color3.fromRGB(48, 50, 58), Enum.Material.Asphalt, false)
 		applyTexture(r, TEXTURES.asphalt, 18, { Enum.NormalId.Top })
 	end
-	road(0, -67, 46, 1018)                       -- central avenue (gate → back of grid)
-	for _, cz in ipairs({ -479, -229, 21, 271 }) do
-		road(0, cz, 1640, 34)                    -- cross street at each plot row's entrance
+	local GRID_LEN = 1500
+	for _, cx in ipairs({ -450, -150, 150, 450 }) do
+		road(cx, HUB_ORIGIN.Z, 50, GRID_LEN)              -- north-south streets
 	end
-	for z = -560, 430, 26 do                     -- dashed centre line up the boulevard
-		block(hubFolder, Vector3.new(2, 0.34, 10), Vector3.new(0, 0.08, z),
-			Color3.fromRGB(240, 220, 90), Enum.Material.SmoothPlastic, false)
+	for _, off in ipairs({ -450, -150, 150, 450 }) do
+		road(0, HUB_ORIGIN.Z + off, GRID_LEN, 50)         -- east-west streets
 	end
 
 	-- Plaza floor
