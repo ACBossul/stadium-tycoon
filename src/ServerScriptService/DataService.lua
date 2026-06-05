@@ -26,6 +26,9 @@ local PROFILE_TEMPLATE = {
 	-- at the concession stand). e.g. buffs.speed, buffs.money.
 	buffs = {},
 
+	-- One-time purchase: auto-banks the Cash Stand pending each tick (no clicking).
+	autoCollect = false,
+
 	-- Kart customisation (bought/previewed at the City garage).
 	kartSkin   = "stock",            -- currently equipped skin id
 	ownedSkins = { stock = true },   -- unlocked skin ids

@@ -115,6 +115,20 @@ function EconomyService.currentRate(data)
 		* getVipMultiplier(data) * getSnackMoneyMultiplier(data)
 end
 
+-- One-time Auto-Collector purchase: from then on the income loop auto-banks the
+-- pending pot each tick (no manual clicking). Deliberately pricey — a late buy.
+EconomyService.AUTO_COLLECT_COST = 800000
+function EconomyService.buyAutoCollect(player)
+	local data = DataService.getData(player)
+	if not data then return false, "no_data" end
+	if data.autoCollect then return false, "already" end
+	if not EconomyService.deductCoins(player, EconomyService.AUTO_COLLECT_COST) then
+		return false, "insufficient"
+	end
+	data.autoCollect = true
+	return true
+end
+
 -- Collect the pending pot into spendable coins (wired to the Cash Stand pad).
 function EconomyService.collectEarnings(player)
 	local data = DataService.getData(player)

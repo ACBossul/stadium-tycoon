@@ -250,6 +250,30 @@ end
 for _, pad in ipairs(CollectionService:GetTagged("TapButton")) do task.spawn(wireTapButton, pad) end
 CollectionService:GetInstanceAddedSignal("TapButton"):Connect(function(pad) task.spawn(wireTapButton, pad) end)
 
+-- Auto-Collector pad: one-time purchase that auto-banks the Cash Stand pending.
+local function wireAutoCollect(pad)
+	local owner = pad:FindFirstChild("Owner")
+	local cd = pad:FindFirstChildOfClass("ClickDetector") or pad:WaitForChild("AutoCollectClick", 10)
+	if not (cd and cd:IsA("ClickDetector")) then return end
+	cd.MouseClick:Connect(function(clicker)
+		if owner and clicker ~= owner.Value then return end
+		local ok, err = EconomyService.buyAutoCollect(clicker)
+		if ok then
+			pushProfile(clicker)
+			notify(clicker, "🤖 Auto-Collector active — your earnings now bank automatically!", "gold")
+			local bb = pad:FindFirstChild("Info")
+			local lbl = bb and bb:FindFirstChild("Amount")
+			if lbl then lbl.Text = "🤖 AUTO-COLLECT\n✅ ACTIVE" end
+		elseif err == "already" then
+			notify(clicker, "Auto-Collector is already active.", "white")
+		else
+			notify(clicker, "Need " .. EconomyService.AUTO_COLLECT_COST .. " coins for the Auto-Collector.", "red")
+		end
+	end)
+end
+for _, pad in ipairs(CollectionService:GetTagged("AutoCollectPad")) do task.spawn(wireAutoCollect, pad) end
+CollectionService:GetInstanceAddedSignal("AutoCollectPad"):Connect(function(pad) task.spawn(wireAutoCollect, pad) end)
+
 -- ─── Income tick loop ────────────────────────────────────────────────────────
 
 -- Push profile updates to clients every 5s to keep HUD in sync
@@ -267,6 +291,8 @@ task.spawn(function()
 			-- Live-update the player's Cash Stand counter (pending pot + rate).
 			local cd = DataService.getData(player)
 			if cd then PlotService.updateCashStand(player, cd.pending, EconomyService.currentRate(cd)) end
+			-- Auto-Collector: bank the pending pot automatically each tick.
+			if cd and cd.autoCollect then EconomyService.collectEarnings(player) end
 
 			-- Studio-only: keep coins topped up so upgrades are always testable,
 			-- even if the join-time grant raced the profile load.

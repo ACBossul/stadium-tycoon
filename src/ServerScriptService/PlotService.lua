@@ -1170,160 +1170,156 @@ local function buildCityPad(plot, origin, player)
 	CollectionService:AddTag(pad, "ToCityPad")
 end
 
--- A second level you climb to: stairs → viewing deck → Trophy Room + VIP Lounge.
--- Built once per plot in a clear east-side spot.
+-- The second floor: a spacious U-shaped concourse ring (East + South + West, open
+-- at the grandstand on the North) that wraps the whole pitch, with the rooms spread
+-- around it — VIP Lounge (seats + TV), Manager's Office, Trophy Room and a
+-- Commentator's balcony — plus the rebirth pad. You climb up the west stairs.
 local function buildUpperTier(plot, origin, player)
-	local bx, bz = 60, 22       -- deck centre (plot-local; pulled in off the east wall)
-	local deckY  = 18
+	local deckY = 22
+	local R     = 70
+	local NORTH = 58                  -- how far the E/W runs reach toward the grandstand
+	local CONCRETE = Color3.fromRGB(86, 90, 104)
+	local GOLD     = Color3.fromRGB(245, 205, 70)
+	local WALL_C   = Color3.fromRGB(46, 50, 64)
+	local ROOF_C   = Color3.fromRGB(34, 38, 50)
+
 	local function up(sx, sy, sz, x, y, z, color, mat, collide)
 		local p = Instance.new("Part")
-		p.Name = "UpperTier"
-		p.Anchored = true
-		p.CanCollide = collide ~= false
-		p.Size = Vector3.new(sx, sy, sz)
-		p.Position = origin + Vector3.new(x, y, z)
-		p.Color = color
-		p.Material = mat or Enum.Material.SmoothPlastic
-		p.TopSurface = Enum.SurfaceType.Smooth
-		p.BottomSurface = Enum.SurfaceType.Smooth
+		p.Name = "UpperTier"; p.Anchored = true; p.CanCollide = collide ~= false
+		p.Size = Vector3.new(sx, sy, sz); p.Position = origin + Vector3.new(x, y, z)
+		p.Color = color; p.Material = mat or Enum.Material.SmoothPlastic
+		p.TopSurface = Enum.SurfaceType.Smooth; p.BottomSurface = Enum.SurfaceType.Smooth
 		p.Parent = plot
 		return p
 	end
-	local CONCRETE = Color3.fromRGB(86, 90, 104)
-	local GOLD     = Color3.fromRGB(245, 205, 70)
+	local function seat(x, z, color)
+		local s = Instance.new("Seat")
+		s.Name = "UpperTier"; s.Anchored = true; s.Size = Vector3.new(2.6, 1, 2.6)
+		s.Position = origin + Vector3.new(x, deckY + 1.4, z)
+		s.Color = color or Color3.fromRGB(120, 60, 150); s.Material = Enum.Material.SmoothPlastic
+		s.TopSurface = Enum.SurfaceType.Smooth; s.Parent = plot
+	end
+	local function signOn(part, face, text, color)
+		local sg = Instance.new("SurfaceGui")
+		sg.Face = face; sg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud; sg.PixelsPerStud = 22; sg.LightInfluence = 0; sg.Parent = part
+		local l = Instance.new("TextLabel")
+		l.Size = UDim2.new(1,0,1,0); l.BackgroundTransparency = 1; l.Text = text
+		l.TextColor3 = color; l.TextScaled = true; l.Font = Enum.Font.GothamBlack; l.Parent = sg
+		return l
+	end
 
-	-- Support cores at the BACK corners only — never in the staircase path.
-	up(6, deckY, 6, bx - 17, deckY / 2, bz + 16, CONCRETE, Enum.Material.Concrete)
-	up(6, deckY, 6, bx + 17, deckY / 2, bz + 16, CONCRETE, Enum.Material.Concrete)
+	-- Support pillars (ground → deck).
+	for _, c in ipairs({ {R,-R},{-R,-R},{R,NORTH-6},{-R,NORTH-6},{R,-10},{-R,-10},{0,-R},{38,-R},{-38,-R} }) do
+		up(5, deckY, 5, c[1], deckY/2, c[2], CONCRETE, Enum.Material.Concrete)
+	end
 
-	-- Wide staircase up the SOUTH face, landing flush on the deck (auto-climbable).
-	local steps = 13
+	-- Spacious U concourse (16 wide). South + East + West; North open.
+	local runZc, runLen = (-R + NORTH)/2, (R + NORTH)
+	local sFloor = up(2*R + 16, 1.6, 16, 0, deckY, -R, CONCRETE, Enum.Material.Concrete)
+	local eFloor = up(16, 1.6, runLen, R, deckY, runZc, CONCRETE, Enum.Material.Concrete)
+	local wFloor = up(16, 1.6, runLen, -R, deckY, runZc, CONCRETE, Enum.Material.Concrete)
+	applyTexture(sFloor, TEXTURES.brick, 10, { Enum.NormalId.Top })
+	applyTexture(eFloor, TEXTURES.brick, 10, { Enum.NormalId.Top })
+	applyTexture(wFloor, TEXTURES.brick, 10, { Enum.NormalId.Top })
+
+	-- Stairs up the WEST side (ground → west concourse at z = 0), auto-climbable.
+	local steps = 17
 	for i = 1, steps do
 		local y = i * (deckY / steps)
-		local z = bz - 36 + (i - 1) * (18 / (steps - 1))
-		up(16, 0.9, 2.4, bx, y, z, CONCRETE, Enum.Material.Concrete)
+		local x = -(R - 18) - (i - 1) * (18 / (steps - 1))   -- x ≈ -52 (ground) → -70 (concourse)
+		up(3, 0.9, 14, x, y, 0, CONCRETE, Enum.Material.Concrete)
 	end
 
-	-- Viewing deck
-	local deck = up(40, 1.5, 36, bx, deckY, bz, CONCRETE, Enum.Material.Concrete)
-	applyTexture(deck, TEXTURES.brick, 8, { Enum.NormalId.Top })
-	-- Lights under the deck so the covered area below isn't gloomy.
-	for _, lx in ipairs({ -12, 12 }) do
-		local fixture = up(2.4, 0.4, 2.4, bx + lx, deckY - 1.4, bz, Color3.fromRGB(255, 250, 225), Enum.Material.Neon, false)
-		local pl = Instance.new("PointLight")
-		pl.Brightness = 2.6; pl.Range = 32; pl.Color = Color3.fromRGB(255, 248, 220); pl.Parent = fixture
-	end
-	-- Railings — SOLID. South is OPEN for the stairs; the EAST side is open so the
-	-- deck flows onto the perimeter ring walkway built below.
-	up(1, 4, 36, bx - 20, deckY + 2, bz, GOLD, Enum.Material.Metal, true)
-	up(40, 4, 1, bx, deckY + 2, bz + 18, GOLD, Enum.Material.Metal, true)
+	-- Continuous OUTER railing (along the walls) — connected at the corners.
+	up(2*R + 18, 5, 1, 0, deckY + 3, -R - 8.5, GOLD, Enum.Material.Metal, true)
+	up(1, 5, runLen + 9, R + 8.5, deckY + 3, runZc, GOLD, Enum.Material.Metal, true)
+	up(1, 5, runLen + 9, -R - 8.5, deckY + 3, runZc, GOLD, Enum.Material.Metal, true)
+	-- Continuous INNER railing (pitch side) — gap on the west run for the stairs.
+	up(2*R - 14, 4, 1, 0, deckY + 3, -R + 8, GOLD, Enum.Material.Metal, true)
+	up(1, 4, runLen + 9, R - 8, deckY + 3, runZc, GOLD, Enum.Material.Metal, true)
+	up(1, 4, 54, -R + 8, deckY + 3, -37, GOLD, Enum.Material.Metal, true)   -- west, south of stairs
+	up(1, 4, 42, -R + 8, deckY + 3, 37, GOLD, Enum.Material.Metal, true)    -- west, north of stairs
 
-	-- ── Trophy Room (west half; open to the deck, with a LIVE display board) ──
-	local trX = bx - 11
-	up(0.6, 9, 20, trX - 9, deckY + 5, bz, Color3.fromRGB(40,44,58), Enum.Material.Concrete)  -- west wall
-	up(20, 9, 0.6, trX, deckY + 5, bz + 9.5, Color3.fromRGB(40,44,58), Enum.Material.Concrete) -- back wall
-	up(20, 1, 20, trX, deckY + 9.5, bz, Color3.fromRGB(34,38,50), Enum.Material.Metal)         -- roof
+	-- Lamps round the ring.
+	for _, c in ipairs({ {R,-R},{-R,-R},{0,-R},{R,30},{-R,30},{R,-30},{-R,-30} }) do
+		up(1, 6, 1, c[1], deckY + 3.5, c[2], Color3.fromRGB(60,64,80), Enum.Material.Metal, false)
+		local bulb = up(2, 1.4, 2, c[1], deckY + 7.2, c[2], Color3.fromRGB(255,250,225), Enum.Material.Neon, false)
+		local pl = Instance.new("PointLight") pl.Brightness = 2 pl.Range = 26 pl.Color = Color3.fromRGB(255,248,220) pl.Parent = bulb
+	end
+
+	-- ══ VIP LOUNGE (WEST side; full room with seats + a big TV) ══
+	local vx = -(R + 8)
+	up(20, 0.4, 52, vx, deckY + 0.9, 2, Color3.fromRGB(74,40,96), Enum.Material.Neon, false)     -- plush carpet
+	up(0.8, 12, 52, vx - 10, deckY + 6, 2, WALL_C, Enum.Material.Concrete)                        -- outer wall
+	up(20, 12, 0.8, vx, deckY + 6, 28, WALL_C, Enum.Material.Concrete)                            -- north wall
+	up(20, 12, 0.8, vx, deckY + 6, -24, WALL_C, Enum.Material.Concrete)                           -- south wall
+	up(20, 1, 52, vx, deckY + 12, 2, ROOF_C, Enum.Material.Metal)                                 -- roof
+	local tv = up(0.6, 7, 13, vx - 9.4, deckY + 6, 2, Color3.fromRGB(10,12,18), Enum.Material.SmoothPlastic)  -- TV
+	signOn(tv, Enum.NormalId.Right, "🔴 LIVE\nGRN  2 - 1  AZL", Color3.fromRGB(120,235,255))
+	for _, sz in ipairs({ -7, 0, 7 }) do seat(vx + 2, 2 + sz) end                                  -- seats facing the TV
+	local vlBoard = up(0.4, 6, 16, vx + 9.6, deckY + 6, 2, Color3.fromRGB(20,16,28), Enum.Material.SmoothPlastic, false)
+	local vlSg = Instance.new("SurfaceGui")
+	vlSg.Face = Enum.NormalId.Left; vlSg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud; vlSg.PixelsPerStud = 20; vlSg.LightInfluence = 0; vlSg.Parent = vlBoard
+	local vlT = Instance.new("TextLabel") vlT.Size = UDim2.new(1,0,0.22,0); vlT.BackgroundTransparency = 1
+	vlT.Text = "⭐ VIP LOUNGE"; vlT.TextColor3 = Color3.fromRGB(255,215,120); vlT.TextScaled = true; vlT.Font = Enum.Font.GothamBlack; vlT.Parent = vlSg
+	local vlL = Instance.new("TextLabel") vlL.Size = UDim2.new(1,-10,0.6,0); vlL.Position = UDim2.new(0,5,0.24,0); vlL.BackgroundTransparency = 1
+	vlL.Text = "• Instant City teleport\n• VIP Turbo Kart\n• Daily free gems\n• Comfy seats + the big screen"
+	vlL.TextColor3 = Color3.new(1,1,1); vlL.TextScaled = true; vlL.Font = Enum.Font.Gotham; vlL.TextXAlignment = Enum.TextXAlignment.Left; vlL.Parent = vlSg
+	local vlC = Instance.new("TextLabel") vlC.Size = UDim2.new(1,0,0.16,0); vlC.Position = UDim2.new(0,0,0.84,0); vlC.BackgroundTransparency = 1
+	vlC.Text = "Get VIP in the 🛍 Shop!"; vlC.TextColor3 = Color3.fromRGB(120,255,160); vlC.TextScaled = true; vlC.Font = Enum.Font.GothamBold; vlC.Parent = vlSg
+
+	-- ══ TROPHY ROOM (EAST side, south end; LIVE display board) ══
+	local tx = R + 8
+	up(20, 0.4, 30, tx, deckY + 0.9, -28, Color3.fromRGB(46,44,60), Enum.Material.SmoothPlastic, false)
+	up(0.8, 11, 30, tx + 10, deckY + 5.5, -28, WALL_C, Enum.Material.Concrete)    -- outer wall
+	up(20, 11, 0.8, tx, deckY + 5.5, -43, WALL_C, Enum.Material.Concrete)         -- south wall
+	up(20, 11, 0.8, tx, deckY + 5.5, -13, WALL_C, Enum.Material.Concrete)         -- north wall
+	up(20, 1, 30, tx, deckY + 11, -28, ROOF_C, Enum.Material.Metal)               -- roof
 	for i = -1, 1 do
-		up(3, 2, 3, trX + i * 5.5, deckY + 1.5, bz + 5, Color3.fromRGB(60,64,78), Enum.Material.Concrete)
-		up(1.6, 2.4, 1.6, trX + i * 5.5, deckY + 3.7, bz + 5, GOLD, Enum.Material.Neon)
+		up(3, 2, 3, tx + 4, deckY + 1.5, -28 + i * 8, Color3.fromRGB(60,64,78), Enum.Material.Concrete)
+		up(1.6, 2.4, 1.6, tx + 4, deckY + 3.7, -28 + i * 8, GOLD, Enum.Material.Neon)
 	end
-	local trBoard = up(18, 6.5, 0.4, trX, deckY + 5.5, bz - 9, Color3.fromRGB(12,14,22), Enum.Material.SmoothPlastic)
+	local trBoard = up(0.4, 6.5, 26, tx + 9.6, deckY + 6, -28, Color3.fromRGB(12,14,22), Enum.Material.SmoothPlastic, false)
 	trBoard.Name = "TrophyDisplay"
 	local trOwner = Instance.new("ObjectValue") trOwner.Name = "Owner" trOwner.Value = player trOwner.Parent = trBoard
 	local trSg = Instance.new("SurfaceGui")
-	trSg.Name = "Info"; trSg.Face = Enum.NormalId.Back; trSg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	trSg.PixelsPerStud = 22; trSg.LightInfluence = 0; trSg.Parent = trBoard
-	local trTitle = Instance.new("TextLabel")
-	trTitle.Size = UDim2.new(1,0,0.26,0); trTitle.BackgroundTransparency = 1; trTitle.Text = "🏆 TROPHY ROOM"
-	trTitle.TextColor3 = GOLD; trTitle.TextScaled = true; trTitle.Font = Enum.Font.GothamBlack; trTitle.Parent = trSg
-	local trInfo = Instance.new("TextLabel")
-	trInfo.Name = "Lines"; trInfo.Size = UDim2.new(1,-8,0.72,0); trInfo.Position = UDim2.new(0,4,0.27,0)
+	trSg.Name = "Info"; trSg.Face = Enum.NormalId.Left; trSg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud; trSg.PixelsPerStud = 22; trSg.LightInfluence = 0; trSg.Parent = trBoard
+	local trTitle = Instance.new("TextLabel") trTitle.Size = UDim2.new(1,0,0.26,0); trTitle.BackgroundTransparency = 1
+	trTitle.Text = "🏆 TROPHY ROOM"; trTitle.TextColor3 = GOLD; trTitle.TextScaled = true; trTitle.Font = Enum.Font.GothamBlack; trTitle.Parent = trSg
+	local trInfo = Instance.new("TextLabel") trInfo.Name = "Lines"; trInfo.Size = UDim2.new(1,-8,0.72,0); trInfo.Position = UDim2.new(0,4,0.27,0)
 	trInfo.BackgroundTransparency = 1; trInfo.Text = "Win cup matches to fill your case!"
-	trInfo.TextColor3 = Color3.fromRGB(225,225,240); trInfo.TextScaled = true; trInfo.Font = Enum.Font.Gotham
-	trInfo.TextWrapped = true; trInfo.Parent = trSg
+	trInfo.TextColor3 = Color3.fromRGB(225,225,240); trInfo.TextScaled = true; trInfo.Font = Enum.Font.Gotham; trInfo.TextWrapped = true; trInfo.Parent = trSg
 	CollectionService:AddTag(trBoard, "TrophyDisplay")
 
-	-- ── VIP Lounge (east half; OPEN, advertises perks to everyone) ──
-	local vlX = bx + 11
-	up(16, 0.4, 18, vlX, deckY + 1, bz, Color3.fromRGB(70, 40, 90), Enum.Material.Neon, false)  -- plush floor
-	local vlBoard = up(16, 7, 0.4, vlX, deckY + 5.5, bz + 8.8, Color3.fromRGB(20,16,28), Enum.Material.SmoothPlastic)
-	local vlSg = Instance.new("SurfaceGui")
-	vlSg.Face = Enum.NormalId.Front; vlSg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	vlSg.PixelsPerStud = 20; vlSg.LightInfluence = 0; vlSg.Parent = vlBoard
-	local vlTitle = Instance.new("TextLabel")
-	vlTitle.Size = UDim2.new(1,0,0.2,0); vlTitle.BackgroundTransparency = 1; vlTitle.Text = "⭐ VIP PERKS"
-	vlTitle.TextColor3 = Color3.fromRGB(255,215,120); vlTitle.TextScaled = true; vlTitle.Font = Enum.Font.GothamBlack; vlTitle.Parent = vlSg
-	local vlList = Instance.new("TextLabel")
-	vlList.Size = UDim2.new(1,-10,0.62,0); vlList.Position = UDim2.new(0,5,0.22,0); vlList.BackgroundTransparency = 1
-	vlList.Text = "• Instant City teleport\n• VIP Turbo Kart (way faster)\n• Daily free gems\n• This exclusive lounge"
-	vlList.TextColor3 = Color3.new(1,1,1); vlList.TextScaled = true; vlList.Font = Enum.Font.Gotham
-	vlList.TextXAlignment = Enum.TextXAlignment.Left; vlList.Parent = vlSg
-	local vlCta = Instance.new("TextLabel")
-	vlCta.Size = UDim2.new(1,0,0.16,0); vlCta.Position = UDim2.new(0,0,0.84,0); vlCta.BackgroundTransparency = 1
-	vlCta.Text = "Get VIP in the 🛍 Shop!"; vlCta.TextColor3 = Color3.fromRGB(120,255,160); vlCta.TextScaled = true; vlCta.Font = Enum.Font.GothamBold; vlCta.Parent = vlSg
-	up(5, 1.4, 2, vlX - 4, deckY + 1.7, bz - 5, Color3.fromRGB(120,60,150), Enum.Material.SmoothPlastic)
-	up(5, 1.4, 2, vlX + 4, deckY + 1.7, bz - 5, Color3.fromRGB(120,60,150), Enum.Material.SmoothPlastic)
+	-- ══ MANAGER'S OFFICE (EAST side, north end) ══
+	local mx = R + 8
+	up(20, 0.4, 26, mx, deckY + 0.9, 34, Color3.fromRGB(48,46,66), Enum.Material.SmoothPlastic, false)
+	up(0.8, 11, 26, mx + 10, deckY + 5.5, 34, WALL_C, Enum.Material.Concrete)     -- outer wall
+	up(20, 11, 0.8, mx, deckY + 5.5, 47, WALL_C, Enum.Material.Concrete)          -- north wall
+	up(20, 1, 26, mx, deckY + 11, 34, ROOF_C, Enum.Material.Metal)                -- roof
+	up(9, 1.8, 3, mx + 2, deckY + 2, 40, Color3.fromRGB(120,84,52), Enum.Material.WoodPlanks)   -- desk
+	up(2.6, 2.8, 2.6, mx + 2, deckY + 2.4, 43, Color3.fromRGB(60,64,82), Enum.Material.SmoothPlastic) -- chair
+	seat(mx - 4, 28, Color3.fromRGB(80,84,100)); seat(mx + 4, 28, Color3.fromRGB(80,84,100))
+	local mlSign = up(0.4, 2.6, 18, mx + 9.6, deckY + 9, 34, Color3.fromRGB(18,20,28), Enum.Material.SmoothPlastic, false)
+	signOn(mlSign, Enum.NormalId.Left, "🧑‍💼 MANAGER'S OFFICE", Color3.fromRGB(150,200,255))
 
-	-- ── Manager's Lounge (the upper area wraps toward the NE corner) ──
-	-- A railed walkway runs from the deck's back-east corner round to a private box.
-	up(12, 1.4, 12, bx + 16, deckY, bz + 20, CONCRETE, Enum.Material.Concrete)             -- corner walkway
-	up(0.5, 3, 12, bx + 22, deckY + 1.6, bz + 20, GOLD, Enum.Material.Metal, false)        -- outer rail
-	local mlX, mlZ = bx + 18, bz + 30
-	up(20, 1.4, 16, mlX, deckY, mlZ, Color3.fromRGB(48, 46, 66), Enum.Material.Concrete)   -- lounge floor
-	up(20, 9, 0.6, mlX, deckY + 5, mlZ + 8, Color3.fromRGB(40,44,58), Enum.Material.Concrete)  -- back wall
-	up(0.6, 9, 16, mlX + 10, deckY + 5, mlZ, Color3.fromRGB(40,44,58), Enum.Material.Concrete) -- east wall
-	up(0.6, 9, 16, mlX - 10, deckY + 5, mlZ, Color3.fromRGB(40,44,58), Enum.Material.Concrete) -- west wall (door gap below sign)
-	up(20, 1, 16, mlX, deckY + 9.5, mlZ, Color3.fromRGB(34,38,50), Enum.Material.Metal)        -- roof
-	-- Manager's desk + chair + a couple of seats
-	up(9, 1.8, 3, mlX, deckY + 2, mlZ + 3, Color3.fromRGB(120,84,52), Enum.Material.WoodPlanks)   -- desk
-	up(2.4, 2.6, 2.4, mlX, deckY + 2.5, mlZ + 5.5, Color3.fromRGB(60,64,82), Enum.Material.SmoothPlastic) -- manager's chair
-	up(2, 1.4, 2, mlX - 6, deckY + 1.7, mlZ - 4, Color3.fromRGB(80,84,100), Enum.Material.SmoothPlastic)
-	up(2, 1.4, 2, mlX + 6, deckY + 1.7, mlZ - 4, Color3.fromRGB(80,84,100), Enum.Material.SmoothPlastic)
-	-- Sign
-	local mlSign = up(18, 2.6, 0.4, mlX, deckY + 7.5, mlZ - 7.6, Color3.fromRGB(18,20,28), Enum.Material.SmoothPlastic, false)
-	local mlSg = Instance.new("SurfaceGui")
-	mlSg.Face = Enum.NormalId.Back; mlSg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	mlSg.PixelsPerStud = 24; mlSg.LightInfluence = 0; mlSg.Parent = mlSign
-	local mlLbl = Instance.new("TextLabel")
-	mlLbl.Size = UDim2.new(1,0,1,0); mlLbl.BackgroundTransparency = 1; mlLbl.Text = "🧑‍💼 MANAGER'S LOUNGE"
-	mlLbl.TextColor3 = Color3.fromRGB(150,200,255); mlLbl.TextScaled = true; mlLbl.Font = Enum.Font.GothamBlack; mlLbl.Parent = mlSg
-
-	-- ── VIP perimeter ring: a walkway that wraps the EAST → SOUTH → WEST sides
-	-- around the pitch (open at the grandstand on the north). You reach it from the
-	-- deck; walk the whole upper ring past the rooms + the rebirth pad. ──
-	local R = 76          -- walkway centreline distance from plot centre
-	-- Support pillars at the ring corners.
-	for _, c in ipairs({ {R,-R}, {-R,-R}, {R,48}, {-R,48} }) do
-		up(4, deckY, 4, c[1], deckY/2, c[2], CONCRETE, Enum.Material.Concrete)
+	-- ══ COMMENTATOR'S BALCONY (south-centre, juts inward over the pitch) ══
+	up(22, 1.4, 12, 0, deckY, -R + 14, CONCRETE, Enum.Material.Concrete)          -- balcony platform
+	up(22, 2.4, 1, 0, deckY + 1.8, -R + 8.5, Color3.fromRGB(30,32,44), Enum.Material.SmoothPlastic)  -- desk front (faces pitch)
+	for _, dx in ipairs({ -7, 7 }) do
+		up(0.3, 2.4, 0.3, dx, deckY + 2.6, -R + 9, Color3.fromRGB(20,20,24), Enum.Material.Metal, false)  -- mic stand
+		up(0.8, 0.8, 0.8, dx, deckY + 3.7, -R + 9, Color3.fromRGB(40,40,48), Enum.Material.SmoothPlastic, false) -- mic head
+		seat(dx, -R + 17, Color3.fromRGB(70,74,92))
 	end
-	-- Walkway decks (E, S, W).
-	local eWalk = up(10, 1.4, 124, R, deckY, -14, CONCRETE, Enum.Material.Concrete)
-	local wWalk = up(10, 1.4, 124, -R, deckY, -14, CONCRETE, Enum.Material.Concrete)
-	local sWalk = up(2*R + 10, 1.4, 10, 0, deckY, -R, CONCRETE, Enum.Material.Concrete)
-	applyTexture(eWalk, TEXTURES.brick, 8, { Enum.NormalId.Top })
-	applyTexture(wWalk, TEXTURES.brick, 8, { Enum.NormalId.Top })
-	applyTexture(sWalk, TEXTURES.brick, 8, { Enum.NormalId.Top })
-	-- Outer railings (along the walls) so you can't fall off the ring.
-	up(1, 4, 130, R + 4, deckY + 2, -14, GOLD, Enum.Material.Metal, true)
-	up(1, 4, 130, -R - 4, deckY + 2, -14, GOLD, Enum.Material.Metal, true)
-	up(2*R + 10, 4, 1, 0, deckY + 2, -R - 4, GOLD, Enum.Material.Metal, true)
-	-- Inner railings (pitch side) on the open south + the south halves of E/W.
-	up(2*R - 12, 3, 1, 0, deckY + 2, -R + 4, GOLD, Enum.Material.Metal, true)
-	up(1, 3, 72, R - 4, deckY + 2, -40, GOLD, Enum.Material.Metal, true)
-	up(1, 3, 124, -R + 4, deckY + 2, -14, GOLD, Enum.Material.Metal, true)
-	-- Lampposts around the ring.
-	for _, c in ipairs({ {R,-R}, {-R,-R}, {0,-R}, {R,20}, {-R,20} }) do
-		up(1, 6, 1, c[1], deckY + 3.4, c[2], Color3.fromRGB(60,64,80), Enum.Material.Metal, false)
-		local bulb = up(2, 1.4, 2, c[1], deckY + 7, c[2], Color3.fromRGB(255,250,225), Enum.Material.Neon, false)
-		local pl = Instance.new("PointLight") pl.Brightness = 2 pl.Range = 24 pl.Color = Color3.fromRGB(255,248,220) pl.Parent = bulb
-	end
+	local cSign = up(10, 2, 0.4, 0, deckY + 4.2, -R + 8.4, Color3.fromRGB(180,30,30), Enum.Material.Neon, false)
+	signOn(cSign, Enum.NormalId.Front, "🎙 ON AIR", Color3.new(1,1,1))
 end
 
 -- A rebirth/prestige pad (RebirthService wires the click via the "RebirthPad" tag).
 -- Sits on the SECOND FLOOR (the upper-tier deck, y≈18.75) — you climb up to it,
 -- and it only works once you've built everything up (see RebirthService.requirement).
 local function buildRebirthPad(plot, origin, player)
-	local pos = origin + Vector3.new(0, 19.4, -76)   -- on the upper-ring south walkway (2nd floor)
+	local pos = origin + Vector3.new(30, 23.4, -70)   -- on the upper-ring south concourse (2nd floor)
 
 	local pad = Instance.new("Part")
 	pad.Name        = "RebirthPad"
@@ -1453,6 +1449,45 @@ local function buildTapButton(plot, origin, player)
 	CollectionService:AddTag(base, "TapButton")
 end
 
+-- A purchasable Auto-Collector next to the Cash Stand: once bought it banks your
+-- earnings automatically (no clicking). Pricey — wired in Main.
+local function buildAutoCollectPad(plot, origin, player)
+	local pos = origin + Vector3.new(-44, 0, -52)
+
+	local base = Instance.new("Part")
+	base.Name = "AutoCollectPad"; base.Anchored = true; base.CanCollide = true
+	base.Size = Vector3.new(8, 5, 6)
+	base.Position = pos + Vector3.new(0, 2.5, 0)
+	base.Color = Color3.fromRGB(58, 62, 82); base.Material = Enum.Material.Metal
+	base.TopSurface = Enum.SurfaceType.Smooth; base.Parent = plot
+
+	local arm = Instance.new("Part")   -- little robotic collector arm
+	arm.Anchored = true; arm.CanCollide = false
+	arm.Size = Vector3.new(1.2, 4, 1.2)
+	arm.Position = pos + Vector3.new(2.5, 6.5, 0)
+	arm.Color = Color3.fromRGB(120, 230, 160); arm.Material = Enum.Material.Neon
+	arm.Parent = plot
+
+	local owner = Instance.new("ObjectValue")
+	owner.Name = "Owner"; owner.Value = player; owner.Parent = base
+
+	local cd = Instance.new("ClickDetector")
+	cd.Name = "AutoCollectClick"; cd.MaxActivationDistance = 28; cd.Parent = base
+
+	local bb = Instance.new("BillboardGui")
+	bb.Name = "Info"; bb.Size = UDim2.new(0, 220, 0, 64); bb.StudsOffset = Vector3.new(0, 4.5, 0)
+	bb.AlwaysOnTop = true; bb.MaxDistance = 240; bb.Adornee = base; bb.Parent = base
+	local lbl = Instance.new("TextLabel")
+	lbl.Name = "Amount"; lbl.Size = UDim2.new(1, 0, 1, 0); lbl.BackgroundTransparency = 1
+	local data = DataService.getData(player)
+	lbl.Text = (data and data.autoCollect) and "🤖 AUTO-COLLECT\n✅ ACTIVE"
+		or "🤖 AUTO-COLLECTOR\n💰 800K — auto-banks cash"
+	lbl.TextColor3 = Color3.fromRGB(150, 255, 180); lbl.TextScaled = true
+	lbl.Font = Enum.Font.GothamBold; lbl.TextStrokeTransparency = 0.4; lbl.Parent = bb
+
+	CollectionService:AddTag(base, "AutoCollectPad")
+end
+
 -- Live-update a player's Cash Stand billboard (called each second by the income
 -- loop in Main). Shows the pending pot + the generation rate.
 function PlotService.updateCashStand(player, pending, rate)
@@ -1573,9 +1608,9 @@ local function buildStadiumStructure(plot, origin, level)
 	if (level or 0) < 1 then return end
 	local L     = math.clamp(level, 1, 10)
 	local half  = PLOT_SIZE.X / 2          -- 90
-	local FAC_H = 8 + L * 2                 -- facade height above the lot wall (10..28)
-	local roofW = 12 + L * 3.4             -- roof eave depth inward (15..46)
-	local roofY = 26 + L * 1.4             -- roof height (27..40)
+	local FAC_H = 12 + L * 2.5               -- taller facade (14.5..37)
+	local roofW = 14 + L * 4                 -- roof eave depth inward (18..54)
+	local roofY = 40 + L * 1.6               -- much taller roof — clears the upper concourse (41.6..56)
 	local FAC_C  = Color3.fromRGB(64, 68, 82)
 	local ROOF_C = Color3.fromRGB(42, 46, 58)
 	local PYL_C  = Color3.fromRGB(78, 82, 98)
@@ -1751,6 +1786,7 @@ function PlotService.buildPlot(player)
 	buildRebirthPad(plot, origin, player)
 	buildCashStand(plot, origin, player)
 	buildTapButton(plot, origin, player)
+	buildAutoCollectPad(plot, origin, player)
 	buildUpperTier(plot, origin, player)
 
 	-- Place each building at its hand-picked spot (spacious, framing the plaza),
