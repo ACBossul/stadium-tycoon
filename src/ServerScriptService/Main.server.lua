@@ -123,6 +123,7 @@ local function onPlayerJoin(player)
 	-- affects live players.
 	if game:GetService("RunService"):IsStudio() then
 		data.coins = math.max(data.coins or 0, 1000000)
+		data.gems  = math.max(data.gems or 0, 500)   -- so snacks are testable in Studio
 	end
 
 	print(string.format("[SvJoin] %s coins=%s gems=%s stands=%s isStudio=%s",
@@ -247,6 +248,7 @@ task.spawn(function()
 			if game:GetService("RunService"):IsStudio() then
 				local d = DataService.getData(player)
 				if d and (d.coins or 0) < 100000 then d.coins = 1000000 end
+				if d and (d.gems or 0) < 50 then d.gems = 500 end   -- keep snacks testable
 			end
 
 			-- Resolve any matchdays that ticked over while player is online,
