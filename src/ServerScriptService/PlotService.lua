@@ -1263,6 +1263,30 @@ local function buildUpperTier(plot, origin, player)
 	vlCta.Text = "Get VIP in the 🛍 Shop!"; vlCta.TextColor3 = Color3.fromRGB(120,255,160); vlCta.TextScaled = true; vlCta.Font = Enum.Font.GothamBold; vlCta.Parent = vlSg
 	up(5, 1.4, 2, vlX - 4, deckY + 1.7, bz - 5, Color3.fromRGB(120,60,150), Enum.Material.SmoothPlastic)
 	up(5, 1.4, 2, vlX + 4, deckY + 1.7, bz - 5, Color3.fromRGB(120,60,150), Enum.Material.SmoothPlastic)
+
+	-- ── Manager's Lounge (the upper area wraps toward the NE corner) ──
+	-- A railed walkway runs from the deck's back-east corner round to a private box.
+	up(12, 1.4, 12, bx + 16, deckY, bz + 20, CONCRETE, Enum.Material.Concrete)             -- corner walkway
+	up(0.5, 3, 12, bx + 22, deckY + 1.6, bz + 20, GOLD, Enum.Material.Metal, false)        -- outer rail
+	local mlX, mlZ = bx + 18, bz + 30
+	up(20, 1.4, 16, mlX, deckY, mlZ, Color3.fromRGB(48, 46, 66), Enum.Material.Concrete)   -- lounge floor
+	up(20, 9, 0.6, mlX, deckY + 5, mlZ + 8, Color3.fromRGB(40,44,58), Enum.Material.Concrete)  -- back wall
+	up(0.6, 9, 16, mlX + 10, deckY + 5, mlZ, Color3.fromRGB(40,44,58), Enum.Material.Concrete) -- east wall
+	up(0.6, 9, 16, mlX - 10, deckY + 5, mlZ, Color3.fromRGB(40,44,58), Enum.Material.Concrete) -- west wall (door gap below sign)
+	up(20, 1, 16, mlX, deckY + 9.5, mlZ, Color3.fromRGB(34,38,50), Enum.Material.Metal)        -- roof
+	-- Manager's desk + chair + a couple of seats
+	up(9, 1.8, 3, mlX, deckY + 2, mlZ + 3, Color3.fromRGB(120,84,52), Enum.Material.WoodPlanks)   -- desk
+	up(2.4, 2.6, 2.4, mlX, deckY + 2.5, mlZ + 5.5, Color3.fromRGB(60,64,82), Enum.Material.SmoothPlastic) -- manager's chair
+	up(2, 1.4, 2, mlX - 6, deckY + 1.7, mlZ - 4, Color3.fromRGB(80,84,100), Enum.Material.SmoothPlastic)
+	up(2, 1.4, 2, mlX + 6, deckY + 1.7, mlZ - 4, Color3.fromRGB(80,84,100), Enum.Material.SmoothPlastic)
+	-- Sign
+	local mlSign = up(18, 2.6, 0.4, mlX, deckY + 7.5, mlZ - 7.6, Color3.fromRGB(18,20,28), Enum.Material.SmoothPlastic, false)
+	local mlSg = Instance.new("SurfaceGui")
+	mlSg.Face = Enum.NormalId.Back; mlSg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	mlSg.PixelsPerStud = 24; mlSg.LightInfluence = 0; mlSg.Parent = mlSign
+	local mlLbl = Instance.new("TextLabel")
+	mlLbl.Size = UDim2.new(1,0,1,0); mlLbl.BackgroundTransparency = 1; mlLbl.Text = "🧑‍💼 MANAGER'S LOUNGE"
+	mlLbl.TextColor3 = Color3.fromRGB(150,200,255); mlLbl.TextScaled = true; mlLbl.Font = Enum.Font.GothamBlack; mlLbl.Parent = mlSg
 end
 
 -- A rebirth/prestige pad (RebirthService wires the click via the "RebirthPad" tag).
