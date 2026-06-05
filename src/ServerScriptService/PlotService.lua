@@ -1218,7 +1218,7 @@ local function buildRebirthPad(plot, origin, player)
 	t.Parent = frame
 	local s = Instance.new("TextLabel")
 	s.Size = UDim2.new(1, -8, 0.4, 0); s.Position = UDim2.new(0, 4, 0.57, 0)
-	s.BackgroundTransparency = 1; s.Text = "Reset for +50% income"
+	s.BackgroundTransparency = 1; s.Text = "Reset for a growing income boost + a boosted card!"
 	s.TextColor3 = Color3.fromRGB(200, 200, 220); s.TextScaled = true; s.Font = Enum.Font.Gotham
 	s.Parent = frame
 

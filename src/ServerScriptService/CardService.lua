@@ -179,13 +179,14 @@ function CardService.grantRewardCard(player, rarityFloor)
 	return { instanceId = id, cardId = cardDef.id, power = power, rarity = rarity }
 end
 
--- Grant a SPECIFIC card by id (used for rebirth-exclusive rewards).
-function CardService.grantSpecificCard(player, cardId)
+-- Grant a SPECIFIC card by id (used for rebirth-exclusive rewards). An optional
+-- powerBonus yields a "better variant" — a higher-power copy (rebirth scales it).
+function CardService.grantSpecificCard(player, cardId, powerBonus)
 	local data = DataService.getData(player)
 	if not data then return nil end
 	local def = CardCatalog.ById[cardId]
 	if not def then return nil end
-	local power = rollPower(def.rarity)
+	local power = rollPower(def.rarity) + (powerBonus or 0)
 	local id    = newInstanceId()
 	data.cards[id] = { cardId = cardId, power = power }
 	return { instanceId = id, cardId = cardId, power = power, rarity = def.rarity }

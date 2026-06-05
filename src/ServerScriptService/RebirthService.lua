@@ -39,8 +39,9 @@ function RebirthService.totalLevels(data)
 end
 
 -- Required total building levels for the player's NEXT rebirth (scales each time).
+-- Gentle early bar so the first prestige comes quickly (addictive loop), then ramps.
 function RebirthService.requirement(data)
-	return 25 * ((data.rebirths or 0) + 1)
+	return 15 * ((data.rebirths or 0) + 1)
 end
 
 function RebirthService.canRebirth(data)
@@ -65,10 +66,14 @@ function RebirthService.doRebirth(player)
 	end
 	data.rebirths = (data.rebirths or 0) + 1
 
-	-- Exclusive reward: a rebirth-only Mythic card (cycles through the set).
-	local cardId   = REBIRTH_CARDS[((data.rebirths - 1) % #REBIRTH_CARDS) + 1]
-	CardService.grantSpecificCard(player, cardId)
+	-- Exclusive reward: a rebirth-only Mythic card (cycles through the set), as a
+	-- "better variant" — its power scales with your rebirth count, so each prestige
+	-- hands you a stronger card than the last.
+	local n        = data.rebirths
+	local cardId   = REBIRTH_CARDS[((n - 1) % #REBIRTH_CARDS) + 1]
+	local card     = CardService.grantSpecificCard(player, cardId, n * 30)
 	local cardName = (CardCatalog.ById[cardId] and CardCatalog.ById[cardId].name) or "a Mythic card"
+	local cardPow  = card and card.power or 0
 
 	-- Reset the physical stadium to its new (low) levels.
 	for _, b in ipairs(BuildingConfig.Buildings) do
@@ -76,8 +81,10 @@ function RebirthService.doRebirth(player)
 	end
 
 	pushProfile(player)
-	notify(player, "🔁 REBIRTH " .. data.rebirths .. "!  +" .. (data.rebirths * 50)
-		.. "% income forever + exclusive card: " .. cardName .. "!", "gold")
+	local mult = 1 + 0.10 * n + 0.025 * n * (n - 1)
+	local pct  = math.floor((mult - 1) * 100 + 0.5)
+	notify(player, "🔁 REBIRTH " .. n .. "!  Income now +" .. pct .. "% forever + "
+		.. cardName .. " ⚡" .. cardPow .. " (boosted)!", "gold")
 	return true
 end
 

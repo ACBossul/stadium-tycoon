@@ -36,9 +36,13 @@ local function getOfflineMultiplier(data)
 	return 1
 end
 
--- Permanent income multiplier from rebirths (+50% per rebirth).
+-- Permanent income multiplier from rebirths. PROGRESSIVE so prestiging stays
+-- addictive: the 1st rebirth is a gentle +10%, and each one is worth more than
+-- the last (+10%, +15%, +20%, +25% …). Cumulative = 1 + 0.10n + 0.025·n·(n-1).
+-- (Keep this formula in sync with HUD.client.lua's income readout.)
 local function getRebirthMultiplier(data)
-	return 1 + (data.rebirths or 0) * 0.5
+	local n = data.rebirths or 0
+	return 1 + 0.10 * n + 0.025 * n * (n - 1)
 end
 EconomyService.getRebirthMultiplier = getRebirthMultiplier
 

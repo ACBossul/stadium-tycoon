@@ -212,7 +212,8 @@ if Remotes then
 			if data.stadium and BuildingConfig then
 				local rate = BuildingConfig.totalPassiveRate(data.stadium)
 				if data.passes and data.passes.double_coins then rate = rate * 2 end
-				rate = rate * (1 + (data.rebirths or 0) * 0.5)   -- permanent rebirth bonus
+				local rb = data.rebirths or 0   -- progressive rebirth bonus (matches EconomyService)
+				rate = rate * (1 + 0.10 * rb + 0.025 * rb * (rb - 1))
 				if data.passes and data.passes.vip then rate = rate * 1.25 end  -- VIP +25%
 				if data.buffs and (data.buffs.money or 0) > os.time() then rate = rate * 1.10 end  -- 🌭 money snack
 				local pend = math.floor(data.pending or 0)
