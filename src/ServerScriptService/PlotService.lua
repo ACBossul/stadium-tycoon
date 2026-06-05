@@ -110,6 +110,25 @@ local DEFAULT_PIECES = {
 	{ size = Vector3.new(10,10,10), offset = Vector3.new(0,5,0), color = Color3.fromRGB(150,150,150), material = M.SmoothPlastic },
 }
 
+-- Thousands-separated number for billboards (e.g. 12345 -> "12,345").
+local function commaNum(n)
+	local s = tostring(math.floor(n))
+	local k
+	repeat s, k = s:gsub("^(%-?%d+)(%d%d%d)", "%1,%2") until k == 0
+	return s
+end
+
+-- "💰 +X/sec" for a passive income building at a level (blank for active-only
+-- buildings or level 0) — shown on each building's billboard so the money loop
+-- is legible: upgrade a building → its rate (and your Cash Stand fill) go up.
+local function rateText(buildingId, level)
+	local b = BuildingConfig.ById[buildingId]
+	if not b or b.activeOnly then return "" end
+	local r = BuildingConfig.incomeRate(buildingId, level or 0)
+	if r > 0 then return "💰 +" .. commaNum(r) .. "/sec" end
+	return ""
+end
+
 -- Uploaded surface textures (decals on the AC6005 account, via Open Cloud).
 local TEXTURES = {
 	grass   = "rbxassetid://70872978008715",
@@ -274,7 +293,7 @@ end
 local function buildBillboard(buildingCfg)
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name           = "InfoBillboard"
-	billboard.Size           = UDim2.new(0, 180, 0, 90)
+	billboard.Size           = UDim2.new(0, 184, 0, 112)
 	billboard.StudsOffset    = Vector3.new(0, 4, 0)
 	billboard.AlwaysOnTop    = true
 	billboard.MaxDistance    = 80
@@ -310,6 +329,19 @@ local function buildBillboard(buildingCfg)
 	levelLabel.TextScaled       = true
 	levelLabel.Font             = Enum.Font.Gotham
 	levelLabel.Parent           = bg
+
+	-- Per-building income rate (set server-side at build + on upgrade; the client's
+	-- StadiumController never touches this label, so there's no conflict).
+	local rateLabel = Instance.new("TextLabel")
+	rateLabel.Name              = "RateLabel"
+	rateLabel.Size              = UDim2.new(1, -8, 0, 20)
+	rateLabel.Position          = UDim2.new(0, 4, 0, 50)
+	rateLabel.BackgroundTransparency = 1
+	rateLabel.Text              = ""
+	rateLabel.TextColor3        = Color3.fromRGB(150, 255, 130)
+	rateLabel.TextScaled        = true
+	rateLabel.Font              = Enum.Font.GothamBold
+	rateLabel.Parent            = bg
 
 	local upgradeButton = Instance.new("TextButton")
 	upgradeButton.Name             = "UpgradeButton"
@@ -628,7 +660,12 @@ local function buildBuildingModel(buildingCfg, position, player, level)
 	detector.MaxActivationDistance = 32
 	detector.Parent = primary
 
-	buildBillboard(buildingCfg).Parent = primary
+	local infoBillboard = buildBillboard(buildingCfg)
+	infoBillboard.Parent = primary
+	do  -- seed the per-building income rate label for its starting level
+		local rl = infoBillboard:FindFirstChild("Frame") and infoBillboard.Frame:FindFirstChild("RateLabel")
+		if rl then rl.Text = rateText(buildingCfg.id, level or 0) end
+	end
 
 	-- Flavor signage
 	if buildingCfg.id == "concessions" then
@@ -1158,6 +1195,67 @@ local function buildRebirthPad(plot, origin, player)
 	CollectionService:AddTag(pad, "RebirthPad")
 end
 
+-- The Cash Stand: your buildings pile their earnings here (server fills the
+-- counter); walk up and click to bank it. This is the active money "grind".
+local function buildCashStand(plot, origin, player)
+	local pos = origin + Vector3.new(28, 0, -PLOT_SIZE.Z / 2 + 18)
+
+	local safe = Instance.new("Part")
+	safe.Name = "CashStand"; safe.Anchored = true; safe.CanCollide = true
+	safe.Size = Vector3.new(9, 6, 6)
+	safe.Position = pos + Vector3.new(0, 3, 0)
+	safe.Color = Color3.fromRGB(38, 72, 50); safe.Material = Enum.Material.Metal
+	safe.TopSurface = Enum.SurfaceType.Smooth; safe.Parent = plot
+
+	local slot = Instance.new("Part")   -- gold coin slot on the front
+	slot.Anchored = true; slot.CanCollide = false
+	slot.Size = Vector3.new(6, 1.4, 0.4)
+	slot.Position = pos + Vector3.new(0, 4.4, -3.05)
+	slot.Color = Color3.fromRGB(245, 205, 70); slot.Material = Enum.Material.Neon
+	slot.Parent = plot
+
+	local pile = Instance.new("Part")   -- glowing coin pile on top
+	pile.Anchored = true; pile.CanCollide = false; pile.Shape = Enum.PartType.Ball
+	pile.Size = Vector3.new(6.5, 3, 6.5)
+	pile.Position = pos + Vector3.new(0, 6.6, 0)
+	pile.Color = Color3.fromRGB(255, 205, 60); pile.Material = Enum.Material.Neon
+	pile.Parent = plot
+
+	local owner = Instance.new("ObjectValue")
+	owner.Name = "Owner"; owner.Value = player; owner.Parent = safe
+
+	local cd = Instance.new("ClickDetector")
+	cd.Name = "CollectClick"; cd.MaxActivationDistance = 30; cd.Parent = safe
+
+	local bb = Instance.new("BillboardGui")
+	bb.Name = "Info"; bb.Size = UDim2.new(0, 230, 0, 72); bb.StudsOffset = Vector3.new(0, 5.5, 0)
+	bb.AlwaysOnTop = true; bb.MaxDistance = 280; bb.Adornee = safe; bb.Parent = safe
+	local lbl = Instance.new("TextLabel")
+	lbl.Name = "Amount"; lbl.Size = UDim2.new(1, 0, 1, 0); lbl.BackgroundTransparency = 1
+	lbl.Text = "💰 CASH STAND\nclick to collect"
+	lbl.TextColor3 = Color3.fromRGB(255, 230, 120); lbl.TextScaled = true
+	lbl.Font = Enum.Font.GothamBlack; lbl.TextStrokeTransparency = 0.4; lbl.Parent = bb
+
+	CollectionService:AddTag(safe, "CashStand")
+end
+
+-- Live-update a player's Cash Stand billboard (called each second by the income
+-- loop in Main). Shows the pending pot + the generation rate.
+function PlotService.updateCashStand(player, pending, rate)
+	local plot = playerPlotModel[player.UserId]
+	if not plot then return end
+	local safe = plot:FindFirstChild("CashStand")
+	local bb   = safe and safe:FindFirstChild("Info")
+	local lbl  = bb and bb:FindFirstChild("Amount")
+	if not lbl then return end
+	local p = math.floor(pending or 0)
+	if p > 0 then
+		lbl.Text = "💰 " .. commaNum(p) .. " to collect\n(+" .. commaNum(rate or 0) .. "/sec) — click!"
+	else
+		lbl.Text = "💰 CASH STAND\n+" .. commaNum(rate or 0) .. "/sec — earning…"
+	end
+end
+
 -- Non-stands buildings visibly GROW with their upgrade level so progression is
 -- felt. Scales around the centre, then re-seats the base on the ground (y=0).
 local function scaleBuildingToLevel(model, level)
@@ -1250,6 +1348,7 @@ function PlotService.buildPlot(player)
 	buildKartStation(plot, origin, player)
 	buildCityPad(plot, origin, player)
 	buildRebirthPad(plot, origin, player)
+	buildCashStand(plot, origin, player)
 	buildUpperTier(plot, origin, player)
 
 	-- Place each building at its hand-picked spot (spacious, framing the plaza),
@@ -1304,6 +1403,12 @@ function PlotService.onBuildingUpgraded(player, buildingId, level)
 		-- Everything else grows in scale.
 		scaleBuildingToLevel(model, level)
 	end
+
+	-- Refresh the per-building income rate label.
+	local base = model.PrimaryPart
+	local bb   = base and base:FindFirstChild("InfoBillboard")
+	local rl   = bb and bb:FindFirstChild("Frame") and bb.Frame:FindFirstChild("RateLabel")
+	if rl then rl.Text = rateText(buildingId, level) end
 end
 
 -- Where the player (re)spawns on their plot — used by HubService to send them home.

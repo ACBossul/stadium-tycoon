@@ -214,7 +214,12 @@ if Remotes then
 				if data.passes and data.passes.double_coins then rate = rate * 2 end
 				rate = rate * (1 + (data.rebirths or 0) * 0.5)   -- permanent rebirth bonus
 				if data.passes and data.passes.vip then rate = rate * 1.25 end  -- VIP +25%
-				incomeLabel.Text = "Income: " .. commas(math.floor(rate)) .. "/sec"
+				local pend = math.floor(data.pending or 0)
+				if pend > 0 then
+					incomeLabel.Text = "Income: " .. commas(math.floor(rate)) .. "/sec   💰" .. commas(pend) .. " to collect"
+				else
+					incomeLabel.Text = "Income: " .. commas(math.floor(rate)) .. "/sec"
+				end
 			end
 		end)
 	end

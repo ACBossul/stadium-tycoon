@@ -59,6 +59,7 @@ function RebirthService.doRebirth(player)
 
 	-- Reset coins + buildings (keep cards, cup, gems, passes).
 	data.coins = BuildingConfig.STARTING_COINS
+	data.pending = 0   -- uncollected earnings reset too
 	for _, b in ipairs(BuildingConfig.Buildings) do
 		data.stadium[b.id] = (b.id == "stands") and 1 or 0
 	end

@@ -204,6 +204,25 @@ for _, player in ipairs(Players:GetPlayers()) do
 	task.spawn(onPlayerJoin, player)
 end
 
+-- ─── Cash Stand collect pads (tagged "CashStand" by PlotService) ─────────────
+
+local CollectionService = game:GetService("CollectionService")
+local function wireCashStand(pad)
+	local owner = pad:FindFirstChild("Owner")
+	local cd = pad:FindFirstChildOfClass("ClickDetector") or pad:WaitForChild("CollectClick", 10)
+	if not (cd and cd:IsA("ClickDetector")) then return end
+	cd.MouseClick:Connect(function(clicker)
+		if owner and clicker ~= owner.Value then return end   -- only the plot owner collects
+		local amt = EconomyService.collectEarnings(clicker)
+		if amt > 0 then
+			pushProfile(clicker)
+			notify(clicker, "💰 Collected " .. amt .. " coins!", "gold")
+		end
+	end)
+end
+for _, pad in ipairs(CollectionService:GetTagged("CashStand")) do task.spawn(wireCashStand, pad) end
+CollectionService:GetInstanceAddedSignal("CashStand"):Connect(function(pad) task.spawn(wireCashStand, pad) end)
+
 -- ─── Income tick loop ────────────────────────────────────────────────────────
 
 -- Push profile updates to clients every 5s to keep HUD in sync
@@ -217,6 +236,10 @@ task.spawn(function()
 
 		for _, player in ipairs(Players:GetPlayers()) do
 			EconomyService.tickIncome(player, now)
+
+			-- Live-update the player's Cash Stand counter (pending pot + rate).
+			local cd = DataService.getData(player)
+			if cd then PlotService.updateCashStand(player, cd.pending, EconomyService.currentRate(cd)) end
 
 			-- Studio-only: keep coins topped up so upgrades are always testable,
 			-- even if the join-time grant raced the profile load.

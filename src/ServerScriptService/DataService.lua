@@ -18,6 +18,10 @@ local PROFILE_TEMPLATE = {
 	coins   = 100,
 	gems    = 0,
 
+	-- Uncollected earnings: your buildings pile income here (capped); you collect
+	-- it at the Cash Stand on your plot. This is the active tycoon "grind".
+	pending = 0,
+
 	-- Rebirth/prestige: each rebirth resets coins + buildings for a permanent
 	-- income multiplier and unlocks rebirth-only cards.
 	rebirths = 0,

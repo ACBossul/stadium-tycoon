@@ -11,6 +11,10 @@ local EconomyService   = {}
 -- Throttle: accumulate income every N seconds rather than every frame
 local TICK_RATE = 1  -- seconds between income ticks
 
+-- The pending pot caps at this many seconds of income — once full it stops
+-- growing, so players come back to the Cash Stand and collect (the grind loop).
+local PENDING_CAP_SECONDS = 300
+
 -- Track per-player income accumulator
 local lastTickTime = {}  -- UserId → last tick timestamp
 
@@ -81,14 +85,34 @@ function EconomyService.tickIncome(player, now)
 
 	lastTickTime[player.UserId] = now
 
-	local passiveRate = BuildingConfig.totalPassiveRate(data.stadium)
-	local coinMult    = getCoinMultiplier(data)
-	local earned      = math.floor(passiveRate * coinMult * getRebirthMultiplier(data) * getVipMultiplier(data) * delta)
+	local rate   = EconomyService.currentRate(data)
+	local earned = math.floor(rate * delta)
 
 	if earned > 0 then
-		data.coins += earned
-		data.stats.totalEarned = (data.stats.totalEarned or 0) + earned
+		-- Pile income into the collectible pot (capped) instead of auto-banking it,
+		-- so earning is active: you go to your Cash Stand and collect.
+		local capacity = math.floor(rate * PENDING_CAP_SECONDS)
+		data.pending = math.min((data.pending or 0) + earned, math.max(capacity, 0))
 	end
+end
+
+-- Current income generation rate (coins/sec) after all multipliers.
+function EconomyService.currentRate(data)
+	if not data then return 0 end
+	return BuildingConfig.totalPassiveRate(data.stadium)
+		* getCoinMultiplier(data) * getRebirthMultiplier(data) * getVipMultiplier(data)
+end
+
+-- Collect the pending pot into spendable coins (wired to the Cash Stand pad).
+function EconomyService.collectEarnings(player)
+	local data = DataService.getData(player)
+	if not data then return 0 end
+	local amount = math.floor(data.pending or 0)
+	if amount <= 0 then return 0 end
+	data.coins = (data.coins or 0) + amount
+	data.pending = 0
+	data.stats.totalEarned = (data.stats.totalEarned or 0) + amount
+	return amount
 end
 
 function EconomyService.onPlayerJoin(player)
