@@ -26,6 +26,10 @@ local PROFILE_TEMPLATE = {
 	-- at the concession stand). e.g. buffs.speed, buffs.money.
 	buffs = {},
 
+	-- Kart customisation (bought/previewed at the City garage).
+	kartSkin   = "stock",            -- currently equipped skin id
+	ownedSkins = { stock = true },   -- unlocked skin ids
+
 	-- Rebirth/prestige: each rebirth resets coins + buildings for a permanent
 	-- income multiplier and unlocks rebirth-only cards.
 	rebirths = 0,

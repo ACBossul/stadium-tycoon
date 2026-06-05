@@ -17,7 +17,8 @@ local ReplicatedStorage   = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local CollectionService   = game:GetService("CollectionService")
 
-local DataService = require(ServerScriptService.DataService)
+local DataService   = require(ServerScriptService.DataService)
+local KartCosmetics = require(ReplicatedStorage.Config.KartCosmetics)
 
 local KartService = {}
 
@@ -65,6 +66,18 @@ end
 
 local function buildKart(tier, spawnCFrame, player)
 	local spec = KART_SPECS[tier] or KART_SPECS.basic
+
+	-- Recolour to the player's equipped skin (bought/previewed at the City garage).
+	-- Copy the spec so we never mutate the shared KART_SPECS table.
+	local data = DataService.getData(player)
+	local skin = data and KartCosmetics.ById[data.kartSkin or "stock"]
+	if skin then
+		spec = {
+			displayName = spec.displayName, maxSpeed = spec.maxSpeed,
+			turnRate = spec.turnRate, neon = spec.neon,
+			body = skin.body, accent = skin.accent,
+		}
+	end
 
 	local model = Instance.new("Model")
 	model.Name = "Kart_" .. player.UserId

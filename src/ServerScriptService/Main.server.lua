@@ -20,6 +20,7 @@ local KartService        = require(ServerScriptService.KartService)
 local HubService         = require(ServerScriptService.HubService)
 local RebirthService     = require(ServerScriptService.RebirthService)
 local SnackService       = require(ServerScriptService.SnackService)
+local KartCustomizeService = require(ServerScriptService.KartCustomizeService)
 local DailyRewardService = require(ServerScriptService.DailyRewardService)
 local BattlePassService  = require(ServerScriptService.BattlePassService)
 local BuildingConfig     = require(ReplicatedStorage.Config.BuildingConfig)
@@ -40,6 +41,9 @@ RebirthService.init()
 
 -- Wire concession snack vendors (tagged "SnackStand") + buff expiry sweep.
 SnackService.init()
+
+-- Wire the City garage kart-skin pedestals (tagged "KartSkinPedestal").
+KartCustomizeService.init()
 
 -- ─── Helpers ─────────────────────────────────────────────────────────────────
 

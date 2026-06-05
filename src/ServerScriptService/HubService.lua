@@ -12,6 +12,7 @@ local Workspace           = game:GetService("Workspace")
 local EconomyService = require(ServerScriptService.EconomyService)
 local DataService    = require(ServerScriptService.DataService)
 local PlotService    = require(ServerScriptService.PlotService)
+local KartCosmetics  = require(ReplicatedStorage.Config.KartCosmetics)
 
 local HubService = {}
 
@@ -268,6 +269,73 @@ local function buildKartGarage(x, z)
 	CollectionService:AddTag(pad, "KartSpawner")
 end
 
+-- A simple static display kart (decoration) coloured to a skin, posed on a CFrame.
+local function buildDisplayKart(cf, body, accent, neon)
+	local function bp(size, off, color, mat, shape)
+		local p = Instance.new("Part")
+		p.Anchored = true; p.CanCollide = false
+		p.Size = size; p.Color = color; p.Material = mat or Enum.Material.SmoothPlastic
+		if shape then p.Shape = shape end
+		p.CFrame = cf * CFrame.new(off)
+		p.Parent = hubFolder
+		return p
+	end
+	bp(Vector3.new(4.6, 1.2, 8),   Vector3.new(0, 0, 0),       body)                          -- floor pan
+	bp(Vector3.new(4, 1, 2.4),     Vector3.new(0, 0.1, -4.2),  body)                          -- nose
+	bp(Vector3.new(4, 2.4, 0.8),   Vector3.new(0, 1.3, 3.2),   accent)                        -- seat back
+	bp(Vector3.new(4.1, 0.5, 0.5), Vector3.new(0, 2.6, 2.6),   accent, neon and Enum.Material.Neon or Enum.Material.Metal)  -- roll bar
+	for _, wx in ipairs({ -2.6, 2.6 }) do
+		for _, wz in ipairs({ -2.8, 2.8 }) do
+			bp(Vector3.new(1, 2.4, 2.4), Vector3.new(wx, -0.5, wz), Color3.fromRGB(24, 24, 28), Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
+		end
+	end
+end
+
+-- A drive-in garage in the city: preview every kart skin on a display kart, then
+-- click its pedestal to buy/equip (KartCustomizeService handles the purchase).
+local function buildCustomizeGarage()
+	local GX, GZ = 0, -98              -- garage centre (local to HUB_ORIGIN), opens north (+Z)
+	local W, D, H = 56, 42, 16
+	local wallC = Color3.fromRGB(54, 58, 70)
+
+	block(hubFolder, Vector3.new(W, 1, D),  HUB_ORIGIN + Vector3.new(GX, 0.5, GZ), Color3.fromRGB(46, 48, 58), Enum.Material.Concrete, true)         -- floor
+	block(hubFolder, Vector3.new(W, H, 2),  HUB_ORIGIN + Vector3.new(GX, H/2, GZ - D/2), wallC, Enum.Material.Concrete, true)                         -- back wall
+	block(hubFolder, Vector3.new(2, H, D),  HUB_ORIGIN + Vector3.new(GX - W/2, H/2, GZ), wallC, Enum.Material.Concrete, true)                         -- west wall
+	block(hubFolder, Vector3.new(2, H, D),  HUB_ORIGIN + Vector3.new(GX + W/2, H/2, GZ), wallC, Enum.Material.Concrete, true)                         -- east wall
+	block(hubFolder, Vector3.new(W+2, 2, D),HUB_ORIGIN + Vector3.new(GX, H, GZ), Color3.fromRGB(38, 40, 50), Enum.Material.Metal, true)               -- roof
+	local header = block(hubFolder, Vector3.new(W, 5, 1.5), HUB_ORIGIN + Vector3.new(GX, H - 2, GZ + D/2), Color3.fromRGB(18, 20, 28), Enum.Material.SmoothPlastic, true)
+	neonSign(header, "🛺 KART GARAGE — drive in & customise", Color3.fromRGB(120, 230, 255), Enum.NormalId.Back)   -- faces +Z (the entrance)
+
+	local skins = KartCosmetics.Skins
+	local n = #skins
+	for i, skin in ipairs(skins) do
+		local px = GX - (W/2 - 7) + ((W - 14) / (n - 1)) * (i - 1)
+		local pz = GZ - 7
+
+		block(hubFolder, Vector3.new(6, 1.6, 6), HUB_ORIGIN + Vector3.new(px, 1.3, pz), Color3.fromRGB(72, 76, 90), Enum.Material.Concrete, true)   -- pedestal
+		local kartCF = CFrame.new(HUB_ORIGIN + Vector3.new(px, 3.5, pz)) * CFrame.Angles(0, math.rad(180), 0)   -- nose faces +Z (the viewer)
+		buildDisplayKart(kartCF, skin.body, skin.accent, skin.vip)
+
+		local hit = block(hubFolder, Vector3.new(6.4, 0.6, 6.4), HUB_ORIGIN + Vector3.new(px, 2.3, pz), Color3.fromRGB(96, 100, 116), Enum.Material.Neon, false)
+		hit.Name = "KartSkinPedestal"
+		hit:SetAttribute("Skin", skin.id)
+		local cd = Instance.new("ClickDetector")
+		cd.Name = "SkinClick"; cd.MaxActivationDistance = 18; cd.Parent = hit
+
+		local bb = Instance.new("BillboardGui")
+		bb.Size = UDim2.new(0, 160, 0, 52); bb.StudsOffset = Vector3.new(0, 6.5, 0)
+		bb.AlwaysOnTop = true; bb.MaxDistance = 90; bb.Adornee = hit; bb.Parent = hit
+		local lbl = Instance.new("TextLabel")
+		lbl.Size = UDim2.new(1, 0, 1, 0); lbl.BackgroundTransparency = 1
+		lbl.Text = (skin.vip and "⭐ " or "") .. skin.name .. "\n"
+			.. (skin.vip and "VIP only" or (skin.cost > 0 and ("💰 " .. skin.cost) or "FREE"))
+		lbl.TextColor3 = skin.vip and Color3.fromRGB(255, 215, 120) or Color3.fromRGB(235, 235, 245)
+		lbl.TextScaled = true; lbl.Font = Enum.Font.GothamBold; lbl.TextStrokeTransparency = 0.4; lbl.Parent = bb
+
+		CollectionService:AddTag(hit, "KartSkinPedestal")
+	end
+end
+
 -- ─── build the hub ──────────────────────────────────────────────────────────
 
 local function build()
@@ -376,6 +444,9 @@ local function build()
 	buildKiosk( 42, edge - 36, Color3.fromRGB(150,70,70), "📦 PACKS",    Color3.fromRGB(255,150,80),  "ShopScreen")
 	buildKiosk(-42, edge - 72, Color3.fromRGB(60,120,90), "🔄 TRADE",    Color3.fromRGB(120,230,160), "TradeScreen")
 	buildKartGarage(42, edge - 72)
+
+	-- Drive-in kart customisation garage (south side of the plaza).
+	buildCustomizeGarage()
 
 	-- Travel-home pads just inside the gate.
 	buildStadiumPad(-22, edge - 14)
