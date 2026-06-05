@@ -1208,6 +1208,32 @@ local function buildUpperTier(plot, origin, player)
 		return l
 	end
 
+	-- A proper gold TROPHY (base + plinth + stem + orb cup + handles) that gently
+	-- floats and pulses, instead of a plain cube.
+	local function buildTrophy(cx, cz, baseY)
+		local parts = {}
+		local function tp(sx, sy, sz, ox, oy, oz, mat, shape)
+			local p = up(sx, sy, sz, cx + ox, baseY + oy, cz + oz, GOLD, mat or Enum.Material.Metal, false)
+			if shape then p.Shape = shape end
+			table.insert(parts, p)
+			return p
+		end
+		tp(2.2, 0.5, 2.2, 0, 0, 0)                                          -- base
+		tp(1.3, 0.6, 1.3, 0, 0.5, 0)                                        -- plinth
+		tp(0.5, 1.9, 0.5, 0, 1.7, 0)                                        -- stem
+		local bowl = tp(2.1, 2.1, 2.1, 0, 3.4, 0, Enum.Material.Neon, Enum.PartType.Ball)  -- cup orb
+		tp(0.4, 1.3, 0.4, -1.15, 3.4, 0)                                    -- left handle
+		tp(0.4, 1.3, 0.4,  1.15, 3.4, 0)                                    -- right handle
+		local light = Instance.new("PointLight")
+		light.Color = GOLD; light.Brightness = 1.6; light.Range = 11; light.Parent = bowl
+		-- Float (whole trophy bobs) + pulse the glow.
+		local bob = TweenInfo.new(2 + math.random() * 0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
+		for _, p in ipairs(parts) do
+			TweenService:Create(p, bob, { Position = p.Position + Vector3.new(0, 0.7, 0) }):Play()
+		end
+		TweenService:Create(light, TweenInfo.new(1.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Brightness = 3.2 }):Play()
+	end
+
 	-- Support pillars (ground → deck).
 	for _, c in ipairs({ {R,-R},{-R,-R},{R,NORTH-6},{-R,NORTH-6},{R,-10},{-R,-10},{0,-R},{38,-R},{-38,-R} }) do
 		up(5, deckY, 5, c[1], deckY/2, c[2], CONCRETE, Enum.Material.Concrete)
@@ -1245,6 +1271,7 @@ local function buildUpperTier(plot, origin, player)
 		up(1, 6, 1, c[1], deckY + 3.5, c[2], Color3.fromRGB(60,64,80), Enum.Material.Metal, false)
 		local bulb = up(2, 1.4, 2, c[1], deckY + 7.2, c[2], Color3.fromRGB(255,250,225), Enum.Material.Neon, false)
 		local pl = Instance.new("PointLight") pl.Brightness = 2 pl.Range = 26 pl.Color = Color3.fromRGB(255,248,220) pl.Parent = bulb
+		TweenService:Create(pl, TweenInfo.new(1.4 + math.random() * 0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Brightness = 3.4 }):Play()  -- gentle flicker
 	end
 
 	-- ══ VIP LOUNGE (WEST side; full room with seats + a big TV) ══
@@ -1255,7 +1282,8 @@ local function buildUpperTier(plot, origin, player)
 	up(20, 12, 0.8, vx, deckY + 6, -24, WALL_C, Enum.Material.Concrete)                           -- south wall
 	up(20, 1, 52, vx, deckY + 12, 2, ROOF_C, Enum.Material.Metal)                                 -- roof
 	local tv = up(0.6, 7, 13, vx - 9.4, deckY + 6, 2, Color3.fromRGB(10,12,18), Enum.Material.SmoothPlastic)  -- TV
-	signOn(tv, Enum.NormalId.Right, "🔴 LIVE\nGRN  2 - 1  AZL", Color3.fromRGB(120,235,255))
+	local tvLbl = signOn(tv, Enum.NormalId.Right, "🔴 LIVE\nGRN  2 - 1  AZL", Color3.fromRGB(120,235,255))
+	TweenService:Create(tvLbl, TweenInfo.new(0.85, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { TextTransparency = 0.45 }):Play()  -- screen flicker
 	for _, sz in ipairs({ -7, 0, 7 }) do seat(vx + 2, 2 + sz) end                                  -- seats facing the TV
 	local vlBoard = up(0.4, 6, 16, vx + 9.6, deckY + 6, 2, Color3.fromRGB(20,16,28), Enum.Material.SmoothPlastic, false)
 	local vlSg = Instance.new("SurfaceGui")
@@ -1276,8 +1304,8 @@ local function buildUpperTier(plot, origin, player)
 	up(20, 11, 0.8, tx, deckY + 5.5, -13, WALL_C, Enum.Material.Concrete)         -- north wall
 	up(20, 1, 30, tx, deckY + 11, -28, ROOF_C, Enum.Material.Metal)               -- roof
 	for i = -1, 1 do
-		up(3, 2, 3, tx + 4, deckY + 1.5, -28 + i * 8, Color3.fromRGB(60,64,78), Enum.Material.Concrete)
-		up(1.6, 2.4, 1.6, tx + 4, deckY + 3.7, -28 + i * 8, GOLD, Enum.Material.Neon)
+		up(3, 2, 3, tx + 4, deckY + 1.5, -28 + i * 8, Color3.fromRGB(60,64,78), Enum.Material.Concrete)  -- podium
+		buildTrophy(tx + 4, -28 + i * 8, deckY + 2.75)                                                   -- animated gold trophy
 	end
 	local trBoard = up(0.4, 6.5, 26, tx + 9.6, deckY + 6, -28, Color3.fromRGB(12,14,22), Enum.Material.SmoothPlastic, false)
 	trBoard.Name = "TrophyDisplay"
@@ -1313,6 +1341,7 @@ local function buildUpperTier(plot, origin, player)
 	end
 	local cSign = up(10, 2, 0.4, 0, deckY + 4.2, -R + 8.4, Color3.fromRGB(180,30,30), Enum.Material.Neon, false)
 	signOn(cSign, Enum.NormalId.Front, "🎙 ON AIR", Color3.new(1,1,1))
+	TweenService:Create(cSign, TweenInfo.new(0.75, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Color = Color3.fromRGB(90, 12, 12) }):Play()  -- pulsing ON AIR
 end
 
 -- A rebirth/prestige pad (RebirthService wires the click via the "RebirthPad" tag).
