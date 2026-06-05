@@ -477,6 +477,20 @@ local function build()
 	local arch = block(hubFolder, Vector3.new(58, 5, 6), HUB_ORIGIN + Vector3.new(0, 20, edge), Color3.fromRGB(36,40,52), Enum.Material.Metal, true)
 	neonSign(arch, "🏙 BRAINROT CITY", Color3.fromRGB(255,200,90), Enum.NormalId.Front)
 
+	-- 🏆 Top Tycoons leaderboard (LeaderboardService fills the "List" label).
+	block(hubFolder, Vector3.new(3, 13, 3), HUB_ORIGIN + Vector3.new(-66, 6.5, edge - 50), Color3.fromRGB(40,44,56), Enum.Material.Metal, true)  -- post
+	local lbScreen = block(hubFolder, Vector3.new(2, 22, 20), HUB_ORIGIN + Vector3.new(-66, 13, edge - 50), Color3.fromRGB(12,14,22), Enum.Material.SmoothPlastic, true)
+	local lbSg = Instance.new("SurfaceGui")
+	lbSg.Face = Enum.NormalId.Right; lbSg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud; lbSg.PixelsPerStud = 22; lbSg.LightInfluence = 0; lbSg.Parent = lbScreen
+	local lbTitle = Instance.new("TextLabel")
+	lbTitle.Size = UDim2.new(1,0,0.15,0); lbTitle.BackgroundTransparency = 1; lbTitle.Text = "🏆 TOP TYCOONS"
+	lbTitle.TextColor3 = Color3.fromRGB(255,215,80); lbTitle.TextScaled = true; lbTitle.Font = Enum.Font.GothamBlack; lbTitle.Parent = lbSg
+	local lbList = Instance.new("TextLabel")
+	lbList.Name = "List"; lbList.Size = UDim2.new(1,-10,0.83,0); lbList.Position = UDim2.new(0,5,0.16,0); lbList.BackgroundTransparency = 1
+	lbList.Text = "Be the first tycoon!"; lbList.TextColor3 = Color3.fromRGB(225,228,240); lbList.TextScaled = true; lbList.Font = Enum.Font.GothamBold
+	lbList.TextYAlignment = Enum.TextYAlignment.Top; lbList.TextXAlignment = Enum.TextXAlignment.Left; lbList.Parent = lbSg
+	CollectionService:AddTag(lbScreen, "LeaderboardSign")
+
 	-- Arena title pillar at the SOUTH end (facing the entrance), out of the way.
 	local pillar = block(hubFolder, Vector3.new(6, 22, 6), HUB_ORIGIN + Vector3.new(0, 11, -54),
 		Color3.fromRGB(30, 32, 44), Enum.Material.Metal, true)

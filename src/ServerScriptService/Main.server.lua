@@ -21,6 +21,7 @@ local HubService         = require(ServerScriptService.HubService)
 local RebirthService     = require(ServerScriptService.RebirthService)
 local SnackService       = require(ServerScriptService.SnackService)
 local KartCustomizeService = require(ServerScriptService.KartCustomizeService)
+local LeaderboardService  = require(ServerScriptService.LeaderboardService)
 local DailyRewardService = require(ServerScriptService.DailyRewardService)
 local BattlePassService  = require(ServerScriptService.BattlePassService)
 local BuildingConfig     = require(ReplicatedStorage.Config.BuildingConfig)
@@ -44,6 +45,9 @@ SnackService.init()
 
 -- Wire the City garage kart-skin pedestals (tagged "KartSkinPedestal").
 KartCustomizeService.init()
+
+-- Per-player leaderstats + the city "Top Tycoons" leaderboard board.
+LeaderboardService.init()
 
 -- ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -149,6 +153,9 @@ local function onPlayerJoin(player)
 
 	-- Build the player's stadium plot (runtime-generated, tagged buildings)
 	PlotService.buildPlot(player)
+
+	-- Leaderstats (Rebirths + Cash in the player list).
+	LeaderboardService.setupLeaderstats(player)
 
 	-- Walkspeed perks (VIP + any active speed snack), applied now + on respawn.
 	player.CharacterAdded:Connect(function(character)

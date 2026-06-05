@@ -73,6 +73,8 @@ local BracketController  = safeRequire("BracketController")
 local KartController     = safeRequire("KartController")
 local HubController      = safeRequire("HubController")
 local TrophyController   = safeRequire("TrophyController")
+local SoundController    = safeRequire("SoundController")
+local TutorialController = safeRequire("TutorialController")
 
 local function safeInit(controller, name)
 	if not controller or type(controller.init) ~= "function" then return end
@@ -89,6 +91,8 @@ safeInit(BracketController,  "BracketController")
 safeInit(KartController,     "KartController")
 safeInit(HubController,      "HubController")
 safeInit(TrophyController,   "TrophyController")
+safeInit(SoundController,    "SoundController")
+safeInit(TutorialController, "TutorialController")
 
 -- Full diagnostic now that controllers are in scope: which loaded (+/-) and how
 -- many buildings StadiumController has actually wired vs how many are tagged.
@@ -136,6 +140,7 @@ onEvent("ProfileUpdated", function(profileData)
 	local ok, err = pcall(function() if StadiumController then StadiumController.onProfileUpdated(profileData) end end)
 	if not ok then _lastMsg = "SC.onProfile ERR: " .. tostring(err) end
 	pcall(function() if TrophyController then TrophyController.onProfileUpdated(profileData) end end)
+	pcall(function() if TutorialController then TutorialController.onProfileUpdated(profileData) end end)
 	_dbgRefresh(profileData)
 end)
 
