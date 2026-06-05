@@ -126,7 +126,9 @@ local function onPlayerJoin(player)
 	-- build up. RunService:IsStudio() is false on real servers, so this never
 	-- affects live players.
 	if game:GetService("RunService"):IsStudio() then
-		data.coins = math.max(data.coins or 0, 1000000)
+		-- Modest test funds (not instant-everything) so the slower progression is
+		-- actually testable; the loop refills if you go broke so you never get stuck.
+		data.coins = math.max(data.coins or 0, 10000)
 		data.gems  = math.max(data.gems or 0, 500)   -- so snacks are testable in Studio
 	end
 
@@ -229,6 +231,24 @@ end
 for _, pad in ipairs(CollectionService:GetTagged("CashStand")) do task.spawn(wireCashStand, pad) end
 CollectionService:GetInstanceAddedSignal("CashStand"):Connect(function(pad) task.spawn(wireCashStand, pad) end)
 
+-- Tap-to-Earn button: each click pays coins. Pays a little more as your passive
+-- income grows, but stays a manual bootstrap that automation (buildings) overtakes.
+local function wireTapButton(pad)
+	local owner = pad:FindFirstChild("Owner")
+	local cd = pad:FindFirstChildOfClass("ClickDetector") or pad:WaitForChild("TapClick", 10)
+	if not (cd and cd:IsA("ClickDetector")) then return end
+	cd.MouseClick:Connect(function(clicker)
+		if owner and clicker ~= owner.Value then return end
+		local data = DataService.getData(clicker)
+		if not data then return end
+		local perTap = math.max(3, math.floor(EconomyService.currentRate(data) * 0.5))
+		EconomyService.addCoins(clicker, perTap)
+		pushProfile(clicker)
+	end)
+end
+for _, pad in ipairs(CollectionService:GetTagged("TapButton")) do task.spawn(wireTapButton, pad) end
+CollectionService:GetInstanceAddedSignal("TapButton"):Connect(function(pad) task.spawn(wireTapButton, pad) end)
+
 -- ─── Income tick loop ────────────────────────────────────────────────────────
 
 -- Push profile updates to clients every 5s to keep HUD in sync
@@ -251,7 +271,7 @@ task.spawn(function()
 			-- even if the join-time grant raced the profile load.
 			if game:GetService("RunService"):IsStudio() then
 				local d = DataService.getData(player)
-				if d and (d.coins or 0) < 100000 then d.coins = 1000000 end
+				if d and (d.coins or 0) < 1000 then d.coins = 10000 end   -- refill if broke (Studio)
 				if d and (d.gems or 0) < 50 then d.gems = 500 end   -- keep snacks testable
 			end
 

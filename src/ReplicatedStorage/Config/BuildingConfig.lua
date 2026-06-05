@@ -97,6 +97,18 @@ BuildingConfig.Buildings = {
 		activeOnly     = false,
 		collectCooldown = 0,
 	},
+	{
+		-- The end-game structural upgrade: walls rise into a facade and a roof ring
+		-- grows in + up each level, turning the ground into an enclosed stadium.
+		id             = "structure",
+		name           = "Stadium Roof",
+		baseRate       = 25,
+		baseCost       = 8000,
+		costMult       = 1.26,
+		maxLevel       = 0,
+		activeOnly     = false,
+		collectCooldown = 0,
+	},
 }
 
 -- Build lookup by id

@@ -46,6 +46,7 @@ local PROFILE_TEMPLATE = {
 		parking     = 0,
 		bigscreen   = 0,
 		floodlights = 0,
+		structure   = 0,
 	},
 
 	-- Card inventory: key = unique instance id (generated server-side), value = table
