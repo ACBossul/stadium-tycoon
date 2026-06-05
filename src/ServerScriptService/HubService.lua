@@ -294,8 +294,8 @@ end
 -- A drive-in garage in the city: preview every kart skin on a display kart, then
 -- click its pedestal to buy/equip (KartCustomizeService handles the purchase).
 local function buildCustomizeGarage()
-	local GX, GZ = 0, -98              -- garage centre (local to HUB_ORIGIN), opens north (+Z)
-	local W, D, H = 56, 42, 16
+	local GX, GZ = 0, -84              -- garage centre (local to HUB_ORIGIN), opens north (+Z)
+	local W, D, H = 48, 28, 15         -- sized to sit clear of the south skyline towers
 	local wallC = Color3.fromRGB(54, 58, 70)
 
 	block(hubFolder, Vector3.new(W, 1, D),  HUB_ORIGIN + Vector3.new(GX, 0.5, GZ), Color3.fromRGB(46, 48, 58), Enum.Material.Concrete, true)         -- floor

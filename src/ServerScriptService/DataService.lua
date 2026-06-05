@@ -34,9 +34,13 @@ local PROFILE_TEMPLATE = {
 	-- income multiplier and unlocks rebirth-only cards.
 	rebirths = 0,
 
-	-- One entry per building id; value is current level (0 = not purchased)
+	-- One entry per building id; value is current level (0 = not purchased).
+	-- Everything starts at 0 — you build the stadium up from nothing (buy the
+	-- pitch first, then the stands, then the rest).
 	stadium = {
-		stands      = 1,
+		pitch       = 0,
+		lowerstands = 0,
+		stands      = 0,
 		concessions = 0,
 		merch       = 0,
 		parking     = 0,

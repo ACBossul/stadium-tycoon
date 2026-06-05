@@ -26,11 +26,22 @@ BuildingConfig.STARTING_COINS = 100
 --   collectCooldown seconds between active collects (only used when activeOnly=true)
 
 BuildingConfig.Buildings = {
+	-- Progressive build: you start with NOTHING built. Lay the pitch first (cheap),
+	-- then the lower-stands bowl, then the big grandstand, then the rest — each is a
+	-- "Build" then "Upgrade". Costs roughly enforce that order.
+	{
+		id = "pitch", name = "The Pitch",
+		baseRate = 2, baseCost = 40, costMult = 1.15, maxLevel = 0, activeOnly = false, collectCooldown = 0,
+	},
+	{
+		id = "lowerstands", name = "Lower Stands",
+		baseRate = 4, baseCost = 150, costMult = 1.15, maxLevel = 0, activeOnly = false, collectCooldown = 0,
+	},
 	{
 		id             = "stands",
-		name           = "Stands",
-		baseRate       = 1,      -- 1 coin/sec at level 1
-		baseCost       = 50,
+		name           = "Grandstand",
+		baseRate       = 8,
+		baseCost       = 350,
 		costMult       = 1.15,
 		maxLevel       = 0,
 		activeOnly     = false,
@@ -39,28 +50,28 @@ BuildingConfig.Buildings = {
 	{
 		id             = "concessions",
 		name           = "Concession Stand",
-		baseRate       = 3,      -- 3 coins/sec when actively collected
-		baseCost       = 75,
+		baseRate       = 3,
+		baseCost       = 600,
 		costMult       = 1.15,
 		maxLevel       = 0,
-		activeOnly     = true,
-		collectCooldown = 30,    -- collect every 30s
+		activeOnly     = false,   -- now feeds the Cash Stand like the others
+		collectCooldown = 0,
 	},
 	{
-		id             = "merch",
-		name           = "Merch Shop",
-		baseRate       = 2,
-		baseCost       = 200,
+		id             = "parking",
+		name           = "Parking Lot",
+		baseRate       = 6,
+		baseCost       = 900,
 		costMult       = 1.18,
 		maxLevel       = 0,
 		activeOnly     = false,
 		collectCooldown = 0,
 	},
 	{
-		id             = "parking",
-		name           = "Parking Lot",
-		baseRate       = 1.5,
-		baseCost       = 300,
+		id             = "merch",
+		name           = "Merch Shop",
+		baseRate       = 18,
+		baseCost       = 1400,
 		costMult       = 1.18,
 		maxLevel       = 0,
 		activeOnly     = false,
@@ -69,8 +80,8 @@ BuildingConfig.Buildings = {
 	{
 		id             = "bigscreen",
 		name           = "Big Screen",
-		baseRate       = 4,
-		baseCost       = 800,
+		baseRate       = 30,
+		baseCost       = 2200,
 		costMult       = 1.20,
 		maxLevel       = 0,
 		activeOnly     = false,
@@ -79,8 +90,8 @@ BuildingConfig.Buildings = {
 	{
 		id             = "floodlights",
 		name           = "Floodlights",
-		baseRate       = 6,
-		baseCost       = 2000,
+		baseRate       = 55,
+		baseCost       = 4500,
 		costMult       = 1.22,
 		maxLevel       = 0,
 		activeOnly     = false,
