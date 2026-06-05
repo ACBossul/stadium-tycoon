@@ -1305,6 +1305,74 @@ local function scaleBuildingToLevel(model, level)
 	end
 end
 
+-- A continuous lower-tier seating bowl hugging the pitch on all sides (south has
+-- the entrance gap). Built from the START so the plot reads as a real stadium —
+-- pitch → bowl → concourse (shops) → outer wall, with the tall main grandstand
+-- rising on the north. Low + raked; the grandstand stays the upgradeable stand.
+local function buildStadiumBowl(plot, origin)
+	local HX, HZ = 40, 48                 -- pitch half-extents
+	local APR    = 5                      -- apron between pitch edge and row 1
+	local rows, stepUp, stepBack = 4, 1.7, 2.3
+	local SEAT   = { Color3.fromRGB(58,118,200), Color3.fromRGB(222,72,72), Color3.fromRGB(245,205,55) }
+	local STEP_C = Color3.fromRGB(116, 120, 132)
+	local SKIN   = Color3.fromRGB(236, 200, 168)
+
+	local function bowlPart(sx, sy, sz, x, y, z, color, mat, collide)
+		local p = Instance.new("Part")
+		p.Name = "BowlPart"; p.Anchored = true; p.CanCollide = collide ~= false
+		p.Size = Vector3.new(sx, sy, sz); p.Position = origin + Vector3.new(x, y, z)
+		p.Color = color; p.Material = mat or Enum.Material.Concrete
+		p.TopSurface = Enum.SurfaceType.Smooth; p.BottomSurface = Enum.SurfaceType.Smooth
+		p.Parent = plot
+		return p
+	end
+	local function crowd(x, y, z)
+		if math.random() < 0.45 then return end
+		bowlPart(0.9, 1.2, 0.7, x, y + 0.6, z, SEAT[math.random(1, #SEAT)], Enum.Material.SmoothPlastic, false)
+		bowlPart(0.66, 0.66, 0.66, x, y + 1.5, z, SKIN, Enum.Material.SmoothPlastic, false)
+	end
+	local function bench(sx, sy, sz, x, y, z, i)
+		local b = bowlPart(sx, sy, sz, x, y, z, SEAT[(i % #SEAT) + 1], Enum.Material.SmoothPlastic)
+		applyTexture(b, TEXTURES.seats, 4, { Enum.NormalId.Top })
+	end
+
+	-- East + West banks (rake outward along X, span the pitch length in Z)
+	for _, sgn in ipairs({ 1, -1 }) do
+		for i = 1, rows do
+			local x = sgn * (HX + APR + (i - 1) * stepBack)
+			local y = (i - 1) * stepUp
+			bowlPart(stepBack, stepUp + 1.2, 2 * HZ, x, y + (stepUp + 1.2) / 2, 0, STEP_C)
+			bench(1.3, 1, 2 * HZ - 4, x - sgn * 0.4, y + stepUp + 0.6, 0, i)
+			if i == rows then
+				for z = -HZ + 6, HZ - 6, 6 do crowd(x - sgn * 0.4, y + stepUp + 1.1, z) end
+			end
+		end
+	end
+
+	-- South bank (rake outward along -Z) with a centre entrance gap
+	local GAP, segW = 18, (2 * HX - 18) / 2
+	for i = 1, rows do
+		local z = -(HZ + APR + (i - 1) * stepBack)
+		local y = (i - 1) * stepUp
+		for _, sgn in ipairs({ 1, -1 }) do
+			local cx = sgn * (GAP / 2 + segW / 2)
+			bowlPart(segW, stepUp + 1.2, stepBack, cx, y + (stepUp + 1.2) / 2, z, STEP_C)
+			bench(segW - 3, 1, 1.3, cx, y + stepUp + 0.6, z + 0.4, i)
+			if i == rows then
+				for x = cx - segW / 2 + 5, cx + segW / 2 - 5, 6 do crowd(x, y + stepUp + 1.1, z + 0.4) end
+			end
+		end
+	end
+
+	-- North short front tier, leading up into the main grandstand
+	for i = 1, 2 do
+		local z = HZ + APR + (i - 1) * stepBack
+		local y = (i - 1) * stepUp
+		bowlPart(2 * HX, stepUp + 1.2, stepBack, 0, y + (stepUp + 1.2) / 2, z, STEP_C)
+		bench(2 * HX - 4, 1, 1.3, 0, y + stepUp + 0.6, z + 0.4, i)
+	end
+end
+
 -- A few little figures kicking a ball around the pitch — ambient life. They jog
 -- back and forth on looping engine-driven tweens (no per-frame server loop).
 local function buildPitchPlayers(plot, origin)
@@ -1422,6 +1490,7 @@ function PlotService.buildPlot(player)
 	-- Pitch in the centre, advertising hoardings, perimeter wall + goals, gate
 	buildPitch(plot, origin)
 	buildPitchPlayers(plot, origin)
+	buildStadiumBowl(plot, origin)
 	buildHoardings(plot, origin)
 	buildSurrounds(plot, origin)
 	buildDoor(plot, origin, player)
