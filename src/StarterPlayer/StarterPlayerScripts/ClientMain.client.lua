@@ -49,9 +49,13 @@ local _dbgRefresh = function() end   -- real version assigned once controllers l
 -- ─── Isolated require / init ───────────────────────────────────────────────────
 
 local function safeRequire(name)
-	local module = script.Parent:FindFirstChild(name)
+	-- WaitForChild (not FindFirstChild): at boot the sibling ModuleScripts may not
+	-- all have replicated yet. FindFirstChild returned nil for whichever hadn't
+	-- arrived, silently skipping that controller (the "upgrades/shop/pack dead"
+	-- regression). Waiting for each module to replicate fixes that race.
+	local module = script.Parent:WaitForChild(name, 15)
 	if not module then
-		warn("[Client] missing module: " .. name)
+		warn("[Client] module never replicated: " .. name)
 		return nil
 	end
 	local ok, result = pcall(require, module)
