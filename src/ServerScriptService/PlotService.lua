@@ -12,6 +12,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
 local Workspace         = game:GetService("Workspace")
 local ServerScriptService = game:GetService("ServerScriptService")
+local TweenService      = game:GetService("TweenService")
 
 local BuildingConfig = require(ReplicatedStorage.Config.BuildingConfig)
 local DataService    = require(ServerScriptService.DataService)
@@ -49,8 +50,8 @@ local BUILDING_LAYOUT = {
 	stands      = { x = -18, z =  70 },   -- north stand, set well back behind the goal
 	bigscreen   = { x =  46, z =  70 },   -- north-east, beside the stand
 	floodlights = { x = -72, z =  72 },   -- north-west corner tower
-	concessions = { x = -70, z =  18 },   -- west concourse, faces the pitch (east)
-	merch       = { x =  70, z =  18 },   -- east concourse, faces the pitch (west)
+	concessions = { x = -70, z =  32 },   -- west concourse (north), faces the pitch
+	merch       = { x = -70, z = -26 },   -- west concourse (south), faces the pitch
 	parking     = { x =  64, z = -64 },   -- south-east corner, clear of the pitch
 }
 
@@ -494,9 +495,9 @@ local function buildStandTiers(model, baseX, baseZ, level)
 		if c.Name == "StandPart" then c:Destroy() end
 	end
 
-	local rows     = math.clamp(level, 1, 8)   -- seating rows grow with level
-	local stepUp   = 2.2
-	local stepBack = 2.6
+	local rows     = math.clamp(math.floor(level / 3) + 1, 1, 6)   -- grows gentler, caps shorter
+	local stepUp   = 1.8
+	local stepBack = 2.4
 	local W        = 40                          -- stand width
 	local frontZ   = baseZ - 6                   -- front row (nearest the pitch)
 	local backZ    = frontZ + (rows - 1) * stepBack
@@ -587,6 +588,13 @@ local function buildStandTiers(model, baseX, baseZ, level)
 	-- Front roof-support pillars rising from the apron to the canopy.
 	part(1.6, roofY, 1.6, baseX - W / 2 + 2, roofY / 2, frontZ - 2, WALL_C, Enum.Material.Metal, true)
 	part(1.6, roofY, 1.6, baseX + W / 2 - 2, roofY / 2, frontZ - 2, WALL_C, Enum.Material.Metal, true)
+
+	-- Floodlights under the canopy so the seating isn't in shadow.
+	for _, lx in ipairs({ -W / 3, W / 3 }) do
+		local fixture = part(2.4, 0.5, 2.4, baseX + lx, roofY - 1, midZ, Color3.fromRGB(255, 250, 225), Enum.Material.Neon, false)
+		local pl = Instance.new("PointLight")
+		pl.Brightness = 2.4; pl.Range = 28; pl.Color = Color3.fromRGB(255, 248, 220); pl.Parent = fixture
+	end
 
 	-- A lit sponsor fascia under the roof's front edge (classic stadium detail).
 	local fascia = part(W + 3, 2.2, 0.6, baseX, roofY - 1.6, frontZ - 4.7,
@@ -1059,7 +1067,7 @@ end
 -- A second level you climb to: stairs → viewing deck → Trophy Room + VIP Lounge.
 -- Built once per plot in a clear east-side spot.
 local function buildUpperTier(plot, origin, player)
-	local bx, bz = 70, 22       -- deck centre (plot-local)
+	local bx, bz = 60, 22       -- deck centre (plot-local; pulled in off the east wall)
 	local deckY  = 18
 	local function up(sx, sy, sz, x, y, z, color, mat, collide)
 		local p = Instance.new("Part")
@@ -1093,6 +1101,12 @@ local function buildUpperTier(plot, origin, player)
 	-- Viewing deck
 	local deck = up(40, 1.5, 36, bx, deckY, bz, CONCRETE, Enum.Material.Concrete)
 	applyTexture(deck, TEXTURES.brick, 8, { Enum.NormalId.Top })
+	-- Lights under the deck so the covered area below isn't gloomy.
+	for _, lx in ipairs({ -12, 12 }) do
+		local fixture = up(2.4, 0.4, 2.4, bx + lx, deckY - 1.4, bz, Color3.fromRGB(255, 250, 225), Enum.Material.Neon, false)
+		local pl = Instance.new("PointLight")
+		pl.Brightness = 2.6; pl.Range = 32; pl.Color = Color3.fromRGB(255, 248, 220); pl.Parent = fixture
+	end
 	-- Railings — SOLID walls so you can't fall off the deck (south is OPEN for stairs)
 	up(1, 4, 36, bx + 20, deckY + 2, bz, GOLD, Enum.Material.Metal, true)
 	up(1, 4, 36, bx - 20, deckY + 2, bz, GOLD, Enum.Material.Metal, true)
@@ -1261,12 +1275,61 @@ end
 local function scaleBuildingToLevel(model, level)
 	local base = model.PrimaryPart
 	if not base then return end
-	local targetScale = 1 + math.clamp(level, 0, 24) * 0.03   -- up to ~1.7x at high levels
+	-- Shops grow only a LITTLE (they're about what you can buy, not size); other
+	-- buildings keep the bigger visual growth.
+	local perLevel, cap = 0.03, 24
+	if model.Name == "concessions" or model.Name == "merch" then
+		perLevel, cap = 0.01, 14
+	end
+	local targetScale = 1 + math.clamp(level, 0, cap) * perLevel
 	model:ScaleTo(targetScale)
 	local baseBottom = base.Position.Y - base.Size.Y / 2
 	if math.abs(baseBottom) > 0.001 then
 		model:TranslateBy(Vector3.new(0, -baseBottom, 0))
 	end
+end
+
+-- A few little figures kicking a ball around the pitch — ambient life. They jog
+-- back and forth on looping engine-driven tweens (no per-frame server loop).
+local function buildPitchPlayers(plot, origin)
+	local SHIRTS = { Color3.fromRGB(222, 72, 72), Color3.fromRGB(70, 120, 222) }
+
+	local function figure(lx, lz, shirt, dx, dz)
+		local torso = Instance.new("Part")
+		torso.Name = "PitchPlayer"; torso.Anchored = true; torso.CanCollide = false
+		torso.Size = Vector3.new(1.5, 2.2, 0.9)
+		torso.Position = origin + Vector3.new(lx, 1.6, lz)
+		torso.Color = shirt; torso.Material = Enum.Material.SmoothPlastic
+		torso.Parent = plot
+		local head = Instance.new("Part")
+		head.Name = "PitchPlayer"; head.Anchored = true; head.CanCollide = false
+		head.Shape = Enum.PartType.Ball; head.Size = Vector3.new(1, 1, 1)
+		head.Position = origin + Vector3.new(lx, 3.1, lz)
+		head.Color = Color3.fromRGB(236, 200, 168); head.Material = Enum.Material.SmoothPlastic
+		head.Parent = plot
+		local info = TweenInfo.new(2.4 + math.random() * 1.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
+		local d = Vector3.new(dx, 0, dz)
+		TweenService:Create(torso, info, { Position = torso.Position + d }):Play()
+		TweenService:Create(head,  info, { Position = head.Position  + d }):Play()
+	end
+
+	-- a ball that rolls up and down the pitch
+	local ball = Instance.new("Part")
+	ball.Name = "PitchPlayer"; ball.Anchored = true; ball.CanCollide = false
+	ball.Shape = Enum.PartType.Ball; ball.Size = Vector3.new(1.5, 1.5, 1.5)
+	ball.Position = origin + Vector3.new(0, 0.9, 6)
+	ball.Color = Color3.new(1, 1, 1); ball.Material = Enum.Material.SmoothPlastic
+	ball.Parent = plot
+	TweenService:Create(ball, TweenInfo.new(3.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut, -1, true),
+		{ Position = ball.Position + Vector3.new(4, 0, -22) }):Play()
+
+	-- two "teams" jogging about
+	figure(-14, 12, SHIRTS[1],  4, -12)
+	figure( -6, -8, SHIRTS[1],  8,   8)
+	figure( 12, 10, SHIRTS[2], -6, -10)
+	figure( 16, -12, SHIRTS[2], -8,  8)
+	figure(  0, 22, SHIRTS[1],  6,  -8)
+	figure(  2, -22, SHIRTS[2], -6,  8)
 end
 
 -- ─── Plot builder ────────────────────────────────────────────────────────────
@@ -1342,6 +1405,7 @@ function PlotService.buildPlot(player)
 
 	-- Pitch in the centre, advertising hoardings, perimeter wall + goals, gate
 	buildPitch(plot, origin)
+	buildPitchPlayers(plot, origin)
 	buildHoardings(plot, origin)
 	buildSurrounds(plot, origin)
 	buildDoor(plot, origin, player)
