@@ -19,6 +19,7 @@ local PlotService        = require(ServerScriptService.PlotService)
 local KartService        = require(ServerScriptService.KartService)
 local HubService         = require(ServerScriptService.HubService)
 local RebirthService     = require(ServerScriptService.RebirthService)
+local SnackService       = require(ServerScriptService.SnackService)
 local DailyRewardService = require(ServerScriptService.DailyRewardService)
 local BattlePassService  = require(ServerScriptService.BattlePassService)
 local BuildingConfig     = require(ReplicatedStorage.Config.BuildingConfig)
@@ -36,6 +37,9 @@ PlotService.initWorld()
 
 -- Wire rebirth pads (tagged "RebirthPad").
 RebirthService.init()
+
+-- Wire concession snack vendors (tagged "SnackStand") + buff expiry sweep.
+SnackService.init()
 
 -- ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -138,15 +142,12 @@ local function onPlayerJoin(player)
 	-- Build the player's stadium plot (runtime-generated, tagged buildings)
 	PlotService.buildPlot(player)
 
-	-- VIP movement perk: faster on foot. Applied now + on every respawn (reads the
-	-- live profile so it kicks in after a mid-session VIP purchase + respawn).
-	local function applyVipSpeed(character)
-		if not (data.passes and data.passes.vip) then return end
-		local hum = character:FindFirstChildOfClass("Humanoid") or character:WaitForChild("Humanoid", 10)
-		if hum then hum.WalkSpeed = 26 end
-	end
-	player.CharacterAdded:Connect(applyVipSpeed)
-	if player.Character then task.spawn(applyVipSpeed, player.Character) end
+	-- Walkspeed perks (VIP + any active speed snack), applied now + on respawn.
+	player.CharacterAdded:Connect(function(character)
+		character:WaitForChild("Humanoid", 10)
+		SnackService.refreshSpeed(player)
+	end)
+	if player.Character then task.spawn(function() SnackService.refreshSpeed(player) end) end
 
 	-- Compute offline earnings
 	local offlineEarned = EconomyService.applyOfflineEarnings(player)

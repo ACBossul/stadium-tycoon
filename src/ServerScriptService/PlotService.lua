@@ -678,6 +678,22 @@ local function buildBuildingModel(buildingCfg, position, player, level)
 	-- Flavor signage
 	if buildingCfg.id == "concessions" then
 		addBoothSign(primary, "🍔 SNACKS", Color3.fromRGB(255, 175, 60))
+		-- Snack vendors: hold-E to buy a timed buff with gems (SnackService wires them).
+		local function snackVendor(offset, color, snackId, actionText)
+			local v = Instance.new("Part")
+			v.Name = "SnackStand"; v.Anchored = true; v.CanCollide = false
+			v.Size = Vector3.new(2.6, 3, 2.6)
+			v.CFrame = primary.CFrame * CFrame.new(offset)
+			v.Color = color; v.Material = Enum.Material.SmoothPlastic
+			v.Parent = model
+			local pp = Instance.new("ProximityPrompt")
+			pp.ActionText = actionText; pp.ObjectText = "Snack Stand"
+			pp.HoldDuration = 0.3; pp.MaxActivationDistance = 12; pp.RequiresLineOfSight = false
+			pp:SetAttribute("Snack", snackId); pp.Parent = v
+			CollectionService:AddTag(v, "SnackStand")
+		end
+		snackVendor(Vector3.new(-5, -3.5, -6), Color3.fromRGB(70, 160, 230), "speed", "Buy ⚡ Energy Drink (8💎)")
+		snackVendor(Vector3.new( 5, -3.5, -6), Color3.fromRGB(210, 80, 60),  "money", "Buy 🌭 Lucky Hot Dog (12💎)")
 	elseif buildingCfg.id == "merch" then
 		addBoothSign(primary, "👕 MERCH", Color3.fromRGB(95, 160, 255))
 	elseif buildingCfg.id == "bigscreen" then

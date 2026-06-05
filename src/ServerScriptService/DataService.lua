@@ -22,6 +22,10 @@ local PROFILE_TEMPLATE = {
 	-- it at the Cash Stand on your plot. This is the active tycoon "grind".
 	pending = 0,
 
+	-- Active timed snack buffs: buffId -> Unix expiry timestamp (bought with gems
+	-- at the concession stand). e.g. buffs.speed, buffs.money.
+	buffs = {},
+
 	-- Rebirth/prestige: each rebirth resets coins + buildings for a permanent
 	-- income multiplier and unlocks rebirth-only cards.
 	rebirths = 0,

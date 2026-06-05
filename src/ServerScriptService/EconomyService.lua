@@ -96,11 +96,19 @@ function EconomyService.tickIncome(player, now)
 	end
 end
 
+-- Income multiplier from an active "money" snack (checked inline so EconomyService
+-- doesn't need to require SnackService — avoids a circular dependency).
+local function getSnackMoneyMultiplier(data)
+	if data.buffs and (data.buffs.money or 0) > os.time() then return 1.10 end
+	return 1
+end
+
 -- Current income generation rate (coins/sec) after all multipliers.
 function EconomyService.currentRate(data)
 	if not data then return 0 end
 	return BuildingConfig.totalPassiveRate(data.stadium)
-		* getCoinMultiplier(data) * getRebirthMultiplier(data) * getVipMultiplier(data)
+		* getCoinMultiplier(data) * getRebirthMultiplier(data)
+		* getVipMultiplier(data) * getSnackMoneyMultiplier(data)
 end
 
 -- Collect the pending pot into spendable coins (wired to the Cash Stand pad).
